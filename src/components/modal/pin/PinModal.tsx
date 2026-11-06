@@ -27,7 +27,12 @@ import {H5, H7} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import useModalContentLifecycle from '../base/useModalContentLifecycle';
 import PinDots from './PinDots';
-import {verifyAndMigratePin, createPin, PIN_CONFIG} from '../../../utils/pin';
+import {
+  verifyAndMigratePin,
+  createPin,
+  PIN_CONFIG,
+  getPinLockoutSeconds,
+} from '../../../utils/pin';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -113,16 +118,30 @@ const Pin = gestureHandlerRootHOC(
     const currentPin = useAppSelector(({APP}) => APP.currentPin);
     const currentSalt = useAppSelector(({APP}) => APP.currentSalt);
     const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
-    const [attempts, setAttempts] = useState<number>(0);
+    // RN-3033/RN-3082: read the persisted cumulative wrong-attempt counter rather
+    // than an in-memory useState, so the lockout survives an app relaunch and can
+    // escalate across a brute-force session.
+    const attempts = useAppSelector(({APP}) => APP.pinFailedAttempts);
 
     const reset = useCallback(() => {
       setMessage(t('Please enter your PIN'));
       setPinStatus({pin: [], firstPinEntered: []});
-      setAttempts(0);
-    }, [setMessage, setAttempts, setPinStatus, t]);
+      // NOTE: do NOT reset the wrong-attempt counter here. 'reset' is emitted by a
+      // long-press on the delete key (VirtualKeyboard) and is meant only to clear the
+      // digits currently typed. Zeroing attempts here let an attacker defeat the lockout
+      // entirely: two wrong tries, long-press delete, repeat — the 3-try ban never fires.
+    }, [setMessage, setPinStatus, t]);
+
+    // Blocks keypad input and re-entry while a PIN check is awaiting the native timer,
+    // so a second PIN can't be checked against a stale wrong-attempt count.
+    const checkInFlightRef = useRef(false);
 
     const checkPin = useCallback(
       async (pinToCheck: Array<string>) => {
+        if (checkInFlightRef.current) {
+          return;
+        }
+        checkInFlightRef.current = true;
         try {
           const result = verifyAndMigratePin(
             pinToCheck,
@@ -134,11 +153,41 @@ const Pin = gestureHandlerRootHOC(
             setShakeDots(true);
             setMessage(t('Incorrect PIN, try again'));
             setPinStatus({pin: [], firstPinEntered: []});
-            setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
+            // RN-3033/RN-3082: persist the wrong-attempt increment so it survives
+            // relaunch and keeps growing across a brute-force session. A ban is due on
+            // every multiple of ATTEMPT_LIMIT (3, 6, 9...) and escalates; it is issued
+            // here, in the same synchronous step as the increment, so both reach
+            // persisted state together. Issuing it later (e.g. from an effect after an
+            // async native call) left a window where killing the app persisted the
+            // count without the ban, and the ban was then skipped for good.
+            const nextAttempts = attempts + 1;
+            let bannedUntil: number | undefined;
+            if (nextAttempts % PIN_CONFIG.ATTEMPT_LIMIT === 0) {
+              try {
+                const timeSinceBoot =
+                  await NativeModules.Timer.getRelativeTime();
+                bannedUntil =
+                  Number(timeSinceBoot) + getPinLockoutSeconds(nextAttempts);
+              } catch (err) {
+                // Fail closed: if the ban can't be timed, store a placeholder deadline
+                // the countdown clamps to a real one once the timer answers again.
+                bannedUntil = Number.MAX_SAFE_INTEGER;
+                logger.error(
+                  `checkPin lockout error: ${
+                    err instanceof Error ? err.message : JSON.stringify(err)
+                  }`,
+                );
+              }
+            }
+            dispatch(AppActions.pinFailedAttempts(nextAttempts));
+            if (bannedUntil !== undefined) {
+              dispatch(AppActions.pinBannedUntil(bannedUntil));
+            }
             return;
           }
 
-          // Correct PIN
+          // Correct PIN - genuine unlock, reset the cumulative wrong-attempt counter.
+          dispatch(AppActions.pinFailedAttempts(0));
           if (result.needsMigration) {
             // Legacy user - save the new salt and hash
             dispatch(AppActions.currentPin(result.hashedPin));
@@ -158,9 +207,11 @@ const Pin = gestureHandlerRootHOC(
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
           logger.error(`checkPin error: ${errStr}`);
+        } finally {
+          checkInFlightRef.current = false;
         }
       },
-      [currentPin, currentSalt, dispatch, logger, onClose, reset, t],
+      [attempts, currentPin, currentSalt, dispatch, logger, onClose, reset, t],
     );
     const checkPinRef = useRef(checkPin);
     checkPinRef.current = checkPin;
@@ -218,8 +269,8 @@ const Pin = gestureHandlerRootHOC(
 
     const handleCellPress = useCallback(
       (value: string) => {
-        if (pinBannedUntil) {
-          // banned wait for entering new pin
+        if (pinBannedUntil || checkInFlightRef.current) {
+          // banned (or a check is still in flight): wait before accepting input
           return;
         }
         setMessageError(null);
@@ -280,83 +331,78 @@ const Pin = gestureHandlerRootHOC(
       onCellPress();
     }, [pinStatus]);
 
-    const setCountDown = useCallback(
-      (bannedUntil: number, timeSinceBoot: number, count: number = 0) => {
-        const intervalId = setInterval(() => {
-          count = count + 1;
-          const totalSecs = bannedUntil - timeSinceBoot - count;
+    const attemptsRef = useRef(attempts);
+    attemptsRef.current = attempts;
 
-          if (totalSecs < 0) {
+    // Single owner of the ban countdown. Every tick re-reads device uptime instead of
+    // counting interval ticks: JS timers are paused while the app is backgrounded, so a
+    // tick counter froze the countdown and a 5m/1h ban only expired after that much
+    // continuous foreground time. Uptime keeps running through sleep on both platforms.
+    useEffect(() => {
+      if (!pinBannedUntil) {
+        return;
+      }
+
+      let cancelled = false;
+      let intervalId: ReturnType<typeof setInterval> | undefined;
+
+      const tick = async () => {
+        try {
+          const now = Number(await NativeModules.Timer.getRelativeTime());
+          if (cancelled) {
+            return;
+          }
+          const remaining = pinBannedUntil - now;
+
+          if (remaining <= 0) {
+            cancelled = true;
+            if (intervalId) {
+              clearInterval(intervalId);
+            }
             dispatch(AppActions.pinBannedUntil(undefined));
-            clearInterval(intervalId);
             reset();
             return;
           }
 
-          const m = Math.floor(totalSecs / 60);
-          const s = totalSecs % 60;
+          // Uptime restarts from zero after a reboot, so a ban stored against the old
+          // boot looks far longer than it is. Clamp to the length of the ban the current
+          // attempt count earns (not the 1h maximum) so a reboot neither shortens a ban
+          // nor turns a 1-minute ban into an hour.
+          // A ban stored by an older build (fixed 2-minute lockout) has no persisted
+          // attempt count; clamp it to that old length rather than the 1-minute step.
+          const cap =
+            attemptsRef.current > 0
+              ? getPinLockoutSeconds(attemptsRef.current)
+              : PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
+          if (remaining > cap) {
+            cancelled = true;
+            dispatch(AppActions.pinBannedUntil(now + cap));
+            return;
+          }
+
+          const m = Math.floor(remaining / 60);
+          const s = remaining % 60;
           setMessage(
             t('Try again in ', {
               time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
             }),
           );
-        }, 1000);
-        return intervalId;
-      },
-      [dispatch, reset, t],
-    );
-
-    useEffect(() => {
-      const checkAttempts = async () => {
-        try {
-          if (attempts === PIN_CONFIG.ATTEMPT_LIMIT) {
-            setAttempts(0);
-            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-            const bannedUntil =
-              Number(timeSinceBoot) + PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
-            dispatch(AppActions.pinBannedUntil(bannedUntil));
-            const timer = setCountDown(bannedUntil, Number(timeSinceBoot));
-            return () => {
-              clearInterval(timer);
-            };
-          }
-        } catch (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logger.error(`checkAttempts error: ${errStr}`);
-        }
-      };
-      checkAttempts();
-    }, [attempts, dispatch, logger, setCountDown]);
-
-    useEffect(() => {
-      const checkIfBanned = async () => {
-        try {
-          const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-          if (pinBannedUntil && Number(timeSinceBoot) < pinBannedUntil) {
-            const totalSecsToRelease = pinBannedUntil - Number(timeSinceBoot);
-            // workaround for inconsistencies between the stored timeSinceBoot with the timeSinceBoot that results after the system been hibernated or suspended
-            if (totalSecsToRelease > PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME) {
-              const bannedUntil =
-                Number(timeSinceBoot) + PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
-              dispatch(AppActions.pinBannedUntil(bannedUntil));
-              return;
-            }
-            const timer = setCountDown(pinBannedUntil, Number(timeSinceBoot));
-            return () => {
-              clearInterval(timer);
-            };
-          } else if (pinBannedUntil) {
-            dispatch(AppActions.pinBannedUntil(undefined));
-          }
         } catch (err) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
           logger.error(`checkIfBanned error: ${errStr}`);
         }
       };
-      checkIfBanned();
-    }, [dispatch, pinBannedUntil, setCountDown, logger]);
+
+      tick();
+      intervalId = setInterval(tick, 1000);
+      return () => {
+        cancelled = true;
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+      };
+    }, [dispatch, logger, pinBannedUntil, reset, t]);
 
     const handleBackPress = useCallback(() => {
       dispatch(AppActions.dismissPinModal());

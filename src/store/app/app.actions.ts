@@ -225,6 +225,12 @@ export const pinBannedUntil = (
   payload: bannedUntil,
 });
 
+// RN-3033/RN-3082: persisted cumulative wrong-PIN attempt counter.
+export const pinFailedAttempts = (attempts: number): AppActionType => ({
+  type: AppActionTypes.PIN_FAILED_ATTEMPTS,
+  payload: attempts,
+});
+
 export const currentPin = (pin: string | undefined): AppActionType => ({
   type: AppActionTypes.CURRENT_PIN,
   payload: pin,

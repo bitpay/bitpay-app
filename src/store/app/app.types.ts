@@ -65,6 +65,7 @@ export enum AppActionTypes {
   CURRENT_PIN = 'APP/CURRENT_PIN',
   CURRENT_SALT = 'APP/CURRENT_SALT',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
+  PIN_FAILED_ATTEMPTS = 'APP/PIN_FAILED_ATTEMPTS',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
   TOGGLE_HIDE_ALL_BALANCES = 'APP/TOGGLE_HIDE_ALL_BALANCES',
@@ -294,6 +295,12 @@ interface PinBannedUntil {
   type: typeof AppActionTypes.PIN_BANNED_UNTIL;
   payload: number | undefined;
 }
+// RN-3033/RN-3082: cumulative wrong-PIN attempts, persisted so the lockout
+// survives an app relaunch and can escalate across a brute-force session.
+interface PinFailedAttempts {
+  type: typeof AppActionTypes.PIN_FAILED_ATTEMPTS;
+  payload: number;
+}
 interface ShowBiometricModal {
   type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
   payload: BiometricModalConfig;
@@ -510,6 +517,7 @@ export type AppActionType =
   | CurrentPin
   | CurrentSalt
   | PinBannedUntil
+  | PinFailedAttempts
   | ShowBlur
   | ShowPortfolioValue
   | ToggleHideAllBalances

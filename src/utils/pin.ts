@@ -17,6 +17,32 @@ export const PIN_CONFIG = {
 } as const;
 
 /**
+ * RN-3033/RN-3082: escalating PIN lockout.
+ *
+ * A lockout is only ever issued when the cumulative wrong-attempt counter hits a
+ * multiple of ATTEMPT_LIMIT (3, 6, 9, ...), so the thresholds here are keyed to
+ * those ban points — i.e. this escalates per *ban*, not per raw attempt:
+ *   >= 9 failures (3rd ban onward) -> 3600s (1 hour)
+ *   >= 6 failures (2nd ban)        -> 300s  (5 minutes)
+ *   otherwise     (1st ban, == 3)  -> 60s   (1 minute)
+ *
+ * (The previous >=8 / >=5 thresholds never landed on a ban point, so the 5m/1h
+ * steps silently fired a ban late, at 6 and 9 rather than 5 and 8.)
+ *
+ * @param totalFailures - cumulative wrong-PIN attempts (persisted)
+ * @returns lockout duration in seconds
+ */
+export const getPinLockoutSeconds = (totalFailures: number): number => {
+  if (totalFailures >= 9) {
+    return 3600;
+  }
+  if (totalFailures >= 6) {
+    return 300;
+  }
+  return 60;
+};
+
+/**
  * Common weak 4-digit PINs to block
  */
 const COMMON_WEAK_PINS = [
