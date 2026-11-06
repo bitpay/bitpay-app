@@ -2536,7 +2536,7 @@ const handleRampUri =
 
 const handleSardineUri =
   (data: string): Effect<void> =>
-  dispatch => {
+  (dispatch, getState) => {
     logManager.info('Incoming-data (redirect): Sardine URL: ' + data);
 
     data = data.replace('?order_id', '&order_id');
@@ -2547,40 +2547,30 @@ const handleSardineUri =
       return;
     }
 
-    const order_id = getParameterByName('order_id', res);
-    const walletId = getParameterByName('walletId', res)!;
-    const status = getParameterByName('status', res)!;
-    const chain = getParameterByName('chain', res)!;
-    const address = getParameterByName('address', res)!;
-    const createdOn = getParameterByName('createdOn', res);
-    const cryptoAmount = getParameterByName('cryptoAmount', res);
-    const coin = getParameterByName('coin', res)!;
-    const env = (getParameterByName('env', res) as 'dev' | 'prod')!;
-    const fiatBaseAmount = getParameterByName('fiatBaseAmount', res)!;
-    const fiatTotalAmount = getParameterByName('fiatTotalAmount', res)!;
-    const fiatTotalAmountCurrency = getParameterByName(
-      'fiatTotalAmountCurrency',
-      res,
-    )!;
-    const paymentMethod = getParameterByName('paymentMethod', res) as
-      | PaymentMethodKey
-      | undefined;
+    // SECURITY (RN-3084 / IS-1570): only act on a return URL for an order this device
+    // actually created. Without this, a crafted Sardine deep link could forge a
+    // "completed" purchase record (arbitrary address/amount) in the user's history from
+    // URL parameters alone. Mirror the Moonpay-sell guard — if we didn't create it, drop it.
+    const {BUY_CRYPTO} = getState();
+    const existingSardineOrder = BUY_CRYPTO.sardine?.[sardineExternalId];
+    if (!existingSardineOrder) {
+      logManager.warn(
+        `No local Sardine order for externalId ${sardineExternalId}. Ignoring redirect.`,
+      );
+      return;
+    }
 
+    const order_id = getParameterByName('order_id', res);
+    const status = getParameterByName('status', res);
+
+    // Everything except the provider status and order id comes from the order this
+    // device created at checkout (BuyAndSellRoot continueToSardine), so a tampered
+    // redirect can't rewrite the address, amounts, coin/chain or payment method the
+    // user sees, nor feed them to analytics. (RN-3084 / IS-1570)
     const newData: SardinePaymentData = {
-      address,
-      chain,
-      created_on: Number(createdOn),
-      crypto_amount: Number(cryptoAmount),
-      coin,
-      env,
-      external_id: sardineExternalId,
-      fiat_base_amount: Number(fiatBaseAmount),
-      fiat_total_amount: Number(fiatTotalAmount),
-      fiat_total_amount_currency: fiatTotalAmountCurrency,
-      order_id,
-      payment_method: paymentMethod,
-      status,
-      user_id: walletId,
+      ...existingSardineOrder,
+      order_id: order_id ?? existingSardineOrder.order_id,
+      status: status ?? existingSardineOrder.status,
     };
 
     dispatch(
@@ -2590,32 +2580,41 @@ const handleSardineUri =
     );
 
     if (order_id) {
+      const {
+        fiat_total_amount,
+        fiat_base_amount,
+        fiat_total_amount_currency,
+        crypto_amount,
+        coin,
+        chain,
+        payment_method,
+      } = newData;
       dispatch(
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'sardine',
-          fiatAmount: Number(fiatTotalAmount) || '',
+          fiatAmount: Number(fiat_total_amount) || '',
           feeAmount:
-            (Number(fiatTotalAmount) &&
-              Number(fiatBaseAmount) &&
-              Number(fiatTotalAmount) - Number(fiatBaseAmount)) ||
+            (Number(fiat_total_amount) &&
+              Number(fiat_base_amount) &&
+              Number(fiat_total_amount) - Number(fiat_base_amount)) ||
             '',
-          fiatCurrency: fiatTotalAmountCurrency || '',
+          fiatCurrency: fiat_total_amount_currency || '',
           coin: coin?.toLowerCase() || '',
           chain: chain?.toLowerCase() || '',
-          cryptoAmount: Number(cryptoAmount) || '',
-          paymentMethod: paymentMethod || '',
+          cryptoAmount: Number(crypto_amount) || '',
+          paymentMethod: payment_method || '',
           exchangeRate:
-            (Number(cryptoAmount) &&
-              Number(fiatBaseAmount) &&
-              Number(fiatBaseAmount) / Number(cryptoAmount)) ||
+            (Number(crypto_amount) &&
+              Number(fiat_base_amount) &&
+              Number(fiat_base_amount) / Number(crypto_amount)) ||
             '',
         }),
       );
 
       const stateParams: SardineIncomingData = {
         sardineExternalId,
-        walletId,
-        status,
+        walletId: newData.user_id,
+        status: newData.status,
         order_id,
       };
 
