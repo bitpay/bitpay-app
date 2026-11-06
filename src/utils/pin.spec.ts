@@ -4,6 +4,7 @@ import {
   verifyAndMigratePin,
   hashPinLegacy,
   PIN_CONFIG,
+  getPinLockoutSeconds,
 } from './pin';
 
 describe('PIN_CONFIG', () => {
@@ -12,6 +13,23 @@ describe('PIN_CONFIG', () => {
     expect(PIN_CONFIG.ATTEMPT_LIMIT).toBe(3);
     expect(PIN_CONFIG.PIN_MAX_VALUE).toBe(9);
     expect(PIN_CONFIG.PIN_MIN_VALUE).toBe(0);
+  });
+});
+
+describe('getPinLockoutSeconds', () => {
+  // A ban is only issued when the cumulative count lands on a multiple of
+  // ATTEMPT_LIMIT, so the schedule is checked at those ban points.
+  it('escalates per ban: 1m, then 5m, then 1h', () => {
+    expect(getPinLockoutSeconds(3)).toBe(60);
+    expect(getPinLockoutSeconds(6)).toBe(300);
+    expect(getPinLockoutSeconds(9)).toBe(3600);
+    expect(getPinLockoutSeconds(12)).toBe(3600);
+  });
+
+  it('uses the first step below the second ban point', () => {
+    expect(getPinLockoutSeconds(0)).toBe(60);
+    expect(getPinLockoutSeconds(5)).toBe(60);
+    expect(getPinLockoutSeconds(8)).toBe(300);
   });
 });
 
