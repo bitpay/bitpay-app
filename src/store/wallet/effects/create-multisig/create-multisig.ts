@@ -13,6 +13,7 @@ import {
   successUpdateKey,
   setPendingJoinerSession,
   removePendingJoinerSession,
+  clearTssSessionSecrets,
 } from '../../wallet.actions';
 import {
   JoinerSessionId,
@@ -1115,6 +1116,13 @@ export const startTSSCeremony =
           ...key.tssSession,
           status: 'complete',
           sessionExport: undefined,
+          // RN-3086 / IS-1572: drop the ceremony-only secrets once the key is complete;
+          // nothing reads them afterwards. 'password' is the user's spending password
+          // that encrypts this TSS key, so keeping it next to the key defeated the
+          // encryption. 'partyKey' is only a duplicate: the party seed also lives in
+          // key.properties (TssKey.toObj()) because BWS request signing needs it.
+          password: undefined,
+          partyKey: undefined,
         };
 
         throwIfCancelled();
@@ -1133,6 +1141,8 @@ export const startTSSCeremony =
         }
 
         dispatch(successUpdateKey({key: finalKey}));
+        // Rewrites the filesystem backup, which still holds the pre-completion session.
+        dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(keyId, 'complete');
         activeCeremonies.delete(keyId);
         clearCeremonyStats(keyId);
@@ -1778,9 +1788,14 @@ export const joinTSSWithCode =
           ...tssSession,
           status: 'complete',
           sessionExport: undefined,
+          // RN-3086 / IS-1572: drop the ceremony-only secrets — see the creator path.
+          password: undefined,
+          partyKey: undefined,
         };
 
         dispatch(successUpdateKey({key: finalKey}));
+        // Rewrites the filesystem backup, which still holds the pre-completion session.
+        dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(finalKey.id, 'complete');
         activeCeremonies.delete(finalKey.id);
         clearCeremonyStats(finalKey.id);

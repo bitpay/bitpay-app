@@ -461,6 +461,63 @@ describe('backupPersistRoot', () => {
   });
 });
 
+describe('discardRollingBackup (RN-3086)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (mockedRNFS.unlink as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  it('removes only the rolling .bak file', async () => {
+    const {discardRollingBackup} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(true);
+
+    await discardRollingBackup();
+
+    expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
+    expect((mockedRNFS.unlink as jest.Mock).mock.calls[0][0]).toMatch(/\.bak/);
+  });
+
+  it('keeps .bak when there is no main backup (failed promotion)', async () => {
+    const {discardRollingBackup} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockImplementation(async (path: string) =>
+      path.endsWith('.bak'),
+    );
+
+    await discardRollingBackup();
+
+    expect(mockedRNFS.unlink).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when there is no .bak file', async () => {
+    const {discardRollingBackup} = getFreshModule();
+    (mockedRNFS.exists as jest.Mock).mockImplementation(
+      async (path: string) => !path.endsWith('.bak'),
+    );
+
+    await discardRollingBackup();
+
+    expect(mockedRNFS.unlink).not.toHaveBeenCalled();
+  });
+
+  it('runs after a queued backup write, so the scrubbed file is kept', async () => {
+    const {backupPersistRoot, discardRollingBackup} = getFreshModule();
+    const order: string[] = [];
+    (mockedRNFS.exists as jest.Mock).mockResolvedValue(true);
+    (mockedRNFS.moveFile as jest.Mock).mockImplementation(async () => {
+      order.push('move');
+    });
+    (mockedRNFS.unlink as jest.Mock).mockImplementation(async () => {
+      order.push('unlink');
+    });
+
+    const write = backupPersistRoot(safeRoot());
+    const discard = discardRollingBackup();
+    await Promise.all([write, discard]);
+
+    expect(order[order.length - 1]).toBe('unlink');
+  });
+});
+
 describe('removePersistRootBackups', () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -105,6 +105,41 @@ export function backupPersistRoot(rawJson: string): Promise<void> {
   return run;
 }
 
+// Drop the rolling .bak generation once the backup queued before this call has been
+// written. Used after a write whose purpose is to scrub secrets (RN-3086): a normal
+// write rotates the previous, secret-bearing file into .bak and would keep it there.
+// Resolves true once .bak is gone, false when the caller should try again later.
+export function discardRollingBackup(): Promise<boolean> {
+  if (backupsSuspended) {
+    return Promise.resolve(false);
+  }
+  const run = backupQueue.then(async () => {
+    // Never drop .bak while it may be the only backup left (a failed promotion
+    // can leave no main file behind)
+    if (!(await RNFS.exists(FINAL_FILE))) {
+      return false;
+    }
+    if (await RNFS.exists(BACKUP_FILE)) {
+      await RNFS.unlink(BACKUP_FILE);
+    }
+    return true;
+  });
+  backupQueue = run.then(
+    () => {},
+    () => {},
+  );
+  return run.catch(err => {
+    initLogs.add(
+      LogActions.persistLog(
+        LogActions.error(
+          `Rolling backup discard failed - ${getErrorString(err)}`,
+        ),
+      ),
+    );
+    return false;
+  });
+}
+
 export function removePersistRootBackups(): Promise<void> {
   requireVaultActive();
   backupsSuspended = true;
