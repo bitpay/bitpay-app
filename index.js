@@ -58,6 +58,37 @@ import {useAppSelector} from './src/utils/hooks';
 import {useResolvedColorScheme} from './src/utils/hooks/useResolvedColorScheme';
 import {DklsWorkerHost} from './src/dkls/DklsWorker';
 import * as Sentry from '@sentry/react-native';
+import {sanitizeLogMessage} from './src/store/log/log.models';
+
+// Last line of defence for key material: every breadcrumb and event leaving the device
+// is redacted here, whichever path produced it (logManager, LogActions, or a direct
+// Sentry.captureException with a library error message).
+const scrub = value =>
+  typeof value === 'string' ? sanitizeLogMessage(value) : value;
+const SENSITIVE_KEY =
+  /^(xPrivKey|xPrivKeyEncrypted|walletPrivKey|requestPrivKey|privateKey|privateKeyShare|mnemonic|mnemonicEncrypted|entropySource|password|partyKey|personalEncryptingKey|sharedEncryptingKey)$/i;
+// Structured fields too: captureException on a non-Error copies the whole object into
+// extra.__serialized__. Depth-limited, so cycles and huge payloads can't hang it.
+const scrubDeep = (value, depth = 0) => {
+  if (typeof value === 'string') {
+    return sanitizeLogMessage(value);
+  }
+  if (!value || typeof value !== 'object' || depth > 8) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map(v => scrubDeep(v, depth + 1));
+  }
+  const out = {};
+  Object.keys(value).forEach(k => {
+    // A secret held as an object field ({walletPrivKey: '...'}) has no key name
+    // in the string itself for the message regex to anchor on.
+    out[k] = SENSITIVE_KEY.test(k)
+      ? '[redacted]'
+      : scrubDeep(value[k], depth + 1);
+  });
+  return out;
+};
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -81,14 +112,41 @@ Sentry.init({
       delete event.user.id;
     }
     if (event.breadcrumbs) {
-      event.breadcrumbs = event.breadcrumbs.filter(b => b.category === 'log');
+      event.breadcrumbs = event.breadcrumbs
+        .filter(b => b.category === 'log')
+        .map(b => ({
+          ...b,
+          message: scrub(b.message),
+          ...(b.data ? {data: scrubDeep(b.data)} : {}),
+        }));
+    }
+    if (event.extra) {
+      event.extra = scrubDeep(event.extra);
+    }
+    if (event.contexts) {
+      event.contexts = scrubDeep(event.contexts);
+    }
+    if (typeof event.message === 'string') {
+      event.message = scrub(event.message);
+    } else if (event.message?.formatted) {
+      event.message = {
+        ...event.message,
+        formatted: scrub(event.message.formatted),
+      };
+    }
+    if (Array.isArray(event.exception?.values)) {
+      event.exception.values.forEach(v => {
+        if (v) {
+          v.value = scrub(v.value);
+        }
+      });
     }
     return event;
   },
   beforeBreadcrumb(breadcrumb) {
     // Only keep our custom log breadcrumbs, discard everything else
     if (breadcrumb.category === 'log') {
-      return breadcrumb;
+      return {...breadcrumb, message: scrub(breadcrumb.message)};
     }
     return null;
   },
