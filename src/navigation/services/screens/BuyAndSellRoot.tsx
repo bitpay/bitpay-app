@@ -124,6 +124,7 @@ import {
   MoonpayPaymentData,
   MoonpayPaymentType,
   SardineGetAuthTokenRequestData,
+  SardinePaymentData,
   SardinePaymentUrlConfigParams,
   SimplexPaymentData,
   TransakAccessTokenData,
@@ -3195,33 +3196,16 @@ const BuyAndSellRoot = ({
       }),
     );
 
+    // The return handler only trusts orders created on this device (RN-3084 /
+    // IS-1570), so the order's financial details live in the local record saved below
+    // rather than in the redirect URL.
     const redirectUrl =
       APP_DEEPLINK_PREFIX +
       'sardine?sardineExternalId=' +
       sardineExternalId +
       '&walletId=' +
       selectedWallet.id +
-      '&status=pending' +
-      '&address=' +
-      address +
-      '&chain=' +
-      destinationChain +
-      '&createdOn=' +
-      Date.now() +
-      '&cryptoAmount=' +
-      Number(offer.amountReceiving) +
-      '&coin=' +
-      coin.toUpperCase() +
-      '&env=' +
-      (__DEV__ ? 'dev' : 'prod') +
-      '&fiatBaseAmount=' +
-      offer.buyAmount +
-      '&fiatTotalAmount=' +
-      offer.amountCost +
-      '&fiatTotalAmountCurrency=' +
-      offer.fiatCurrency +
-      '&paymentMethod=' +
-      paymentMethod.method;
+      '&status=pending';
 
     const quoteData: SardinePaymentUrlConfigParams = {
       env: sardineEnv,
@@ -3263,6 +3247,27 @@ const BuyAndSellRoot = ({
       showError(title, err, reason);
       return;
     }
+
+    // Save the order before checkout, as the other providers do. The Sardine return
+    // handler ignores redirects for orders it can't find locally (RN-3084 / IS-1570).
+    const sardinePaymentData: SardinePaymentData = {
+      address,
+      chain: destinationChain,
+      created_on: Date.now(),
+      crypto_amount: Number(offer.amountReceiving),
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offer.buyAmount!,
+      fiat_total_amount: offer.amountCost!,
+      fiat_total_amount_currency: offer.fiatCurrency,
+      external_id: sardineExternalId,
+      payment_method: paymentMethod?.method,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+    dispatch(
+      BuyCryptoActions.successPaymentRequestSardine({sardinePaymentData}),
+    );
 
     await openCheckoutWithInAppBrowser(
       checkoutUrl,
