@@ -194,6 +194,17 @@ async function runIteration(ctx, scenario) {
       // Startup launches clear the log themselves; interaction runs must clear
       // it here so the collector only sees this iteration's payloads.
       android.clearLogcat(serial);
+      // Activity scenarios diff the app's 2 s activity snapshots; let one
+      // land while the app is idle so the flow has a clean starting point.
+      if ((scenario.measures || []).includes('activity')) {
+        await sleep(2600);
+      }
+      // The process's memory mode moves PSS, jank and peak CPU of a whole
+      // run (one process serves every iteration): record it so a mismatch
+      // between two runs is visible. Context only — compare.js never judges it.
+      if (wantsMemory) {
+        metrics.unknown_mb_start = android.readMemoryMb(serial).unknown_mb;
+      }
       android.resetGfxInfo(serial);
       startSampling();
       visibleAnchor = Date.now();
@@ -288,6 +299,14 @@ async function runIteration(ctx, scenario) {
     }
 
     let profile = null;
+    if ((scenario.measures || []).includes('activity')) {
+      // The final snapshot can trail the flow by up to one interval.
+      await sleep(2000);
+      payloads = collector.collect(serial);
+      const activity = collector.extractActivity(payloads);
+      Object.assign(metrics, activity.metrics);
+      profile = activity.profile;
+    }
     if ((scenario.measures || []).includes('load')) {
       const load = collector.extractLoadProfile(payloads, ctx.moduleMap);
       Object.assign(metrics, load.metrics);
