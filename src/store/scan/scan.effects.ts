@@ -6,6 +6,7 @@ import {GetPayProOptions} from '../wallet/effects/paypro/paypro';
 import {
   ExtractBitPayUriAddress,
   GetPayProUrl,
+  isTrustedBitPayPayProUrl,
 } from '../wallet/utils/decode-uri';
 import {
   IsValidBitcoinAddress,
@@ -354,6 +355,29 @@ const goToPayPro =
     const payProUrl = GetPayProUrl(data);
     const {host} = new URL(payProUrl);
     logManager.info('[scan] Incoming-data: Payment Protocol request');
+
+    // SECURITY (RN-3074 / IS-1457): the PayPro host comes straight from the scanned data
+    // / deep link, and this flow fetches the invoice and payment request from it. Restrict
+    // it to BitPay hosts over https so an attacker-controlled host can't feed the app a
+    // payment request it then presents as a BitPay invoice.
+    if (!isTrustedBitPayPayProUrl(payProUrl)) {
+      logManager.warn(
+        `[scan] Blocked PayPro request to untrusted host: ${host}`,
+      );
+      ongoingProcessManager.hide();
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t('Unrecognized payment request'),
+          message: t(
+            'This payment request does not come from BitPay and was blocked for your protection.',
+          ),
+          enableBackdropDismiss: true,
+          actions: [{text: t('OK'), action: () => {}, primary: true}],
+        }),
+      );
+      return;
+    }
     try {
       ongoingProcessManager.show('FETCHING_PAYMENT_INFO');
       const payProOptions = await dispatch(GetPayProOptions(payProUrl));
@@ -433,7 +457,17 @@ const handleUnlock =
       return;
     }
 
-    const {host} = new URL(GetPayProUrl(data));
+    const unlockPayProUrl = GetPayProUrl(data);
+    const {host} = new URL(unlockPayProUrl);
+
+    // SECURITY (RN-3074 / IS-1457): same BitPay-host restriction as goToPayPro — this path
+    // fetches invoiceData directly from the URL host before goToPayPro's own guard runs.
+    if (!isTrustedBitPayPayProUrl(unlockPayProUrl)) {
+      logManager.warn(
+        `[scan] Blocked PayPro invoiceData request to untrusted host: ${host}`,
+      );
+      return;
+    }
 
     // QueryParam c=u is used in BitPay invoice payment URL when BitPayApp is the selected wallet.
     const context = getParameterByName('c', data);
@@ -3096,7 +3130,17 @@ export const setBuyerProvidedEmail =
     return new Promise(async (resolve, reject) => {
       try {
         const invoiceId = data.split('/i/')[1].split('?')[0];
-        const {host} = new URL(GetPayProUrl(data));
+        const setEmailPayProUrl = GetPayProUrl(data);
+        const {host} = new URL(setEmailPayProUrl);
+
+        // SECURITY (RN-3074 / IS-1457): don't POST the buyer's email to an arbitrary host.
+        if (!isTrustedBitPayPayProUrl(setEmailPayProUrl)) {
+          logManager.warn(
+            `[scan] Blocked PayPro setBuyerProvidedEmail to untrusted host: ${host}`,
+          );
+          return reject(new Error('Untrusted payment request host'));
+        }
+
         const body = {
           buyerProvidedEmail: email,
           invoiceId,

@@ -3,8 +3,32 @@ import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Effect} from '../../..';
 import {logManager} from '../../../../managers/LogManager';
+import {isTrustedBitPayPayProUrl} from '../../utils/decode-uri';
 
 const BWC = BwcProvider.getInstance();
+
+// SECURITY (RN-3074 / IS-1457): paymentUrl is attacker-controllable (scanned data, deep
+// links, pasted invoice URIs). Both PayPro fetches below hit this host and present the
+// result as a BitPay invoice, so enforce the BitPay-host allowlist centrally here — the
+// app's own PayPro fetches (scan, SendTo, HandlePayPro, WalletConnect) funnel through
+// these two effects, which closes the SendTo.tsx path the per-screen guards missed.
+// BWC also contacts txp.payProUrl by itself when signing and broadcasting a proposal
+// (pushSignatures / broadcastTxProposal -> getPayProV2), so those paths are guarded
+// separately with assertTxpPayProUrlTrusted.
+const assertTrustedPayProUrl = (paymentUrl: string): void => {
+  if (!isTrustedBitPayPayProUrl(paymentUrl)) {
+    logManager.warn(`Blocked PayPro request to untrusted host: ${paymentUrl}`);
+    throw new Error('Unrecognized payment request: untrusted PayPro host');
+  }
+};
+
+// A proposal's payProUrl is set by whichever copayer created it. Refuse to sign or
+// broadcast one that points anywhere but BitPay, since BWC would contact it directly.
+export const assertTxpPayProUrlTrusted = (txp: {payProUrl?: string}): void => {
+  if (txp?.payProUrl) {
+    assertTrustedPayProUrl(txp.payProUrl);
+  }
+};
 export interface PayProPaymentOption {
   chain: string;
   currency: string;
@@ -33,6 +57,7 @@ export interface SupportedTransactionCurrencies {
 export const GetPayProOptions =
   (paymentUrl: string, attempt: number = 1): Effect<Promise<PayProOptions>> =>
   async (dispatch): Promise<PayProOptions> => {
+    assertTrustedPayProUrl(paymentUrl);
     logManager.info('PayPro Options: try... ' + attempt);
     const bwc = BWC.getPayProV2();
     const options: any = {
@@ -67,6 +92,7 @@ export const GetPayProDetails =
   }): Effect<Promise<any>> =>
   async (dispatch): Promise<any> => {
     let {paymentUrl, coin, chain, payload, attempt = 1} = params;
+    assertTrustedPayProUrl(paymentUrl);
     logManager.info('PayPro Details: try... ' + attempt);
     const bwc = BWC.getPayProV2();
     const options: any = {
