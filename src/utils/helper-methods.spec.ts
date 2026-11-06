@@ -2284,6 +2284,10 @@ describe('processSwapRequest', () => {
         swapFromChain: 'eth',
         swapFromCurrencyAbbreviation: 'eth',
         swapAmount: '7',
+        // Non-empty calldata the app cannot summarize must be flagged.
+        ...(typeof data === 'string' && data !== '' && data !== '0x'
+          ? {unknownContractCall: true}
+          : {}),
       });
     },
   );
@@ -2309,9 +2313,58 @@ describe('processSwapRequest', () => {
         swapFromChain: 'eth',
         swapFromCurrencyAbbreviation: 'eth',
         swapAmount: '7',
+        unknownContractCall: true,
       });
     },
   );
+
+  describe('ERC-20 transfer summary (fix #9)', () => {
+    const USDC = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+    const RECIPIENT = '0x3333333333333333333333333333333333333333';
+    const erc20 = () => new ethers.utils.Interface(abiERC20);
+
+    it('summarizes transfer() on a known token and does not warn', async () => {
+      const result = await makeDispatch()(
+        processSwapRequest(
+          buildTxEvent('eth_sendTransaction', {
+            data: erc20().encodeFunctionData('transfer', [RECIPIENT, '1000']),
+            from: ACCOUNT_A,
+            to: USDC,
+          }),
+        ),
+      );
+      expect(result.tokenTransfer).toEqual(
+        expect.objectContaining({
+          functionName: 'transfer',
+          recipient: RECIPIENT,
+          amount: '1000',
+        }),
+      );
+      expect(result.tokenTransfer.symbol).toBeTruthy();
+      expect(result.unknownContractCall).toBeUndefined();
+    });
+
+    it.each([
+      ['transfer', [RECIPIENT, '1000']],
+      // ERC-721 transferFrom shares the ERC-20 selector exactly.
+      ['transferFrom', [ACCOUNT_A, RECIPIENT, '1234']],
+    ])(
+      'warns instead of summarizing %s on an unknown contract',
+      async (name, args) => {
+        const result = await makeDispatch()(
+          processSwapRequest(
+            buildTxEvent('eth_sendTransaction', {
+              data: erc20().encodeFunctionData(name as string, args as any),
+              from: ACCOUNT_A,
+              to: '0x2222222222222222222222222222222222222222',
+            }),
+          ),
+        );
+        expect(result.tokenTransfer).toBeUndefined();
+        expect(result.unknownContractCall).toBe(true);
+      },
+    );
+  });
 
   describe.each(['eth_sendTransaction', 'eth_signTransaction'])(
     '%s with invalid address padding',
@@ -2400,7 +2453,10 @@ describe('processSwapRequest', () => {
             processSwapRequest(makeEvent(data)),
           );
 
-          expect(result).toEqual(expectedFallback);
+          expect(result).toEqual({
+            ...expectedFallback,
+            unknownContractCall: true,
+          });
           expect(errorLog).toHaveBeenCalledTimes(1);
           expect(errorLog).toHaveBeenCalledWith(
             expect.stringContaining('Error processing swap request:'),
@@ -2473,6 +2529,8 @@ describe('processSwapRequest', () => {
       swapFromChain: 'eth',
       swapFromCurrencyAbbreviation: 'eth',
       swapAmount: '1000000000000000000',
+      // 0x22..22 is not a known token, so the transfer is not summarized.
+      unknownContractCall: true,
     });
   });
 

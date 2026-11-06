@@ -40,6 +40,16 @@ export type TokenApproval = {
   isUnlimited: boolean;
 };
 
+export type TokenTransfer = {
+  functionName: 'transfer' | 'transferFrom';
+  recipient: string;
+  amount: string;
+  from?: string;
+  // Symbol of the known token at the destination contract (only known tokens are
+  // summarized as transfers).
+  symbol?: string;
+};
+
 export type WCV2RequestType =
   WalletKitTypes.EventArguments['session_request'] & {
     createdOn?: number;
@@ -59,6 +69,8 @@ export type WCV2RequestType =
     decodedInstructions: any;
     tokenApproval?: TokenApproval;
     tokenApprovalDecodeError?: boolean;
+    tokenTransfer?: TokenTransfer;
+    unknownContractCall?: boolean;
   };
 
 export type WCV2SessionType = SessionTypes.Struct & {
