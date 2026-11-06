@@ -2319,5 +2319,6 @@
   "If you delete the BitPay app or lose your device, you'll need your recovery phrase to regain access to your funds.": "Если вы удалите приложение BitPay или потеряете устройство, для получения доступа к вашим средствам вам потребуется ввести фразу восстановления.",
   "Some assets not charted": "Некоторые активы не отображены на графике",
   "Not all assets are charted": "Не все активы отображены на графике",
-  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "График и его изменение пока не учитывают эти активы, так как их историю не удалось восстановить. Баланс портфеля по-прежнему их включает."
+  "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "График и его изменение пока не учитывают эти активы, так как их историю не удалось восстановить. Баланс портфеля по-прежнему их включает.",
+  "Other co-signers are already signing this proposal. Check its status in a few minutes.": "Другие соподписанты уже подписывают это предложение. Проверьте его статус через несколько минут."
 }

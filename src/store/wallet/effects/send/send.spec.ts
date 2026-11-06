@@ -19,6 +19,17 @@ jest.mock('../../../../managers/TokenManager', () => ({
   tokenManager: {getTokenOptions: () => ({tokenOptionsByAddress: {}})},
 }));
 
+const mockStartTSSSigning = jest.fn();
+jest.mock('../tss-send/tss-send', () => ({
+  ...jest.requireActual('../tss-send/tss-send'),
+  startTSSSigning: (...args: any[]) => mockStartTSSSigning(...args),
+}));
+
+jest.mock('../status/status', () => ({
+  ...jest.requireActual('../status/status'),
+  startUpdateWalletStatus: jest.fn(() => ({type: 'TEST/UPDATE_WALLET_STATUS'})),
+}));
+
 import configureTestStore from '@test/store';
 import {processSwapRequest} from '../../../../utils/helper-methods';
 import {
@@ -281,6 +292,36 @@ describe('hardware wallet keys', () => {
       ),
     ).rejects.toThrow(HARDWARE_WALLET_SIGNING_UNSUPPORTED);
     expect(wallet.publishTxProposal).not.toHaveBeenCalled();
+  });
+});
+
+describe('publishAndSign with a TSS key', () => {
+  it('reports TSS progress complete without broadcasting again when the proposal is already broadcasted', async () => {
+    const broadcasted = {id: 'txp1', status: 'broadcasted', txid: 'tx1'};
+    mockStartTSSSigning.mockReturnValue(() => Promise.resolve(broadcasted));
+    const store = configureTestStore({});
+    const wallet = {
+      id: 'tss-wallet',
+      tssKeyId: 'tss-key',
+      chain: 'btc',
+      credentials: {chain: 'btc', coin: 'btc', network: 'livenet'},
+      broadcastTxProposal: jest.fn(),
+    } as any;
+    const key = {id: 'tss-key', wallets: [wallet]} as any;
+    const onStatusChange = jest.fn();
+
+    const result = await store.dispatch(
+      publishAndSign({
+        txp: {id: 'txp1', status: 'pending', chain: 'btc'} as any,
+        key,
+        wallet,
+        tssCallbacks: {onStatusChange} as any,
+      }) as any,
+    );
+
+    expect(result).toBe(broadcasted);
+    expect(onStatusChange).toHaveBeenCalledWith('complete');
+    expect(wallet.broadcastTxProposal).not.toHaveBeenCalled();
   });
 });
 
