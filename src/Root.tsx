@@ -157,6 +157,7 @@ import {PERF_DEBUG, performanceLog} from './utils/performanceDebug';
 import PerformanceProfiler from './components/performance/PerformanceProfiler';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
+import {TopToast} from './components/backup/TopToast';
 import AllAssets from './navigation/tabs/home/screens/AllAssets';
 import Allocation from './navigation/tabs/home/screens/Allocation';
 import {
@@ -1273,6 +1274,7 @@ export default () => {
             onRender={logReactProfiler}>
             <MoonpayEmbeddedCredentialManager />
           </PerformanceProfiler>
+          <TopToast />
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

@@ -19,6 +19,7 @@ export interface ImportParamList {
   context?: string;
   keyId?: string;
   importQrCodeData?: string;
+  importTab?: 'phrase' | 'file';
 }
 
 const Tab = createMaterialTopTabNavigator();
@@ -48,6 +49,9 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
       onLayout={onPerformanceLayout}>
       <Tab.Navigator
         screenOptions={{lazy: true, lazyPreloadDistance: 0}}
+        initialRouteName={
+          route.params?.importTab === 'file' ? t('File') : t('Phrase')
+        }
         tabBar={props => <CustomTabBar {...props} />}>
         <Tab.Screen
           name={t('Phrase')}

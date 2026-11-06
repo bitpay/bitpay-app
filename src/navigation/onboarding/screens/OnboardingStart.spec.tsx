@@ -1,23 +1,6 @@
 import React from 'react';
-import {act, fireEvent, render} from '@test/render';
+import {fireEvent, render} from '@test/render';
 import OnboardingStart from './OnboardingStart';
-
-// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
-// dependency code and assertions) plus the `get`/`set` API the app code uses.
-// A hoisted function declaration so jest.mock factories can call it.
-function mockSharedValue<T>(initial: T) {
-  const sharedValue = {
-    value: initial,
-    get: (): T => sharedValue.value,
-    set: (next: T | ((current: T) => T)) => {
-      sharedValue.value =
-        typeof next === 'function'
-          ? (next as (current: T) => T)(sharedValue.value)
-          : next;
-    },
-  };
-  return sharedValue;
-}
 
 const mockDispatch = jest.fn();
 const mockAnalyticsTrack = jest.fn(
@@ -26,31 +9,11 @@ const mockAnalyticsTrack = jest.fn(
     payload: {event, properties},
   }),
 );
-const mockCarouselRender = jest.fn();
 const mockTranslate = (key: string) => key;
-const mockState = {
-  APP: {
-    network: 'livenet',
-    notificationsInteractionDone: false,
-    pinInteractionDone: false,
-  },
-  BITPAY_ID: {
-    apiToken: {
-      livenet: '',
-    },
-  },
+let mockState: {
+  APP: {onboardingKeyStatus: string};
+  WALLET: {keys: Record<string, unknown>};
 };
-
-let mockLatestCarouselProps: Record<string, any> | undefined;
-let mockAnimatedScrollHandlers:
-  | {
-      onScroll?: (
-        event: {contentOffset: {x: number}},
-        context: Record<string, unknown>,
-      ) => void;
-    }
-  | undefined;
-let mockProgressValue: {value: number} | undefined;
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({t: mockTranslate}),
@@ -73,13 +36,24 @@ jest.mock('../../../store/analytics/analytics.effects', () => ({
   },
 }));
 
-jest.mock('../../../store/bitpay-id', () => ({
-  BitPayIdEffects: {
-    startDisconnectBitPayId: jest.fn(() => ({
-      type: 'TEST/DISCONNECT_BITPAY_ID',
-    })),
-  },
+jest.mock('../../../store/app/onboardingKey.effects', () => ({
+  startOnboardingKeyCreation: () => ({type: 'TEST/START_KEY_CREATION'}),
+  cancelOnboardingKeyCreation: () => ({type: 'TEST/CANCEL_KEY_CREATION'}),
 }));
+
+jest.mock('../../wallet/components/RestoreOrImportSheet', () => {
+  const ReactLib = require('react');
+  const {View} = require('react-native');
+  return {
+    RestoreOrImportSheet: ({isVisible, context}: any) =>
+      isVisible
+        ? ReactLib.createElement(View, {
+            testID: 'restore-or-import-sheet',
+            accessibilityLabel: context,
+          })
+        : null,
+  };
+});
 
 jest.mock('../../../components/button/Button', () => {
   const ReactLib = require('react');
@@ -92,37 +66,8 @@ jest.mock('../../../components/button/Button', () => {
   };
 });
 
-jest.mock('react-native-reanimated', () => {
-  const ReactLib = require('react');
-  const {View} = require('react-native');
-
-  return {
-    __esModule: true,
-    default: {
-      createAnimatedComponent: (component: React.ComponentType) => component,
-      View,
-      FlatList: (props: Record<string, any>) => {
-        mockLatestCarouselProps = props;
-        mockCarouselRender(props);
-        return ReactLib.createElement(View, {testID: 'onboarding-carousel'});
-      },
-    },
-    useSharedValue: (initialValue: number) => {
-      const progressValue = ReactLib.useRef(
-        mockSharedValue(initialValue),
-      ).current;
-      mockProgressValue = progressValue;
-      return progressValue;
-    },
-    useAnimatedScrollHandler: (handlers: typeof mockAnimatedScrollHandlers) => {
-      mockAnimatedScrollHandlers = handlers;
-      return jest.fn();
-    },
-    useAnimatedStyle: (factory: () => Record<string, unknown>) => factory(),
-    interpolate: () => 0,
-    Extrapolate: {CLAMP: 'clamp'},
-  };
-});
+const dispatchedTypes = () =>
+  mockDispatch.mock.calls.map(([action]) => action.type);
 
 const renderScreen = () => {
   const navigation = {
@@ -141,91 +86,64 @@ const renderScreen = () => {
   };
 };
 
-describe('OnboardingStart performance boundaries', () => {
+describe('OnboardingStart', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLatestCarouselProps = undefined;
-    mockAnimatedScrollHandlers = undefined;
-    mockProgressValue = undefined;
+    mockState = {APP: {onboardingKeyStatus: 'idle'}, WALLET: {keys: {}}};
   });
 
-  it('keeps progress on the UI thread and tracks once when an item snaps', () => {
-    renderScreen();
+  it('starts creating the key in the background and asks to protect the app', () => {
+    const {getByTestId, navigation} = renderScreen();
 
-    expect(mockLatestCarouselProps?.initialNumToRender).toBe(1);
-    expect(mockLatestCarouselProps?.maxToRenderPerBatch).toBe(1);
-    expect(mockLatestCarouselProps?.windowSize).toBe(3);
+    fireEvent.press(getByTestId('create-a-key-button'));
 
-    act(() => {
-      const pageWidth = mockLatestCarouselProps?.getItemLayout(
-        undefined,
-        1,
-      ).length;
-      mockAnimatedScrollHandlers?.onScroll?.(
-        {contentOffset: {x: pageWidth * 0.75}},
-        {},
-      );
-    });
-    expect(mockProgressValue?.value).toBe(0.75);
-    expect(mockAnalyticsTrack).not.toHaveBeenCalled();
-
-    act(() => {
-      const pageWidth = mockLatestCarouselProps?.getItemLayout(
-        undefined,
-        1,
-      ).length;
-      mockLatestCarouselProps?.onMomentumScrollEnd({
-        nativeEvent: {contentOffset: {x: pageWidth}},
-      });
-      mockLatestCarouselProps?.onMomentumScrollEnd({
-        nativeEvent: {contentOffset: {x: pageWidth}},
-      });
-    });
-
-    expect(mockAnalyticsTrack).toHaveBeenCalledTimes(1);
-    expect(mockAnalyticsTrack).toHaveBeenCalledWith('Swiped Feature', {
+    expect(dispatchedTypes()).toContain('TEST/START_KEY_CREATION');
+    expect(navigation.navigate).toHaveBeenCalledWith('Pin');
+    expect(mockAnalyticsTrack).toHaveBeenCalledWith('Clicked Create New Key', {
       context: 'onboarding',
-      pageSwiped: 2,
     });
   });
 
-  it('grows the carousel to fit the tallest slide', () => {
-    renderScreen();
-    const carouselHeight = () =>
-      [mockLatestCarouselProps?.style]
-        .flat(Infinity)
-        .reduce((height, style) => style?.height ?? height, undefined);
-    const minHeight = carouselHeight();
-    const slide = mockLatestCarouselProps?.renderItem({
-      item: mockLatestCarouselProps?.data[2],
-      index: 2,
-    });
-    const onSlideLayout = slide.props.children.props.onLayout;
+  it.each([
+    ['a key is already being created', 'creating', {}],
+    ['a connection is still pending', 'waiting', {}],
+    ['the key already exists', 'idle', {'key-1': {}}],
+  ])(
+    'does not create another key when %s',
+    (_case, onboardingKeyStatus, keys) => {
+      mockState = {APP: {onboardingKeyStatus}, WALLET: {keys}};
+      const {getByTestId, navigation} = renderScreen();
 
-    act(() => {
-      onSlideLayout({nativeEvent: {layout: {height: minHeight + 120.4}}});
-    });
-    expect(carouselHeight()).toBe(Math.ceil(minHeight + 120.4));
+      fireEvent.press(getByTestId('create-a-key-button'));
 
-    act(() => {
-      onSlideLayout({nativeEvent: {layout: {height: 10}}});
-    });
-    expect(carouselHeight()).toBe(Math.ceil(minHeight + 120.4));
-  });
+      expect(dispatchedTypes()).not.toContain('TEST/START_KEY_CREATION');
+      expect(navigation.navigate).toHaveBeenCalledWith('Pin');
+    },
+  );
 
-  it('does not re-render the carousel when CTA layout updates its spacer', () => {
+  it('retries creating the key after a failure', () => {
+    mockState = {APP: {onboardingKeyStatus: 'failed'}, WALLET: {keys: {}}};
     const {getByTestId} = renderScreen();
-    const initialData = mockLatestCarouselProps?.data;
 
-    expect(mockCarouselRender).toHaveBeenCalledTimes(1);
+    fireEvent.press(getByTestId('create-a-key-button'));
 
-    fireEvent(getByTestId('cta-container'), 'layout', {
-      nativeEvent: {
-        layout: {height: 100, width: 300, x: 0, y: 0},
-      },
-    });
+    expect(dispatchedTypes()).toContain('TEST/START_KEY_CREATION');
+  });
 
-    expect(mockCarouselRender).toHaveBeenCalledTimes(1);
-    expect(mockLatestCarouselProps?.data).toBe(initialData);
+  it('drops the key being created and offers to restore or import', () => {
+    const {getByTestId, queryByTestId} = renderScreen();
+
+    expect(queryByTestId('restore-or-import-sheet')).toBeNull();
+
+    fireEvent.press(getByTestId('i-already-have-a-key-button'));
+
+    expect(dispatchedTypes()).toContain('TEST/CANCEL_KEY_CREATION');
+    expect(
+      getByTestId('restore-or-import-sheet').props.accessibilityLabel,
+    ).toBe('onboarding');
+    expect(mockAnalyticsTrack).toHaveBeenCalledWith(
+      'Clicked I already have a Key',
+      {context: 'onboarding'},
+    );
   });
 });

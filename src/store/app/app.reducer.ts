@@ -18,6 +18,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
   InAppNotificationContextType,
+  OnboardingKeyStatus,
 } from './app.models';
 import {AppActionType, AppActionTypes} from './app.types';
 import {uniqBy} from '../../utils/array';
@@ -56,6 +57,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'hasViewedTSSOnboarding',
   'showKycGetVerifiedModal',
   'kycGetVerifiedModalShown',
+  'onboardingKeyStatus',
 ];
 
 export type ModalId =
@@ -177,6 +179,8 @@ export interface AppState {
   dismissedMarketingCardIds: string[];
   showKycGetVerifiedModal: boolean;
   kycGetVerifiedModalShown: boolean;
+  onboardingKeyStatus: OnboardingKeyStatus;
+  backupNudgeShown: boolean;
 }
 
 const initialState: AppState = {
@@ -280,6 +284,8 @@ const initialState: AppState = {
   dismissedMarketingCardIds: [],
   showKycGetVerifiedModal: false,
   kycGetVerifiedModalShown: false,
+  onboardingKeyStatus: 'idle',
+  backupNudgeShown: false,
 };
 
 export const appReducer = (
@@ -856,6 +862,18 @@ export const appReducer = (
         ...state,
         showKycGetVerifiedModal: false,
         kycGetVerifiedModalShown: false,
+      };
+
+    case AppActionTypes.SET_ONBOARDING_KEY_STATUS:
+      return {
+        ...state,
+        onboardingKeyStatus: action.payload,
+      };
+
+    case AppActionTypes.SET_BACKUP_NUDGE_SHOWN:
+      return {
+        ...state,
+        backupNudgeShown: true,
       };
 
     default:

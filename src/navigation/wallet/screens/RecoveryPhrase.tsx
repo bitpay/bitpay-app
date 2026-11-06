@@ -1,11 +1,8 @@
-import React, {useLayoutEffect, useMemo, useRef} from 'react';
-import {
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
+import RNFS from 'react-native-fs';
+import {Platform, Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ShareOptions} from 'react-native-share';
 import {useTheme} from '../../../contexts';
 import {
   BaseText,
@@ -14,32 +11,33 @@ import {
   Paragraph,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {
-  ActiveOpacity,
-  CTA_RESERVED,
-  CtaContainerAbsolute,
-} from '../../../components/styled/Containers';
+import {ActiveOpacity} from '../../../components/styled/Containers';
 import {
   Caution,
   Caution25,
   Caution60,
-  Grey,
   LightBlack,
-  Slate,
   SlateDark,
 } from '../../../styles/colors';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {backupRedirect} from './Backup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import Back from '../../../components/back/Back';
 import {IS_ANDROID} from '../../../constants';
+import {sleep} from '../../../utils/helper-methods';
+import {shareFile} from '../../../utils/share';
+import {CustomErrorMessage} from '../components/ErrorMessages';
+import Blur from '../../../components/blur/Blur';
+import {useBackupColors} from '../../../components/backup/colors';
+import {EyeGlyph, PrintGlyph} from '../../../components/backup/glyphs';
+import {BackupMethodCard} from '../../../components/backup/BackupCards';
+import {PhraseCell} from '../../../components/backup/PhraseCell';
 
 type RecoveryPhraseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -49,129 +47,121 @@ type RecoveryPhraseScreenProps = NativeStackScreenProps<
 export interface RecoveryPhraseParamList {
   keyId: string;
   words: string[];
-  context: string;
+  context?: string;
   key?: Key;
   walletTermsAccepted: boolean;
+  mode?: 'view' | 'privateKey';
+  xPrivKey?: string;
 }
 
+const TEMPLATE_FILE = 'bitpay-recovery-phrase-template.pdf';
+
 const styles = StyleSheet.create({
-  recoveryPhraseContainer: {
-    flex: 1,
-  },
-  recoveryContainer: {
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-  },
-  wordPairContainer: {
-    marginTop: 30,
-    marginRight: 15,
-    marginBottom: 15,
-    marginLeft: 20,
-  },
-  wordPairLine: {
-    flexDirection: 'row',
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-  },
-  wordPairColumn: {
-    flex: 1,
-    flexDirection: 'row',
-    lineHeight: 24,
-    letterSpacing: 0.5,
-  },
-  wordText: {
-    fontSize: 16,
-    fontStyle: 'normal',
-    fontWeight: '400',
-  },
-  wordTextIndex: {
-    fontSize: 16,
-    width: 30,
-  },
-  warningMessageContainer: {
-    flexDirection: 'column',
+  container: {flex: 1},
+  content: {gap: 12, paddingTop: 10, paddingHorizontal: 12, paddingBottom: 20},
+  privateKeyContent: {gap: 12, paddingVertical: 20, paddingHorizontal: 15},
+  paragraph: {fontSize: 16, lineHeight: 25},
+  grid: {gap: 6},
+  gridRow: {flexDirection: 'row', gap: 6},
+  hiddenGrid: {borderRadius: 10, overflow: 'hidden'},
+  reveal: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  revealTitle: {fontSize: 16, fontWeight: '600'},
+  revealSubtitle: {fontSize: 13},
+  footer: {paddingHorizontal: 12, paddingTop: 12},
+  warning: {
+    alignItems: 'center',
+    gap: 5,
     backgroundColor: Caution25,
     borderRadius: 8,
     padding: 10,
-    width: '100%',
   },
-  warningMessageTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  warningMessageDescContainer: {
-    flex: 1,
-    marginTop: 5,
-  },
-  warningMessageTextContainer: {
-    flex: 1,
-    marginTop: 5,
+  warningLine: {fontSize: 14, lineHeight: 20, textAlign: 'center'},
+  privateKey: {
+    borderRadius: 8,
+    padding: 16,
+    fontFamily: Platform.select({ios: 'Menlo', default: 'monospace'}),
+    fontSize: 14,
+    lineHeight: 22,
   },
 });
 
 const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const logger = useLogger();
   const theme = useTheme();
+  const colors = useBackupColors();
   const {params} = route;
   const walletTermsAccepted = useAppSelector(
     ({WALLET}) => WALLET.walletTermsAccepted,
   );
   const storedKey = useAppSelector(({WALLET}) => WALLET.keys[params.keyId]);
-  const {words, context} = params;
+  const {words, context, mode, xPrivKey} = params;
   const key = params.key ?? storedKey;
+  const isBackup = !mode;
+  const [revealed, setRevealed] = useState(!isBackup);
 
-  const renderWordPairs = () => {
-    const wordPairs = [];
-
-    for (let i = 0; i < words.length; i += 2) {
-      const word1 = words[i];
-      const word2 = words[i + 1];
-      const index1 = i + 1;
-      const index2 = i + 2;
-
-      wordPairs.push(
-        <View
-          key={i}
-          style={[
-            styles.wordPairLine,
-            {borderBottomColor: theme.dark ? SlateDark : Grey},
-          ]}>
-          <View style={styles.wordPairColumn}>
-            <BaseText
-              style={[
-                styles.wordTextIndex,
-                {color: theme.dark ? SlateDark : Slate},
-              ]}>
-              {index1}.
-            </BaseText>
-            <BaseText style={styles.wordText}>{word1}</BaseText>
-          </View>
-          {word2 && (
-            <View style={styles.wordPairColumn}>
-              <BaseText
-                style={[
-                  styles.wordTextIndex,
-                  {color: theme.dark ? SlateDark : Slate},
-                ]}>
-                {index2}.
-              </BaseText>
-              <BaseText style={styles.wordText}>{word2}</BaseText>
-            </View>
-          )}
-        </View>,
-      );
-    }
-
-    return wordPairs;
+  const showError = async () => {
+    await sleep(500);
+    dispatch(
+      showBottomNotificationModal(
+        CustomErrorMessage({
+          errMsg: t('The file could not be shared'),
+          title: t('Uh oh, something went wrong'),
+        }),
+      ),
+    );
   };
 
-  const onPressHeaderCancel = () => {
+  const printBackupTemplate = async () => {
+    haptic('impactLight');
+    let sourceStoragePath = RNFS.MainBundlePath;
+    if (Platform.OS !== 'ios') {
+      // Android bundles the PDF in android/app/src/main/assets; it has to be copied out before sharing.
+      try {
+        await RNFS.copyFileAssets(
+          TEMPLATE_FILE,
+          `${RNFS.CachesDirectoryPath}/${TEMPLATE_FILE}`,
+        );
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(
+          `Failed trying to execute RNFS.copyFileAssets. Error: ${errMsg}`,
+        );
+        await showError();
+        return;
+      }
+      sourceStoragePath = RNFS.CachesDirectoryPath;
+    }
+    try {
+      const opts: ShareOptions = {
+        title: t('BitPay Backup Template'),
+        url: `file://${sourceStoragePath}/${TEMPLATE_FILE}`,
+        type: 'application/pdf',
+        subject: 'BitPay Backup Template',
+        failOnCancel: false,
+      };
+      dispatch(shareFile(opts));
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Failed trying to execute Share.open. Error: ${errMsg}`);
+      await showError();
+    }
+  };
+
+  const onPressHeaderBack = () => {
     haptic('impactLight');
 
-    if (context === 'settings' || key?.backupComplete) {
+    if (!isBackup || context === 'settings' || key?.backupComplete) {
       navigation.goBack();
       return;
     }
@@ -200,24 +190,28 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
       }),
     );
   };
-  const onPressHeaderCancelRef = useRef(onPressHeaderCancel);
+  const onPressHeaderBackRef = useRef(onPressHeaderBack);
   useLayoutEffect(() => {
-    onPressHeaderCancelRef.current = onPressHeaderCancel;
+    onPressHeaderBackRef.current = onPressHeaderBack;
   });
 
   const headerTitle = useMemo(() => {
-    return () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>;
-  }, [t]);
+    return () => (
+      <HeaderTitle>
+        {mode === 'privateKey' ? t('Private Key') : t('Recovery Phrase')}
+      </HeaderTitle>
+    );
+  }, [mode, t]);
 
   const headerLeft = useMemo(() => {
     return () => (
       <TouchableOpacity
         touchableLibrary={'react-native-gesture-handler'}
         testID="cancel-button"
-        accessibilityLabel={t('Cancel')}
+        accessibilityLabel={t('Back')}
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
-        onPress={onPressHeaderCancelRef.current}>
+        onPress={() => onPressHeaderBackRef.current()}>
         <Back opacity={1} />
       </TouchableOpacity>
     );
@@ -225,56 +219,141 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      gestureEnabled: false,
+      gestureEnabled: !isBackup,
       headerTitle,
       headerLeft,
     });
-  }, [navigation, headerTitle, headerLeft]);
+  }, [navigation, headerTitle, headerLeft, isBackup]);
 
   const next = () => {
     navigation.navigate('VerifyPhrase', {...params, walletTermsAccepted});
   };
 
-  return (
-    <SafeAreaView
-      style={styles.recoveryPhraseContainer}
-      testID="recovery-phrase-view">
-      <ScrollView
-        style={styles.recoveryContainer}
-        contentContainerStyle={{
-          paddingBottom: CTA_RESERVED,
-        }}>
-        <View style={styles.warningMessageContainer}>
-          <View style={styles.warningMessageTitleContainer}>
+  const wordRows = useMemo(
+    () =>
+      Array.from({length: Math.ceil(words.length / 2)}, (_, row) =>
+        words.slice(row * 2, row * 2 + 2),
+      ),
+    [words],
+  );
+
+  if (mode === 'privateKey') {
+    return (
+      <SafeAreaView edges={['bottom']} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.privateKeyContent}>
+          <View style={styles.warning}>
             <HeaderSubtitle style={{color: theme.dark ? Caution : Caution60}}>
               {t('CONFIDENTIAL')}
             </HeaderSubtitle>
-          </View>
-          <View style={styles.warningMessageDescContainer}>
             <Paragraph style={{color: theme.dark ? SlateDark : LightBlack}}>
-              {t('Your 12-word recovery phrase')}
+              {t('Your extended private key')}
             </Paragraph>
-          </View>
-          <View style={styles.warningMessageTextContainer}>
-            <BaseText style={{color: theme.dark ? Caution60 : Caution}}>
+            <BaseText
+              style={[
+                styles.warningLine,
+                {color: theme.dark ? Caution60 : Caution},
+              ]}>
               {t('Store Securely - Never share')}
             </BaseText>
           </View>
+          <BaseText
+            style={[styles.privateKey, {backgroundColor: colors.surfaceMuted}]}>
+            {xPrivKey}
+          </BaseText>
+        </ScrollView>
+        <View style={styles.footer}>
+          <Button onPress={() => navigation.goBack()}>{t('Done')}</Button>
         </View>
+      </SafeAreaView>
+    );
+  }
 
-        <View style={styles.wordPairContainer}>{renderWordPairs()}</View>
+  return (
+    <SafeAreaView
+      edges={['bottom']}
+      style={styles.container}
+      testID="recovery-phrase-view">
+      <ScrollView contentContainerStyle={styles.content}>
+        <BaseText style={[styles.paragraph, {color: colors.textDescription}]}>
+          {t(
+            'Write these {{wordCount}} words on paper, in order. Never share them. BitPay will never ask for them.',
+            {wordCount: words.length},
+          )}
+        </BaseText>
+        <View style={revealed ? null : styles.hiddenGrid}>
+          <View
+            style={styles.grid}
+            accessibilityElementsHidden={!revealed}
+            importantForAccessibility={
+              revealed ? 'auto' : 'no-hide-descendants'
+            }>
+            {wordRows.map((pair, row) => (
+              <View key={row} style={styles.gridRow}>
+                {pair.map((word, column) => (
+                  <PhraseCell key={column} n={row * 2 + column + 1} tone="word">
+                    {word}
+                  </PhraseCell>
+                ))}
+              </View>
+            ))}
+          </View>
+          {revealed ? null : (
+            <>
+              <Blur />
+              <Pressable
+                testID="reveal-button"
+                accessibilityRole="button"
+                accessibilityLabel={t('Tap to reveal')}
+                onPress={() => setRevealed(true)}
+                style={styles.reveal}>
+                <EyeGlyph color={colors.textPrimary} />
+                <BaseText style={styles.revealTitle}>
+                  {t('Tap to reveal')}
+                </BaseText>
+                <BaseText
+                  style={[
+                    styles.revealSubtitle,
+                    {color: colors.textDescription},
+                  ]}>
+                  {t('Make sure no one can see your screen')}
+                </BaseText>
+              </Pressable>
+            </>
+          )}
+        </View>
+        {isBackup && revealed ? (
+          <Button
+            buttonType={'link'}
+            accessibilityLabel={t('Hide')}
+            onPress={() => setRevealed(false)}>
+            {t('Hide')}
+          </Button>
+        ) : null}
+        <BackupMethodCard
+          testID="print-backup-button"
+          icon={<PrintGlyph color={colors.iconButtonGlyph} />}
+          title={t('Print recovery template')}
+          description={t(
+            'A blank sheet to write your phrase on and store somewhere safe.',
+          )}
+          onPress={printBackupTemplate}
+        />
       </ScrollView>
-      <CtaContainerAbsolute testID="cta-container">
-        <Button
-          testID="next-button"
-          accessibilityLabel={t('Verify recovery phrase')}
-          buttonStyle={'primary'}
-          debounceTime={Platform.OS === 'android' ? 200 : 0}
-          disabled={key.backupComplete}
-          onPress={next}>
-          {key.backupComplete ? t('Verified') : t('Verify')}
-        </Button>
-      </CtaContainerAbsolute>
+      <View style={styles.footer}>
+        {isBackup ? (
+          <Button
+            testID="next-button"
+            accessibilityLabel={t('I Wrote It Down')}
+            buttonStyle={'primary'}
+            debounceTime={Platform.OS === 'android' ? 200 : 0}
+            disabled={!revealed}
+            onPress={next}>
+            {t('I Wrote It Down')}
+          </Button>
+        ) : (
+          <Button onPress={() => navigation.goBack()}>{t('Done')}</Button>
+        )}
+      </View>
     </SafeAreaView>
   );
 };

@@ -298,7 +298,7 @@ export const CustomizeCard = ({
       return (
         <NeedsBackupContainer>
           <NeedBackupText style={{marginTop: 0}}>
-            {t('Needs Backup')}
+            {t('Backup Required')}
           </NeedBackupText>
         </NeedsBackupContainer>
       );

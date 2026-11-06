@@ -86,7 +86,7 @@ export const backupRedirect = ({
   key?: Key;
 }) => {
   if (context === 'onboarding') {
-    navigation.navigate('TermsOfUse');
+    navigation.navigate('Pin');
   } else if (context === 'keySettings') {
     navigation.navigate('KeySettings', {keyId: key?.id});
   } else if (context === 'settings') {
@@ -125,13 +125,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
   const {context, key} = route.params;
 
   const gotoBackup = () => {
-    const {id, mnemonic} = key.properties!;
-    navigation.navigate('RecoveryPhrase', {
-      keyId: id,
-      words: mnemonic.trim().split(' '),
-      walletTermsAccepted,
-      ...route.params,
-    });
+    navigation.navigate('BackupOnboarding', {keyId: key.id, context});
   };
 
   useLayoutEffect(() => {

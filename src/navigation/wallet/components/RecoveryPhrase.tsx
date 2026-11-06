@@ -1,11 +1,13 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {useTheme} from '../../../contexts';
 import {
+  Action,
   Caution,
   LightBlack,
   LuckySevens,
   NeutralSlate,
   SlateDark,
+  Warning,
   White,
 } from '../../../styles/colors';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
@@ -85,6 +87,8 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
   AppState,
   FlatList,
+  InputAccessoryView,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -92,6 +96,9 @@ import {
   View,
   ViewProps,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import {Pill} from '../../../components/backup/BackupCards';
+import {useBackupColors} from '../../../components/backup/colors';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {
@@ -110,6 +117,44 @@ import {
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {
+  autocorrectRecoveryWords,
+  getEnglishWordsStartingWith,
+  getNearestEnglishWords,
+  getUniqueEnglishWord,
+  isEnglishRecoveryWord,
+  isOtherLanguageRecoveryWord,
+  isValidEnglishPhrase,
+} from '../../../utils/recoveryPhraseWords';
+
+const MAX_PHRASE_WORDS = 24;
+const WORD_SEPARATOR = /[\u3000\s]+/;
+const NON_WORD_CHARACTERS = /[0-9.,;:\-_|"'()[\]]+/g;
+const EXTENDED_PRIVATE_KEY = /[xt]prv/;
+const SUGGESTIONS_ID = 'recoveryPhraseSuggestions';
+const SUGGESTION_COUNT = 3;
+
+const toPhraseWords = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(NON_WORD_CHARACTERS, ' ')
+    .trim()
+    .split(WORD_SEPARATOR)
+    .filter(Boolean);
+
+const fitsChips = (phrase: string) => {
+  const words = toPhraseWords(phrase);
+  return (
+    !EXTENDED_PRIVATE_KEY.test(phrase) &&
+    (words.length === 12 || words.length === MAX_PHRASE_WORDS) &&
+    words.every(isEnglishRecoveryWord)
+  );
+};
+
+const firstInvalidIndex = (words: string[]) => {
+  const index = words.findIndex(word => !isEnglishRecoveryWord(word));
+  return index < 0 ? null : index;
+};
 
 const styles = StyleSheet.create({
   scrollViewContainer: {
@@ -205,6 +250,83 @@ const styles = StyleSheet.create({
   },
   currencySubTitle: {
     fontSize: 12,
+  },
+  intro: {
+    fontSize: 16,
+    lineHeight: 25,
+  },
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  counter: {
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+  },
+  chipsField: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignContent: 'flex-start',
+    gap: 6,
+    minHeight: 132,
+    padding: 8,
+    paddingBottom: 44,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+    borderWidth: 0.75,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 30,
+    paddingHorizontal: 10,
+    borderRadius: 50,
+    borderWidth: 1.5,
+  },
+  chipNumber: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  chipWord: {
+    fontSize: 14,
+  },
+  chipWordInvalid: {
+    color: Caution,
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'dotted',
+    textDecorationColor: Caution,
+  },
+  chipInput: {
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 60,
+    minWidth: 0,
+    fontSize: 15,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  pastePill: {
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
+  },
+  status: {
+    paddingTop: 6,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  suggestionBar: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    borderTopWidth: 1,
+  },
+  hiddenInput: {
+    display: 'none',
   },
 });
 
@@ -426,9 +548,24 @@ const RecoveryPhrase = () => {
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
+  const colors = useBackupColors();
   const wordsRef = useRef<TextInput>(null);
-  const [sensitiveInputRefs] = useState(() => [wordsRef]);
+  const chipInputRef = useRef<TextInput>(null);
+  const [sensitiveInputRefs] = useState(() => [wordsRef, chipInputRef]);
   const {clearSensitive} = useSensitiveRefClear(sensitiveInputRefs);
+  const [qrChips] = useState(() => {
+    const qrPhrase = route.params?.importQrCodeData?.split('|')[1] || '';
+    return fitsChips(qrPhrase) ? toPhraseWords(qrPhrase) : [];
+  });
+  const [textMode, setTextMode] = useState(
+    () => !!route.params?.importQrCodeData && !qrChips.length,
+  );
+  const [chips, setChips] = useState<string[]>(qrChips);
+  const [typed, setTyped] = useState('');
+  const [selectedChip, setSelectedChip] = useState<number | null>(null);
+  const [phraseMessage, setPhraseMessage] = useState<string | null>(null);
+  const [pasted, setPasted] = useState(false);
+  const [chipsFocused, setChipsFocused] = useState(false);
 
   const {
     handleSubmit,
@@ -464,8 +601,138 @@ const RecoveryPhrase = () => {
 
   const clearRecoveryPhrase = useCallback(() => {
     clearSensitive();
+    setChips([]);
+    setTyped('');
+    setSelectedChip(null);
+    setPhraseMessage(null);
+    setPasted(false);
     setValue('text', '');
   }, [clearSensitive, setValue]);
+
+  const applyTextAutocorrect = (text: string): string => {
+    if (!text.trim() || text.includes('xprv') || text.includes('tprv')) {
+      return text;
+    }
+    const words = text.trim().split(WORD_SEPARATOR);
+    const corrected = autocorrectRecoveryWords(words).words.join(' ');
+    if (corrected === words.join(' ')) {
+      return text;
+    }
+    updateRecoveryPhraseFromExternalSource(corrected);
+    return corrected;
+  };
+
+  const showAsText = (phrase: string) => {
+    clearRecoveryPhrase();
+    setTextMode(true);
+    updateRecoveryPhraseFromExternalSource(phrase);
+  };
+
+  const commitWord = (word: string) => {
+    chipInputRef.current?.clear();
+    setTyped('');
+    if (!word) {
+      return;
+    }
+    const replacing = selectedChip !== null;
+    if (!replacing && chips.length >= MAX_PHRASE_WORDS) {
+      return;
+    }
+    const next = replacing
+      ? chips.map((chip, index) => (index === selectedChip ? word : chip))
+      : [...chips, word];
+    const corrected = autocorrectRecoveryWords(next).words;
+    const committedIndex = replacing ? selectedChip : corrected.length - 1;
+    setChips(corrected);
+    setPhraseMessage(null);
+    setPasted(false);
+    setSelectedChip(
+      isEnglishRecoveryWord(corrected[committedIndex])
+        ? firstInvalidIndex(corrected)
+        : committedIndex,
+    );
+  };
+
+  const pastePhrase = (text: string) => {
+    chipInputRef.current?.clear();
+    setTyped('');
+    if (EXTENDED_PRIVATE_KEY.test(text)) {
+      showAsText(text.trim());
+      return;
+    }
+    const words = toPhraseWords(text);
+    if (
+      words.some(
+        word =>
+          !isEnglishRecoveryWord(word) && isOtherLanguageRecoveryWord(word),
+      )
+    ) {
+      showAsText(words.join(' '));
+      return;
+    }
+    const englishWords = words.filter(isEnglishRecoveryWord);
+    if (
+      !words.length ||
+      englishWords.length * 2 < words.length ||
+      words.length > MAX_PHRASE_WORDS
+    ) {
+      setPhraseMessage(t('That isn’t a recovery phrase.'));
+      return;
+    }
+    const corrected = autocorrectRecoveryWords(words).words;
+    setChips(corrected);
+    setSelectedChip(firstInvalidIndex(corrected));
+    setPhraseMessage(null);
+    setPasted(true);
+  };
+
+  const pasteFromClipboard = async () => {
+    pastePhrase(await Clipboard.getString());
+  };
+
+  const onChipInputChange = (value: string) => {
+    if (toPhraseWords(value).length > 1 || EXTENDED_PRIVATE_KEY.test(value)) {
+      pastePhrase(value);
+      return;
+    }
+    const word = value.toLowerCase().replace(NON_WORD_CHARACTERS, '');
+    if (WORD_SEPARATOR.test(word)) {
+      commitWord(word.trim());
+      return;
+    }
+    const completed = getUniqueEnglishWord(word);
+    if (completed) {
+      commitWord(completed);
+      return;
+    }
+    setTyped(word);
+  };
+
+  const onChipInputKeyPress = (key: string) => {
+    if (key !== 'Backspace' || typed) {
+      return;
+    }
+    if (selectedChip !== null) {
+      const next = chips.filter((_, index) => index !== selectedChip);
+      setChips(next);
+      setSelectedChip(firstInvalidIndex(next));
+    } else if (chips.length) {
+      setChips(chips.slice(0, -1));
+    }
+  };
+
+  const toggleTextMode = () => {
+    const words =
+      typed && selectedChip !== null
+        ? chips.map((chip, index) => (index === selectedChip ? typed : chip))
+        : [...chips, typed];
+    const phrase = textMode ? '' : words.filter(Boolean).join(' ');
+    clearRecoveryPhrase();
+    setTextMode(!textMode);
+    if (phrase) {
+      updateRecoveryPhraseFromExternalSource(phrase);
+    }
+  };
 
   const showErrorModal = (e: Error, submittedText?: string) => {
     if (e && e.message === 'WALLET_DOES_NOT_EXIST') {
@@ -494,7 +761,7 @@ const RecoveryPhrase = () => {
     return words && words.trim().split(/[\u3000\s]+/).length % 3 === 0;
   };
 
-  const processImportQrCode = (code: string): void => {
+  const readImportQrCode = (code: string): string | undefined => {
     try {
       const parsedCode = code.split('|');
       const recoveryObj: ImportObj = {
@@ -505,7 +772,7 @@ const RecoveryPhrase = () => {
 
       if (!isValidPhrase(recoveryObj.data)) {
         showErrorModal(new Error(t('The recovery phrase is invalid.')));
-        return;
+        return undefined;
       }
       if (recoveryObj.type === '1' && recoveryObj.hasPassphrase) {
         dispatch(
@@ -524,9 +791,24 @@ const RecoveryPhrase = () => {
           }),
         );
       }
-      updateRecoveryPhraseFromExternalSource(recoveryObj.data);
+      return recoveryObj.data;
     } catch {
       showErrorModal(new Error('The recovery phrase is invalid.'));
+      return undefined;
+    }
+  };
+
+  const applyScannedPhrase = (code: string) => {
+    const phrase = readImportQrCode(code);
+    if (!phrase) {
+      return;
+    }
+    if (textMode) {
+      updateRecoveryPhraseFromExternalSource(phrase);
+    } else if (fitsChips(phrase)) {
+      pastePhrase(phrase);
+    } else {
+      showAsText(phrase);
     }
   };
 
@@ -597,8 +879,22 @@ const RecoveryPhrase = () => {
     }
   };
 
-  const onSubmit = (formData: {text: string}) => {
-    const {text} = formData;
+  const onSubmit = (formData: {text: string}) =>
+    startImport(applyTextAutocorrect(formData.text));
+
+  const importChips = () => {
+    if (!isValidEnglishPhrase(chips)) {
+      setPhraseMessage(
+        t(
+          'These words don’t make a valid phrase. Check them against your paper.',
+        ),
+      );
+      return;
+    }
+    startImport(chips.join(' '));
+  };
+
+  const startImport = (text: string) => {
     clearRecoveryPhrase();
 
     let keyOpts: Partial<KeyOptions> = {};
@@ -828,7 +1124,10 @@ const RecoveryPhrase = () => {
 
   useEffect(() => {
     if (route.params?.importQrCodeData) {
-      processImportQrCode(route.params.importQrCodeData);
+      const phrase = readImportQrCode(route.params.importQrCodeData);
+      if (phrase && textMode) {
+        updateRecoveryPhraseFromExternalSource(phrase);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -842,6 +1141,59 @@ const RecoveryPhrase = () => {
     return () => sub.remove();
   }, [clearRecoveryPhrase]);
 
+  const invalidChips = chips.filter(chip => !isEnglishRecoveryWord(chip));
+  const phraseReady =
+    (chips.length === 12 || chips.length === MAX_PHRASE_WORDS) &&
+    !invalidChips.length &&
+    !typed;
+  const phraseStatus = phraseMessage
+    ? {error: true, text: phraseMessage}
+    : invalidChips.length === 1
+    ? {
+        error: true,
+        text: t('“{{word}}” isn’t a recovery phrase word.', {
+          word: invalidChips[0],
+        }),
+      }
+    : invalidChips.length
+    ? {
+        error: true,
+        text: t('{{number}} words aren’t recovery phrase words.', {
+          number: invalidChips.length,
+        }),
+      }
+    : pasted && (chips.length === 11 || chips.length === 23)
+    ? {error: false, text: t('One word is missing.')}
+    : null;
+  const phraseHasError = !!phraseStatus?.error;
+  const selectedInvalidChip =
+    selectedChip !== null && !isEnglishRecoveryWord(chips[selectedChip])
+      ? chips[selectedChip]
+      : undefined;
+  const suggestions = typed
+    ? getEnglishWordsStartingWith(typed, SUGGESTION_COUNT)
+    : selectedInvalidChip
+    ? getNearestEnglishWords(selectedInvalidChip, SUGGESTION_COUNT)
+    : [];
+  const suggestionBar = (
+    <View
+      testID="phrase-suggestions"
+      accessibilityLabel={t('Suggestions')}
+      style={[
+        styles.suggestionBar,
+        {backgroundColor: colors.screenBg, borderTopColor: colors.borderCard},
+      ]}>
+      {suggestions.map(word => (
+        <Pill
+          key={word}
+          size="lg"
+          label={word}
+          onPress={() => commitWord(word)}
+        />
+      ))}
+    </View>
+  );
+
   return (
     <ScrollViewContainer
       testID="recovery-phrase-view"
@@ -852,11 +1204,17 @@ const RecoveryPhrase = () => {
         <PerformanceProfiler
           id="RecoveryPhrase:intro"
           onRender={logReactProfiler}>
-          <Paragraph>
-            {t(
-              'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
-            )}
-          </Paragraph>
+          {textMode ? (
+            <Paragraph>
+              {t(
+                'Enter your recovery phrase (usually 12-words) in the correct order. Separate each word with a single space only (no commas or any other punctuation). For backup phrases in non-English languages: Some words may include special symbols, so be sure to spell all the words correctly.',
+              )}
+            </Paragraph>
+          ) : (
+            <BaseText style={[styles.intro, {color: colors.textDescription}]}>
+              {t('Type or paste your 12 or 24 words, in order.')}
+            </BaseText>
+          )}
         </PerformanceProfiler>
 
         <PerformanceProfiler
@@ -864,39 +1222,172 @@ const RecoveryPhrase = () => {
           onRender={logReactProfiler}>
           <HeaderContainer>
             <ImportTitle>{t('Recovery phrase')}</ImportTitle>
-
-            <ScanContainer
-              testID="scan-button"
-              accessibilityLabel={t('Scan QR code')}
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                dispatch(
-                  Analytics.track('Open Scanner', {
-                    context: 'RecoveryPhrase',
-                  }),
-                );
-                navigation.navigate('ScanRoot', {
-                  onScanComplete: data => {
-                    processImportQrCode(data);
-                  },
-                });
-              }}>
-              <ScanSvg />
-            </ScanContainer>
+            <View style={styles.counterRow}>
+              {!textMode ? (
+                <BaseText
+                  testID="phrase-word-counter"
+                  style={[
+                    styles.counter,
+                    {color: phraseReady ? colors.gain : colors.textDescription},
+                  ]}>
+                  {`${chips.length} / ${chips.length > 12 ? 24 : 12}`}
+                </BaseText>
+              ) : null}
+              <ScanContainer
+                testID="scan-button"
+                accessibilityLabel={t('Scan QR code')}
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  dispatch(
+                    Analytics.track('Open Scanner', {
+                      context: 'RecoveryPhrase',
+                    }),
+                  );
+                  navigation.navigate('ScanRoot', {
+                    onScanComplete: data => {
+                      applyScannedPhrase(data);
+                    },
+                  });
+                }}>
+                <ScanSvg />
+              </ScanContainer>
+            </View>
           </HeaderContainer>
         </PerformanceProfiler>
 
         <PerformanceProfiler
           id="RecoveryPhrase:controller"
           onRender={logReactProfiler}>
+          {!textMode ? (
+            <Pressable
+              testID="phrase-chips-field"
+              accessible={false}
+              onPress={() => chipInputRef.current?.focus()}
+              style={[
+                styles.chipsField,
+                {
+                  borderColor: phraseHasError ? Caution : colors.inputBorder,
+                  borderBottomWidth: chipsFocused || phraseHasError ? 2 : 0.75,
+                  borderBottomColor: phraseHasError
+                    ? Caution
+                    : chipsFocused
+                    ? colors.inputFocusBorder
+                    : colors.inputBorder,
+                  backgroundColor: phraseHasError
+                    ? colors.inputErrorBg
+                    : chipsFocused
+                    ? colors.inputFocusBg
+                    : colors.screenBg,
+                },
+              ]}>
+              {chips.map((chip, index) => {
+                const valid = isEnglishRecoveryWord(chip);
+                const selected = selectedChip === index;
+                return (
+                  <Pressable
+                    key={index}
+                    testID={`phrase-chip-${index}`}
+                    accessibilityRole="button"
+                    accessibilityState={{selected}}
+                    accessibilityLabel={
+                      valid
+                        ? t('Word {{position}}, {{word}}', {
+                            position: index + 1,
+                            word: chip,
+                          })
+                        : t(
+                            'Word {{position}}, {{word}}, not a recovery phrase word',
+                            {position: index + 1, word: chip},
+                          )
+                    }
+                    onPress={() => {
+                      setSelectedChip(selected ? null : index);
+                      setTyped('');
+                      chipInputRef.current?.focus();
+                    }}
+                    style={[
+                      styles.chip,
+                      {
+                        borderColor: selected
+                          ? valid
+                            ? Action
+                            : Caution
+                          : valid
+                          ? 'transparent'
+                          : Caution,
+                        backgroundColor: valid
+                          ? colors.surfaceMuted
+                          : colors.inputErrorBg,
+                      },
+                    ]}>
+                    <BaseText
+                      style={[
+                        styles.chipNumber,
+                        {color: valid ? colors.textPrimary : Caution},
+                      ]}>
+                      {index + 1}
+                    </BaseText>
+                    <BaseText
+                      style={[
+                        styles.chipWord,
+                        valid
+                          ? {color: colors.textPrimary}
+                          : styles.chipWordInvalid,
+                      ]}>
+                      {chip}
+                    </BaseText>
+                  </Pressable>
+                );
+              })}
+              <TextInput
+                ref={chipInputRef}
+                testID="phrase-word-input"
+                accessibilityLabel={t('Word {{position}}', {
+                  position: chips.length + 1,
+                })}
+                style={[styles.chipInput, {color: colors.textPrimary}]}
+                value={typed}
+                placeholder={chips.length ? '' : t('Type or paste your phrase')}
+                placeholderTextColor={colors.textPlaceholder}
+                autoCapitalize={'none'}
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="off"
+                textContentType={IS_IOS ? 'password' : undefined}
+                keyboardType={IS_ANDROID ? 'visible-password' : undefined}
+                inputAccessoryViewID={IS_IOS ? SUGGESTIONS_ID : undefined}
+                submitBehavior="submit"
+                onFocus={() => setChipsFocused(true)}
+                onBlur={() => {
+                  setChipsFocused(false);
+                  commitWord(typed);
+                  setSelectedChip(null);
+                }}
+                onChangeText={onChipInputChange}
+                onKeyPress={({nativeEvent}) =>
+                  onChipInputKeyPress(nativeEvent.key)
+                }
+                onSubmitEditing={() => commitWord(typed)}
+              />
+              <View style={styles.pastePill}>
+                <Pill
+                  label={t('Paste')}
+                  accessibilityLabel={t('Paste recovery phrase')}
+                  onPress={pasteFromClipboard}
+                />
+              </View>
+            </Pressable>
+          ) : null}
           <ImportTextInput
             ref={wordsRef}
             testID="import-text-input"
             accessibilityLabel={t('Enter recovery phrase')}
+            style={textMode ? undefined : styles.hiddenInput}
             multiline
             autoCapitalize={'none'}
             numberOfLines={3}
             onChangeText={updateRecoveryPhraseValue}
+            onBlur={() => applyTextAutocorrect(getValues().text)}
             defaultValue=""
             autoCorrect={false}
             spellCheck={false}
@@ -906,11 +1397,34 @@ const RecoveryPhrase = () => {
           />
         </PerformanceProfiler>
 
-        {errors.text?.message && <ErrorText>{errors.text.message}</ErrorText>}
+        {!textMode && IS_ANDROID && chipsFocused ? suggestionBar : null}
+        {!textMode && IS_IOS ? (
+          <InputAccessoryView nativeID={SUGGESTIONS_ID}>
+            {suggestionBar}
+          </InputAccessoryView>
+        ) : null}
 
-        <CuationText>
-          {t('This process may take a few minutes to complete.')}
-        </CuationText>
+        {!textMode && phraseStatus ? (
+          <BaseText
+            testID="phrase-status"
+            accessibilityRole={phraseHasError ? 'alert' : undefined}
+            style={[
+              styles.status,
+              {color: phraseHasError ? Caution : Warning},
+            ]}>
+            {phraseStatus.text}
+          </BaseText>
+        ) : null}
+
+        {textMode && errors.text?.message ? (
+          <ErrorText>{errors.text.message}</ErrorText>
+        ) : null}
+
+        {textMode ? (
+          <CuationText>
+            {t('This process may take a few minutes to complete.')}
+          </CuationText>
+        ) : null}
         <PerformanceProfiler
           id="RecoveryPhrase:advanced-options"
           onRender={logReactProfiler}>
@@ -981,6 +1495,25 @@ const RecoveryPhrase = () => {
                           setIncludeLegacyWallets(!includeLegacyWallets);
                         }}
                       />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
+              {showAdvancedOptions && (
+                <AdvancedOptions>
+                  <RowContainer
+                    testID="import-as-text-option"
+                    activeOpacity={1}
+                    onPress={toggleTextMode}>
+                    <Column>
+                      <OptionTitle>
+                        {t('Enter Phrase or Key as Text')}
+                      </OptionTitle>
+                    </Column>
+                    <CheckBoxContainer
+                      testID="import-as-text-checkbox"
+                      accessibilityLabel={t('Enter Phrase or Key as Text')}>
+                      <Checkbox checked={textMode} onPress={toggleTextMode} />
                     </CheckBoxContainer>
                   </RowContainer>
                 </AdvancedOptions>
@@ -1148,7 +1681,10 @@ const RecoveryPhrase = () => {
             accessibilityLabel={t('Import Wallet')}
             buttonStyle={'primary'}
             state={importButtonState}
-            onPress={handleSubmit(onSubmit)}>
+            disabled={!textMode && !phraseReady}
+            onPress={() =>
+              textMode ? handleSubmit(onSubmit)() : importChips()
+            }>
             {t('Import Wallet')}
           </Button>
         </PerformanceProfiler>

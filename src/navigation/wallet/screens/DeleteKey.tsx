@@ -4,6 +4,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {CommonActions, RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
 import {SafeAreaView, StyleSheet} from 'react-native';
+import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
@@ -13,19 +14,16 @@ import {
   deleteKey,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {findKeyByKeyId} from '../../../store/wallet/utils/wallet';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {setHomeCarouselConfig} from '../../../store/app/app.actions';
-import {
-  unSubscribeEmailNotifications,
-  unSubscribePushNotifications,
-} from '../../../store/app/app.effects';
+import {unsubscribeKeyNotifications} from '../../../store/app/keyNotifications.effects';
 import {cancelTSSCeremony} from '../../../store/wallet/effects/create-multisig/create-multisig';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useMount} from '../../../utils/hooks';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {useOngoingProcess} from '../../../contexts';
+import {ResultView} from '../../../components/backup/ResultView';
 
 const gutter = parseInt(ScreenGutter, 10);
 
@@ -74,43 +72,27 @@ const DeleteKey = () => {
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-
-  const notificationsAccepted = useAppSelector(
-    ({APP}) => APP.notificationsAccepted,
-  );
-  const emailNotifications = useAppSelector(({APP}) => APP.emailNotifications);
-  const brazeEid = useAppSelector(({APP}) => APP.brazeEid);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const {
-    params: {keyId},
+    params: {keyId, confirmed},
   } = useRoute<RouteProp<WalletGroupParamList, 'DeleteKey'>>();
+  const [keyName] = useState(() => keys[keyId]?.keyName || '');
+  const [deleted, setDeleted] = useState(false);
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Delete Key')}</HeaderTitle>,
-    });
+    navigation.setOptions(
+      confirmed
+        ? {
+            headerTitle: () => null,
+            headerLeft: () => null,
+            gestureEnabled: false,
+          }
+        : {headerTitle: () => <HeaderTitle>{t('Delete Key')}</HeaderTitle>},
+    );
   });
 
-  const [isVisible, setIsVisible] = useState(false);
-  const startDeleteKey = async () => {
-    dispatch(cancelTSSCeremony(keyId));
-    setIsVisible(false);
-    await sleep(500);
-    showOngoingProcess('DELETING_KEY');
-
-    await sleep(300);
-    unsubscribeNotifications();
-    dispatch(deleteKey({keyId}));
-
-    dispatch(
-      setHomeCarouselConfig(
-        homeCarouselConfig.filter(item => item.id !== keyId),
-      ),
-    );
-    dispatch(updatePortfolioBalance());
-    hideOngoingProcess();
-    await sleep(1000);
+  const goHome = () =>
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
@@ -122,26 +104,61 @@ const DeleteKey = () => {
         ],
       }),
     );
+
+  const removeKey = async () => {
+    dispatch(cancelTSSCeremony(keyId));
+    showOngoingProcess('DELETING_KEY');
+
+    await sleep(300);
+    dispatch(unsubscribeKeyNotifications(keyId));
+    dispatch(deleteKey({keyId}));
+
+    dispatch(
+      setHomeCarouselConfig(
+        homeCarouselConfig.filter(item => item.id !== keyId),
+      ),
+    );
+    dispatch(updatePortfolioBalance());
+    hideOngoingProcess();
   };
 
-  const unsubscribeNotifications = async () => {
-    const keyObj = await findKeyByKeyId(keyId, keys);
-    keyObj.wallets
-      .filter(
-        (wallet: any) =>
-          !wallet.credentials.token &&
-          wallet.credentials.isComplete() &&
-          !wallet.pendingTssSession,
-      )
-      .forEach(walletClient => {
-        if (notificationsAccepted && brazeEid) {
-          dispatch(unSubscribePushNotifications(walletClient, brazeEid));
-        }
-        if (emailNotifications.accepted && emailNotifications.email) {
-          dispatch(unSubscribeEmailNotifications(walletClient));
-        }
-      });
+  useMount(() => {
+    if (confirmed) {
+      removeKey().then(() => setDeleted(true));
+    }
+  });
+
+  useAndroidBackHandler(() => {
+    if (!confirmed) {
+      return false;
+    }
+    if (deleted) {
+      goHome();
+    }
+    return true;
+  });
+
+  const [isVisible, setIsVisible] = useState(false);
+  const startDeleteKey = async () => {
+    setIsVisible(false);
+    await sleep(500);
+    await removeKey();
+    await sleep(1000);
+    goHome();
   };
+
+  if (confirmed) {
+    return deleted ? (
+      <ResultView
+        title={t('Key deleted')}
+        message={t('{{keyName}} has been removed from this phone.', {
+          keyName,
+        })}
+        primary={t('Done')}
+        onPrimary={goHome}
+      />
+    ) : null;
+  }
 
   return (
     <DeleteKeyContainer>
