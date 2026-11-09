@@ -41,6 +41,8 @@ interface HomeCardProps {
   onCTAPress?: () => void;
   onCTAPressIn?: () => void;
   backgroundImg?: () => ReactElement;
+  testID?: string;
+  accessibilityLabel?: string;
 }
 
 const styles = StyleSheet.create({
@@ -120,6 +122,8 @@ const HomeCard: React.FC<HomeCardProps> = ({
   footer,
   onCTAPress,
   onCTAPressIn,
+  testID,
+  accessibilityLabel,
 }) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -216,6 +220,8 @@ const HomeCard: React.FC<HomeCardProps> = ({
   return (
     <TouchableOpacity
       style={styles.cardContainer}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
       activeOpacity={ActiveOpacity}
       onPressIn={onCTAPressIn}
       onPress={_onPress}>
