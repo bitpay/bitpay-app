@@ -91,6 +91,7 @@ import {
   matchesRequestToken,
   getTransactionValue,
   getTokenApproval,
+  getTokenTransfer,
   processOtherMethodsRequest,
   processSwapRequest,
 } from './helper-methods';
@@ -1980,13 +1981,14 @@ describe('processSwapRequest', () => {
         receiveAddress: ACCOUNT_A,
       },
     ],
+    customTokenOptionsByAddress = {},
   ) => {
     const getState = () =>
       ({
         APP: {defaultAltCurrency: {isoCode: 'USD'}},
         RATE: {rates: {}},
         WALLET: {
-          customTokenOptionsByAddress: {},
+          customTokenOptionsByAddress,
           keys: {
             'key-1': {
               wallets,
@@ -2264,9 +2266,17 @@ describe('processSwapRequest', () => {
     },
   );
 
-  it.each([undefined, null, '', '0x', '0xdeadbeef', '0x123', '0xzzzzzzzz'])(
+  it.each([
+    [undefined, {}],
+    [null, {}],
+    ['', {}],
+    ['0x', {}],
+    ['0xdeadbeef', {unknownContractCall: true}],
+    ['0x123', {unknownContractCall: true}],
+    ['0xzzzzzzzz', {unknownContractCall: true}],
+  ])(
     'does not invent an approval for calldata %s',
-    async data => {
+    async (data, expectedFlags) => {
       const result = await makeDispatch()(
         processSwapRequest(
           buildTxEvent('eth_sendTransaction', {
@@ -2284,10 +2294,7 @@ describe('processSwapRequest', () => {
         swapFromChain: 'eth',
         swapFromCurrencyAbbreviation: 'eth',
         swapAmount: '7',
-        // Non-empty calldata the app cannot summarize must be flagged.
-        ...(typeof data === 'string' && data !== '' && data !== '0x'
-          ? {unknownContractCall: true}
-          : {}),
+        ...expectedFlags,
       });
     },
   );
@@ -2318,35 +2325,81 @@ describe('processSwapRequest', () => {
     },
   );
 
-  describe('ERC-20 transfer summary (fix #9)', () => {
+  describe('ERC-20 transfer summary', () => {
     const USDC = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+    const CUSTOM_TOKEN = '0x5555555555555555555555555555555555555555';
     const RECIPIENT = '0x3333333333333333333333333333333333333333';
     const erc20 = () => new ethers.utils.Interface(abiERC20);
+    const unsummarizedTransfer = {
+      transactionDataName: 'TRANSFER',
+      senderAddress: ACCOUNT_A,
+      swapFromChain: 'eth',
+      swapFromCurrencyAbbreviation: 'eth',
+      unknownContractCall: true,
+    };
 
     it('summarizes transfer() on a known token and does not warn', async () => {
       const result = await makeDispatch()(
         processSwapRequest(
           buildTxEvent('eth_sendTransaction', {
-            data: erc20().encodeFunctionData('transfer', [RECIPIENT, '1000']),
+            data: erc20().encodeFunctionData('transfer', [
+              RECIPIENT,
+              '1500000',
+            ]),
             from: ACCOUNT_A,
             to: USDC,
           }),
         ),
       );
-      expect(result.tokenTransfer).toEqual(
-        expect.objectContaining({
+
+      expect(result).toEqual({
+        transactionDataName: 'TRANSFER',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: 'eth',
+        swapFromCurrencyAbbreviation: 'eth',
+        tokenTransfer: {
           functionName: 'transfer',
           recipient: RECIPIENT,
-          amount: '1000',
-        }),
+          amount: '1500000',
+          formattedAmount: '1.5',
+          symbol: 'usdc',
+        },
+      });
+    });
+
+    it('summarizes transferFrom() on a known token and does not warn', async () => {
+      const result = await makeDispatch()(
+        processSwapRequest(
+          buildTxEvent('eth_sendTransaction', {
+            data: erc20().encodeFunctionData('transferFrom', [
+              OWNER,
+              RECIPIENT,
+              '1234',
+            ]),
+            from: ACCOUNT_A,
+            to: USDC,
+          }),
+        ),
       );
-      expect(result.tokenTransfer.symbol).toBeTruthy();
-      expect(result.unknownContractCall).toBeUndefined();
+
+      expect(result).toEqual({
+        transactionDataName: 'TRANSFER FROM',
+        senderAddress: ACCOUNT_A,
+        swapFromChain: 'eth',
+        swapFromCurrencyAbbreviation: 'eth',
+        tokenTransfer: {
+          functionName: 'transferFrom',
+          from: OWNER,
+          recipient: RECIPIENT,
+          amount: '1234',
+          formattedAmount: '0.001234',
+          symbol: 'usdc',
+        },
+      });
     });
 
     it.each([
       ['transfer', [RECIPIENT, '1000']],
-      // ERC-721 transferFrom shares the ERC-20 selector exactly.
       ['transferFrom', [ACCOUNT_A, RECIPIENT, '1234']],
     ])(
       'warns instead of summarizing %s on an unknown contract',
@@ -2360,8 +2413,79 @@ describe('processSwapRequest', () => {
             }),
           ),
         );
-        expect(result.tokenTransfer).toBeUndefined();
-        expect(result.unknownContractCall).toBe(true);
+
+        expect(result).toEqual({
+          ...unsummarizedTransfer,
+          transactionDataName:
+            name === 'transfer' ? 'TRANSFER' : 'TRANSFER FROM',
+        });
+      },
+    );
+
+    it('warns instead of summarizing a mainnet token address on a testnet chain', async () => {
+      const result = await makeDispatch([
+        {
+          chain: 'eth',
+          currencyAbbreviation: 'eth',
+          network: 'testnet',
+          receiveAddress: ACCOUNT_A,
+        },
+      ])(
+        processSwapRequest(
+          buildTxEvent(
+            'eth_sendTransaction',
+            {
+              data: erc20().encodeFunctionData('transfer', [RECIPIENT, '1000']),
+              from: ACCOUNT_A,
+              to: USDC,
+            },
+            'eip155:11155111',
+          ),
+        ),
+      );
+
+      expect(result).toEqual(unsummarizedTransfer);
+    });
+
+    it('warns instead of summarizing a transfer on a custom token', async () => {
+      const result = await makeDispatch(undefined, {
+        [`${CUSTOM_TOKEN}_e`]: {
+          name: 'Custom Token',
+          symbol: 'cst',
+          decimals: 18,
+          address: CUSTOM_TOKEN,
+        },
+      })(
+        processSwapRequest(
+          buildTxEvent('eth_sendTransaction', {
+            data: erc20().encodeFunctionData('transfer', [RECIPIENT, '1000']),
+            from: ACCOUNT_A,
+            to: CUSTOM_TOKEN,
+          }),
+        ),
+      );
+
+      expect(result).toEqual(unsummarizedTransfer);
+    });
+
+    it.each([undefined, NaN, -1, 1.5, 256, '6'])(
+      'leaves out the formatted amount for token decimals %s',
+      decimals => {
+        const decoded = erc20().parseTransaction({
+          data: erc20().encodeFunctionData('transfer', [RECIPIENT, '1000']),
+        });
+
+        expect(
+          getTokenTransfer(decoded, {
+            symbol: 'usdc',
+            decimals: decimals as any,
+          }),
+        ).toEqual({
+          functionName: 'transfer',
+          recipient: RECIPIENT,
+          amount: '1000',
+          symbol: 'usdc',
+        });
       },
     );
   });
@@ -2529,7 +2653,6 @@ describe('processSwapRequest', () => {
       swapFromChain: 'eth',
       swapFromCurrencyAbbreviation: 'eth',
       swapAmount: '1000000000000000000',
-      // 0x22..22 is not a known token, so the transfer is not summarized.
       unknownContractCall: true,
     });
   });

@@ -44,9 +44,8 @@ export type TokenTransfer = {
   functionName: 'transfer' | 'transferFrom';
   recipient: string;
   amount: string;
+  formattedAmount?: string;
   from?: string;
-  // Symbol of the known token at the destination contract (only known tokens are
-  // summarized as transfers).
   symbol?: string;
 };
 

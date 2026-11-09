@@ -747,6 +747,20 @@ const WalletConnectConfirm = () => {
                 />
               </TouchableOpacity>
             ))}
+            {tokenTransfer.formattedAmount !== undefined ? (
+              <SharedDetailRow
+                description={t('Amount')}
+                value={
+                  tokenTransfer.symbol
+                    ? `${
+                        tokenTransfer.formattedAmount
+                      } ${tokenTransfer.symbol.toUpperCase()}`
+                    : tokenTransfer.formattedAmount
+                }
+                secondary
+                hr
+              />
+            ) : null}
             <SharedDetailRow
               description={t('Amount (base units)')}
               value={tokenTransfer.amount}

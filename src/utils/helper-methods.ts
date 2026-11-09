@@ -1236,36 +1236,37 @@ const isTokenTransferFunction = (
 ): name is TokenTransfer['functionName'] =>
   name === 'transfer' || name === 'transferFrom';
 
-// Decoding only proves the calldata matches the transfer/transferFrom selector — any
-// contract can expose that selector (ERC-721 transferFrom shares it exactly) and do
-// something else. Callers must only pass a decode for a contract already known to be a
-// fungible token (see processSwapRequest), and report the symbol it is known by.
+const formatTokenAmount = (
+  amount: string,
+  decimals: unknown,
+): string | undefined =>
+  typeof decimals === 'number' &&
+  Number.isInteger(decimals) &&
+  decimals >= 0 &&
+  decimals <= 255
+    ? atomicToUnitString(BigInt(amount), decimals)
+    : undefined;
+
 export const getTokenTransfer = (
   transactionData: ethers.utils.TransactionDescription,
-  symbol?: string,
+  token: Pick<Token, 'symbol' | 'decimals'>,
 ): TokenTransfer | undefined => {
   const {name, args} = transactionData;
   if (!isTokenTransferFunction(name)) {
     return undefined;
   }
-  if (name === 'transferFrom') {
-    return {
-      functionName: name,
-      from: args[0],
-      recipient: args[1],
-      amount: args[2].toString(),
-      ...(symbol ? {symbol} : {}),
-    };
-  }
+  const amount = args[name === 'transferFrom' ? 2 : 1].toString();
+  const formattedAmount = formatTokenAmount(amount, token.decimals);
   return {
     functionName: name,
-    recipient: args[0],
-    amount: args[1].toString(),
-    ...(symbol ? {symbol} : {}),
+    ...(name === 'transferFrom' ? {from: args[0]} : {}),
+    recipient: args[name === 'transferFrom' ? 1 : 0],
+    amount,
+    ...(formattedAmount !== undefined ? {formattedAmount} : {}),
+    ...(token.symbol ? {symbol: token.symbol} : {}),
   };
 };
 
-// Non-empty calldata means a contract call whose real effect lives in params[0].data.
 const hasContractCalldata = (data: unknown): boolean =>
   typeof data === 'string' && data !== '' && data !== '0x';
 
@@ -1280,9 +1281,12 @@ export const processSwapRequest =
 
     const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
-    const tokenOptions = {
+    const knownTokenOptions = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
+    };
+    const tokenOptions = {
+      ...knownTokenOptions,
       ...customTokenOptionsByAddress,
     };
 
@@ -1317,8 +1321,6 @@ export const processSwapRequest =
           dispatch,
           value,
         );
-        // Could not decode the calldata at all: warn rather than show a summary
-        // that leaves out what the call actually does.
         return {
           ...transaction,
           ...(hasContractCalldata(data) ? {unknownContractCall: true} : {}),
@@ -1371,14 +1373,15 @@ export const processSwapRequest =
         value,
       );
       const tokenApproval = getTokenApproval(transactionData!);
-      // Only summarize a transfer when 'to' is a token the app already knows; otherwise
-      // the decoded arguments say nothing reliable about what the contract will do.
       const knownToken =
-        swapFromChain && typeof to === 'string'
-          ? tokenOptions[addTokenChainSuffix(to.toLowerCase(), swapFromChain)]
+        WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.network === Network.mainnet &&
+        typeof to === 'string'
+          ? knownTokenOptions[
+              addTokenChainSuffix(to.toLowerCase(), swapFromChain)
+            ]
           : undefined;
       const tokenTransfer = knownToken
-        ? getTokenTransfer(transactionData!, knownToken.symbol)
+        ? getTokenTransfer(transactionData!, knownToken)
         : undefined;
       const unknownContractCall =
         !tokenApproval && !tokenTransfer && hasContractCalldata(data);
