@@ -461,7 +461,7 @@ describe('backupPersistRoot', () => {
   });
 });
 
-describe('discardRollingBackup (RN-3086)', () => {
+describe('discardRollingBackup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (mockedRNFS.unlink as jest.Mock).mockResolvedValue(undefined);

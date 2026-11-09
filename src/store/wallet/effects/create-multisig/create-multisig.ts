@@ -281,22 +281,12 @@ export const startCreateTSSKey =
     network: string;
     m: number;
     n: number;
-    password?: string;
     myName: string;
     walletName: string;
   }): Effect<Promise<{key: Key}>> =>
   async (dispatch): Promise<{key: Key}> => {
     try {
-      const {
-        coin,
-        chain: _chain,
-        network,
-        m,
-        n,
-        password,
-        walletName,
-        myName,
-      } = opts;
+      const {coin, chain: _chain, network, m, n, walletName, myName} = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
       const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
@@ -316,7 +306,6 @@ export const startCreateTSSKey =
       await tssKeyGen.newKey({
         m: m,
         n: n,
-        password: password,
       });
 
       const sessionId = tssKeyGen.id;
@@ -384,7 +373,6 @@ export const startCreateTSSKey =
         network,
         m,
         n,
-        password,
         myName,
         walletName,
         createdAt: Date.now(),
@@ -893,13 +881,6 @@ export const startTSSCeremony =
           ...key.tssSession,
           status: 'complete',
           sessionExport: undefined,
-          // RN-3086 / IS-1572: drop the ceremony-only secrets once the key is complete;
-          // nothing reads them afterwards. 'password' is the user's spending password
-          // that encrypts this TSS key, so keeping it next to the key defeated the
-          // encryption. 'partyKey' is only a duplicate: the party seed also lives in
-          // key.properties (TssKey.toObj()) because BWS request signing needs it.
-          password: undefined,
-          partyKey: undefined,
         };
 
         throwIfCancelled();
@@ -918,7 +899,6 @@ export const startTSSCeremony =
         }
 
         dispatch(successUpdateKey({key: finalKey}));
-        // Rewrites the filesystem backup, which still holds the pre-completion session.
         dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(keyId, 'complete');
         activeCeremonies.delete(keyId);
@@ -1550,13 +1530,9 @@ export const joinTSSWithCode =
           ...tssSession,
           status: 'complete',
           sessionExport: undefined,
-          // RN-3086 / IS-1572: drop the ceremony-only secrets — see the creator path.
-          password: undefined,
-          partyKey: undefined,
         };
 
         dispatch(successUpdateKey({key: finalKey}));
-        // Rewrites the filesystem backup, which still holds the pre-completion session.
         dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(finalKey.id, 'complete');
         activeCeremonies.delete(finalKey.id);

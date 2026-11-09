@@ -769,7 +769,6 @@ export const walletReducer = (
         const key = keys[keyId];
         if (key?.tssSession) {
           const tssSession = {...key.tssSession};
-          delete tssSession.password;
           delete tssSession.partyKey;
           keys[keyId] = {...key, tssSession};
         }

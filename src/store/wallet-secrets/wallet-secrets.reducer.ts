@@ -147,7 +147,6 @@ export const walletSecretsReducer = (
         const session = tssSessionByKeyId[keyId];
         if (session) {
           const scrubbed = {...session};
-          delete scrubbed.password;
           delete scrubbed.partyKey;
           tssSessionByKeyId[keyId] = scrubbed;
         }

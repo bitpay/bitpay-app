@@ -34,7 +34,6 @@ import {
 import {
   migrateWalletSecrets,
   rehydrateWalletSecrets,
-  scrubCompletedTssSessionSecrets,
 } from './wallet-secrets.effects';
 import {WalletActionTypes} from '../wallet/wallet.types';
 import {bootstrapKey, bootstrapWallets} from '../transforms/transforms';
@@ -207,6 +206,27 @@ describe('wallet secrets slice', () => {
       afterFirstDeletion.byKeyIdAndWalletId.key2['shared-wallet']
         .requestPrivKey,
     ).toBe('second-copayer-secret');
+  });
+
+  it('drops partyKey from cleared TSS sessions only', () => {
+    const withKeys = {
+      ...initialWalletSecretsState,
+      tssSessionByKeyId: {key1: key.tssSession, key2: key.tssSession} as any,
+    };
+    const next = walletSecretsReducer(withKeys, {
+      type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+      payload: {keyIds: ['key1']},
+    } as any);
+
+    expect(next.tssSessionByKeyId.key1).not.toHaveProperty('partyKey');
+    expect(next.tssSessionByKeyId.key1).toMatchObject({
+      id: 'tss-session',
+      sessionExport: 'session-export',
+      copayers: key.tssSession.copayers,
+    });
+    expect(next.tssSessionByKeyId.key2.partyKey).toEqual({
+      xPrivKey: 'party-xpriv',
+    });
   });
 
   it('merges TSS secrets back into their public sessions', () => {
@@ -502,67 +522,6 @@ describe('rehydrateWalletSecrets', () => {
       undefined,
     );
 
-    expect(dispatch).not.toHaveBeenCalled();
-  });
-});
-
-describe('CLEAR_TSS_SESSION_SECRETS (RN-3086)', () => {
-  const session = (status: string) =>
-    ({
-      id: 's1',
-      status,
-      password: 'spending-password',
-      partyKey: {xPrivKey: 'party-xprv'},
-      isCreator: true,
-    } as any);
-
-  it('drops password and partyKey but keeps the rest of the session', () => {
-    const state = walletSecretsReducer(
-      {
-        ...initialWalletSecretsState,
-        tssSessionByKeyId: {k1: session('complete'), k2: session('pending')},
-      },
-      {
-        type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
-        payload: {keyIds: ['k1']},
-      } as any,
-    );
-    expect(state.tssSessionByKeyId.k1).toEqual({
-      id: 's1',
-      status: 'complete',
-      isCreator: true,
-    });
-    // untouched: not in keyIds
-    expect(state.tssSessionByKeyId.k2.password).toBe('spending-password');
-  });
-
-  it('startup scrub targets only completed sessions that still hold secrets', () => {
-    const dispatch = jest.fn();
-    const getState = () =>
-      ({
-        WALLET_SECRETS: {
-          ...initialWalletSecretsState,
-          tssSessionByKeyId: {
-            done: session('complete'),
-            inFlight: session('pending'),
-            clean: {id: 's3', status: 'complete'},
-          },
-        },
-      } as any);
-    scrubCompletedTssSessionSecrets()(dispatch, getState, undefined);
-    expect(dispatch).toHaveBeenCalledWith({
-      type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
-      payload: {keyIds: ['done']},
-    });
-  });
-
-  it('startup scrub does nothing when there is nothing to clear', () => {
-    const dispatch = jest.fn();
-    scrubCompletedTssSessionSecrets()(
-      dispatch,
-      () => ({WALLET_SECRETS: initialWalletSecretsState} as any),
-      undefined,
-    );
     expect(dispatch).not.toHaveBeenCalled();
   });
 });

@@ -105,17 +105,14 @@ export function backupPersistRoot(rawJson: string): Promise<void> {
   return run;
 }
 
-// Drop the rolling .bak generation once the backup queued before this call has been
-// written. Used after a write whose purpose is to scrub secrets (RN-3086): a normal
-// write rotates the previous, secret-bearing file into .bak and would keep it there.
-// Resolves true once .bak is gone, false when the caller should try again later.
+// Removes .bak after any queued backup write. Resolves false when the caller
+// should try again later.
 export function discardRollingBackup(): Promise<boolean> {
   if (backupsSuspended) {
     return Promise.resolve(false);
   }
   const run = backupQueue.then(async () => {
-    // Never drop .bak while it may be the only backup left (a failed promotion
-    // can leave no main file behind)
+    // .bak may be the only backup left after a failed promotion
     if (!(await RNFS.exists(FINAL_FILE))) {
       return false;
     }

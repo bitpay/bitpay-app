@@ -130,7 +130,6 @@ export {storage};
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
   WalletActionTypes.SUCCESS_IMPORT,
-  // Rewrite the backup once completed TSS sessions are scrubbed (RN-3086).
   WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
   WalletActionTypes.SUCCESS_ADD_WALLET,
   WalletActionTypes.DELETE_KEY,
@@ -160,10 +159,8 @@ let backupInFlight = false;
 // Latest persist:root not yet handed to a backup; writes arriving while one is
 // in flight coalesce here instead of queueing attempts past the failure limit
 let pendingPersistRoot: string | null = null;
-// RN-3086: CLEAR_TSS_SESSION_SECRETS scrubs secrets from state, but the next
-// backup rotates the pre-scrub file into .bak. persist:root writes are numbered
-// so .bak is only dropped after a backup of a write made after the scrub; a
-// coalesced or retried write of older state must not count.
+// .bak is discarded only after a backup of a persist:root write made after the
+// last CLEAR_TSS_SESSION_SECRETS
 let persistRootWriteSeq = 0;
 let pendingPersistRootSeq = 0;
 let discardBakAfterSeq: number | null = null;
@@ -242,8 +239,6 @@ const runFsBackup = async (): Promise<void> => {
   let label = backupTriggerAction;
   backupTriggerAction = null;
   try {
-    // The scrub's own trigger can be consumed by an older coalesced write, so a
-    // pending scrub keeps forcing backups until a post-scrub one lands
     if (!label && scrubsPendingBak && backupFailures < 3) {
       label = WalletActionTypes.CLEAR_TSS_SESSION_SECRETS;
     }
@@ -262,7 +257,10 @@ const runFsBackup = async (): Promise<void> => {
       backupRetryLabel = null;
       logManager.debug(`Backed up store to filesystem, triggered by ${label}.`);
       if (scrubsPendingBak && (await discardRollingBackup())) {
-        discardBakAfterSeq = null;
+        // A clear dispatched during the awaits keeps its pending discard
+        if (discardBakAfterSeq !== null && seq > discardBakAfterSeq) {
+          discardBakAfterSeq = null;
+        }
       }
     } catch {
       // Retry on the next persist:root write rather than waiting for another
@@ -409,6 +407,22 @@ const flushPersistenceSoon = () => {
     activePersistor?.flush().catch(() => {});
   }, 0);
 };
+
+export const fsBackupTriggerMiddleware: Middleware =
+  () => next => (action: AnyAction) => {
+    try {
+      if (action && typeof action.type === 'string') {
+        if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
+          backupTriggerAction = action.type;
+          if (action.type === WalletActionTypes.CLEAR_TSS_SESSION_SECRETS) {
+            discardBakAfterSeq = persistRootWriteSeq;
+          }
+          flushPersistenceSoon();
+        }
+      }
+    } catch {}
+    return next(action);
+  };
 
 let persistFlushSubscription: {remove: () => void} | null = null;
 
@@ -648,23 +662,6 @@ const initializeStore = async () => {
     };
   };
 
-  const lastActionMiddleware =
-    (): Middleware => () => next => (action: AnyAction) => {
-      try {
-        if (action && typeof action.type === 'string') {
-          if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
-            backupTriggerAction = action.type;
-            if (action.type === WalletActionTypes.CLEAR_TSS_SESSION_SECRETS) {
-              // Every write so far holds pre-scrub state
-              discardBakAfterSeq = persistRootWriteSeq;
-            }
-            flushPersistenceSoon();
-          }
-        }
-      } catch {}
-      return next(action);
-    };
-
   const invalidateWalletDerivedCachesMiddleware: Middleware =
     () => next => (action: AnyAction) => {
       const result = next(action);
@@ -691,7 +688,7 @@ const initializeStore = async () => {
       return result;
     });
   }
-  middlewares.push(lastActionMiddleware());
+  middlewares.push(fsBackupTriggerMiddleware);
   middlewares.push(invalidateWalletDerivedCachesMiddleware);
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 

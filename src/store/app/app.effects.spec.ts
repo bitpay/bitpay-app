@@ -36,7 +36,6 @@ jest.mock('../../utils/deviceIntegrity', () => ({
 }));
 jest.mock('../wallet-secrets/wallet-secrets.effects', () => ({
   migrateWalletSecrets: jest.fn(() => async () => {}),
-  scrubCompletedTssSessionSecrets: jest.fn(() => () => {}),
 }));
 jest.mock('../persistor', () => ({flushPersistor: jest.fn()}));
 jest.mock('../backup/fs-backup', () => ({

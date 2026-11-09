@@ -298,9 +298,6 @@ export const removePendingJoinerSession = () => ({
   type: WalletActionTypes.REMOVE_PENDING_JOINER_SESSION,
 });
 
-// RN-3086 / IS-1572: drop the ceremony-only secrets (the spending password used to
-// encrypt the TSS key, and the duplicate party seed) from completed TSS sessions.
-// Also a filesystem-backup trigger, so the on-disk backup stops carrying them.
 export const clearTssSessionSecrets = (keyIds: string[]): WalletActionType => ({
   type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
   payload: {keyIds},

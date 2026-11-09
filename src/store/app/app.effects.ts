@@ -61,10 +61,7 @@ import {
   startGetRates,
 } from '../wallet/effects';
 import {startWalletStoreInit} from '../wallet/effects/init/init';
-import {
-  migrateWalletSecrets,
-  scrubCompletedTssSessionSecrets,
-} from '../wallet-secrets/wallet-secrets.effects';
+import {migrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
 import {flushPersistor} from '../persistor';
 import {
   removePersistRootBackups,
@@ -276,7 +273,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       ),
     );
     perfMark('bp_wallet_secrets_done');
-    dispatch(scrubCompletedTssSessionSecrets());
 
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());
