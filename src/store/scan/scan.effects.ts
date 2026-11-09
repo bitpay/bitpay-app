@@ -2547,10 +2547,6 @@ const handleSardineUri =
       return;
     }
 
-    // SECURITY (RN-3084 / IS-1570): only act on a return URL for an order this device
-    // actually created. Without this, a crafted Sardine deep link could forge a
-    // "completed" purchase record (arbitrary address/amount) in the user's history from
-    // URL parameters alone. Mirror the Moonpay-sell guard — if we didn't create it, drop it.
     const {BUY_CRYPTO} = getState();
     const existingSardineOrder = BUY_CRYPTO.sardine?.[sardineExternalId];
     if (!existingSardineOrder) {
@@ -2563,10 +2559,7 @@ const handleSardineUri =
     const order_id = getParameterByName('order_id', res);
     const status = getParameterByName('status', res);
 
-    // Everything except the provider status and order id comes from the order this
-    // device created at checkout (BuyAndSellRoot continueToSardine), so a tampered
-    // redirect can't rewrite the address, amounts, coin/chain or payment method the
-    // user sees, nor feed them to analytics. (RN-3084 / IS-1570)
+    // Only the provider status and order id come from the URL
     const newData: SardinePaymentData = {
       ...existingSardineOrder,
       order_id: order_id ?? existingSardineOrder.order_id,

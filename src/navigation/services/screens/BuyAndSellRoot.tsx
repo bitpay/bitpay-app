@@ -3197,9 +3197,6 @@ const BuyAndSellRoot = ({
       }),
     );
 
-    // The return handler only trusts orders created on this device (RN-3084 /
-    // IS-1570), so the order's financial details live in the local record saved below
-    // rather than in the redirect URL.
     const redirectUrl =
       APP_DEEPLINK_PREFIX +
       'sardine?sardineExternalId=' +
@@ -3249,8 +3246,8 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    // Save the order before checkout, as the other providers do. The Sardine return
-    // handler ignores redirects for orders it can't find locally (RN-3084 / IS-1570).
+    // Saved before checkout, as the other providers do; the return URL only
+    // updates an order saved here
     const sardinePaymentData: SardinePaymentData = {
       address,
       chain: destinationChain,

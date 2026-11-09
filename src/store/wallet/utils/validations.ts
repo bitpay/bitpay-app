@@ -143,9 +143,6 @@ export const isValidRampUri = (data: string): boolean => {
 
 export const isValidSardineUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  // Require the externalId parameter rather than just the substring "sardine": the
-  // handler can only act on a return URL that references a locally-created order, so a
-  // bare "sardine"-containing string should not be routed as a Sardine redirect. (RN-3084)
   return !!data && /sardineExternalId=/i.test(data);
 };
 

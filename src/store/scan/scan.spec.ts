@@ -1906,7 +1906,7 @@ describe('incomingData', () => {
     expect(navigationResetSpy).not.toHaveBeenCalled();
   });
 
-  describe('Sardine return URL (RN-3084 / IS-1570)', () => {
+  describe('Sardine return URL', () => {
     const localOrder = {
       address: 'local-address',
       chain: 'eth',
