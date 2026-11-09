@@ -22,7 +22,6 @@ export type ContactsGroupParamList = {
     | {
         contact?: Partial<ContactRowProps>;
         context?: string;
-        onEditComplete?: (contact: ContactRowProps) => void;
       }
     | undefined;
 };
