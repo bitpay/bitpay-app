@@ -409,6 +409,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
   const isListView = layout === 'listView';
+  const backupPending = needsBackup && !pendingTssSession;
+  const cardAccessibilityLabel = backupPending
+    ? `${t('{{key}} wallet', {key: keyName})}, ${t('Needs Backup')}`
+    : t('{{key}} wallet', {key: keyName});
   const SupportedNetworkIcons = (
     <HeaderImg>
       {walletInfo.map((wallet, index) => {
@@ -439,7 +443,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       <ListWalletCard
         activeOpacity={ActiveOpacity}
         testID={`wallet-card-${keyName}`}
-        accessibilityLabel={t('{{key}} wallet', {key: keyName})}
+        accessibilityLabel={cardAccessibilityLabel}
         onPressIn={onPressIn}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
@@ -519,6 +523,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         isMultisig,
       }}
       footer={CardFooter}
+      testID={`wallet-card-${keyName}`}
+      accessibilityLabel={cardAccessibilityLabel}
       onCTAPressIn={onPressIn}
       onCTAPress={onPress}
     />
