@@ -24,6 +24,9 @@ const ALIASES = {
     __dirname,
     'node_modules/bitauth/lib/bitauth-node.js',
   ),
+  // i18next's ESM and CJS builds each create their own instance; pin one so
+  // every import gets the instance that i18n.js initializes.
+  i18next: path.resolve(__dirname, 'node_modules/i18next/dist/cjs/i18next.js'),
 };
 
 /**

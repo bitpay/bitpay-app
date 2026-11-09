@@ -31,6 +31,7 @@ const getSession = (kind: string, id: string) => {
       publicKey: null,
       signature: null,
       secret: null,
+      secrets: {},
     });
   }
   return state.sessions.get(sessionKey);
@@ -93,8 +94,18 @@ const routes: Array<
   [
     'post',
     /^\/v1\/tss\/keygen\/([^/]+)\/secret$/,
-    ([, id], {secret}) => {
-      getSession('keygen', id).secret = secret;
+    ([, id], {secret, secrets, chain, network}) => {
+      const session = getSession('keygen', id);
+      if (secret) {
+        session.secret = secret;
+      } else {
+        session.secrets[`${chain}:${network}`] = Object.fromEntries(
+          Object.entries(secrets).map(([party, ciphertext]) => [
+            /^\d+$/.test(party) ? Number(party) : session.partyByCopayer[party],
+            ciphertext,
+          ]),
+        );
+      }
       return {};
     },
   ],
@@ -102,8 +113,16 @@ const routes: Array<
   [
     'get',
     /^\/v1\/tss\/keygen\/([^/]+)\/secret$/,
-    ([, id]) => {
-      const {secret} = getSession('keygen', id);
+    ([, id], _body, copayerId, query) => {
+      const session = getSession('keygen', id);
+      const chain = query.get('chain');
+      const network = query.get('network');
+      const secret =
+        chain === null && network === null
+          ? session.secret
+          : session.secrets[`${chain}:${network}`]?.[
+              session.partyByCopayer[copayerId]
+            ];
       if (!secret) {
         throw bwsError('TSS_BWS_JOIN_SECRET_NOT_FOUND');
       }
@@ -155,8 +174,8 @@ const routes: Array<
       state.wallets.set(id, {
         id,
         name: body.name,
-        m: body.m,
-        n: body.n,
+        m: body.tssKeyId ? 1 : body.m,
+        n: body.tssKeyId ? 1 : body.n,
         coin: body.coin,
         chain: body.chain,
         network: body.network,
@@ -175,13 +194,24 @@ const routes: Array<
   [
     'post',
     /^\/v2\/wallets\/([^/]+)\/copayers$/,
-    ([, walletId], body, copayerId) => {
+    ([, walletId], body) => {
       const wallet = state.wallets.get(walletId);
       if (!wallet) {
         throw bwsError('WALLET_NOT_FOUND');
       }
+      const copayerId = Utils.xPubToCopayerId(wallet.chain, body.xPubKey);
       if (wallet.copayers.some((c: any) => c.id === copayerId)) {
-        throw bwsError('COPAYER_REGISTERED', 'Copayer ID already registered');
+        throw bwsError('COPAYER_IN_WALLET', 'Copayer already in wallet');
+      }
+      if (
+        [...state.wallets.values()].some(w =>
+          w.copayers.some((c: any) => c.id === copayerId),
+        )
+      ) {
+        throw bwsError(
+          'COPAYER_REGISTERED',
+          'Copayer ID already registered on server',
+        );
       }
       wallet.copayers.push({
         id: copayerId,
@@ -217,6 +247,12 @@ const routes: Array<
     /^\/v4\/addresses\/$/,
     (_match, _body, copayerId) => {
       const wallet = walletOf(copayerId);
+      if (
+        Constants.EVM_CHAINS.includes(wallet.chain) &&
+        wallet.addresses.length
+      ) {
+        return wallet.addresses[0];
+      }
       const path = `m/0/${wallet.addresses.length}`;
       const address = {
         ...deriveWalletAddress(wallet, path),
