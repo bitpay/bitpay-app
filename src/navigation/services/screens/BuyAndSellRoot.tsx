@@ -207,6 +207,7 @@ import {MoonpayClientCredentials} from '../utils/moonpayFrameCrypto';
 import {
   getPayoutMethodKeyFromRampType,
   getRampSellCoinFormat,
+  getRampCheckoutHost,
   getRampSellCurrenciesFixedProps,
   rampSellEnv,
 } from '../sell-crypto/utils/ramp-sell-utils';
@@ -3876,26 +3877,10 @@ const BuyAndSellRoot = ({
       logger.error('handleRampCheckoutMessage: offer is undefined');
       return;
     }
-    // SECURITY (RN-2965 / CertiK BIP-29): the message payload below is fully
-    // attacker-controllable unless we confirm it actually came from Ramp. A page loaded
-    // inside the webview could otherwise forge a SELL_CRYPTO / SEND_CRYPTO event and
-    // redirect the user's crypto to an address of its choosing. Reject any message whose
-    // origin is not a ramp.network host.
-    const rampMessageUrl = event?.nativeEvent?.url;
-    try {
-      if (
-        !rampMessageUrl ||
-        !/(^|\.)ramp\.network$/i.test(new URL(rampMessageUrl).hostname)
-      ) {
-        logger.warn(
-          'handleRampCheckoutMessage: rejected message from untrusted origin: ' +
-            rampMessageUrl,
-        );
-        return;
-      }
-    } catch {
+    // Only act on messages sent by a Ramp frame
+    if (!getRampCheckoutHost(event?.nativeEvent?.url)) {
       logger.warn(
-        'handleRampCheckoutMessage: could not parse message origin, rejecting',
+        'handleRampCheckoutMessage: ignored message from non-Ramp frame',
       );
       return;
     }
