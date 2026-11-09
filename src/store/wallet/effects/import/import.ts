@@ -1079,13 +1079,15 @@ export const startImportWithDerivationPath =
         const {words, xPrivKey} = importData;
         opts.mnemonic = words;
         opts.extendedPrivateKey = xPrivKey;
-        const showOpts = Object.assign({}, opts);
-        if (showOpts.extendedPrivateKey) {
-          showOpts.extendedPrivateKey = '[hidden]';
-        }
-        if (showOpts.mnemonic) {
-          showOpts.mnemonic = '[hidden]';
-        }
+        const {coin, chain, networkName, derivationStrategy, account, n} = opts;
+        const showOpts = {
+          coin,
+          chain,
+          networkName,
+          derivationStrategy,
+          account,
+          n,
+        };
         logManager.info(
           `Importing Wallet with derivation path: ${JSON.stringify(showOpts)}`,
         );

@@ -52,7 +52,14 @@ export class BwcProvider {
   }
 
   public createKey(opts: KeyOptions) {
-    return new BWC.Key(opts);
+    try {
+      return new BWC.Key(opts);
+    } catch (err) {
+      if (opts.seedType === 'mnemonic') {
+        throw new Error('INVALID_BACKUP');
+      }
+      throw err;
+    }
   }
 
   public getTssKey() {

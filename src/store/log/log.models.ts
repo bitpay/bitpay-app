@@ -23,8 +23,18 @@ export interface LogEntry {
   message: string;
 }
 
+export const redactExtendedPrivateKeys = (message: string) =>
+  message.replace(/[xt]prv[1-9A-HJ-NP-Za-km-z]+/g, '[...]');
+
 export const sanitizeLogMessage = (message: string) =>
-  message
-    .replace(/xpriv.*/gi, '[...]')
-    .replace(/[xt]prv[1-9A-HJ-NP-Za-km-z]+/g, '[...]')
-    .replace(/walletPrivKey.*/gi, 'walletPrivKey:[...]');
+  redactExtendedPrivateKeys(message.replace(/xpriv.*/gi, '[...]')).replace(
+    /walletPrivKey.*/gi,
+    'walletPrivKey:[...]',
+  );
+
+export const sanitizeLogEntries = (entries: LogEntry[]): LogEntry[] =>
+  entries.map(entry =>
+    typeof entry?.message === 'string'
+      ? {...entry, message: sanitizeLogMessage(entry.message)}
+      : entry,
+  );

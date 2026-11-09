@@ -99,9 +99,6 @@ class LogManager {
       }
     }
 
-    // Redact key material once, at the entry point. Both the Sentry breadcrumb and the
-    // in-memory session log (which the Session Log screen exports) are fed from here,
-    // and neither passes through the LOG reducer that sanitizes persisted entries.
     const message = sanitizeLogMessage(messages.join(' '));
     const breadcrumbMessage =
       sentryMessage !== undefined ? sanitizeLogMessage(sentryMessage) : message;

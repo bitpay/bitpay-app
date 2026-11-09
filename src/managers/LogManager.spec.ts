@@ -79,27 +79,56 @@ describe('LogManager', () => {
     });
     expect(logManager.getLogs()).toEqual([]);
   });
-  it('redacts key material before it reaches the session log or Sentry', () => {
+
+  it.each([
+    [
+      'walletPrivKey',
+      'failed with walletPrivKey: deadbeef01',
+      'failed with walletPrivKey:[...]',
+    ],
+    [
+      'xprv',
+      'failed with xprv9s21ZrQH143K3QTDL4LXw2F7HEK3 here',
+      'failed with [...] here',
+    ],
+    [
+      'tprv',
+      'failed with tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSbrd here',
+      'failed with [...] here',
+    ],
+  ])(
+    'redacts a %s value in the session log and Sentry breadcrumb',
+    (_kind, input, expected) => {
+      const {logManager} = require('./LogManager');
+
+      logManager.error(input);
+
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: 'log',
+        message: expected,
+        level: 'error',
+      });
+      expect(logManager.getLogs()).toEqual([
+        expect.objectContaining({message: expected}),
+      ]);
+    },
+  );
+
+  it('redacts key material in a custom Sentry breadcrumb message', () => {
     const {logManager} = require('./LogManager');
 
-    logManager.error(
-      'failed with walletPrivKey: deadbeef01 and xprv9s21ZrQH143K3QTDL4LXw2F7HEK3',
-    );
     logManager.warnWithSentryMessage(
       'local walletPrivKey=cafebabe',
-      'sentry tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSbrd',
+      'sentry tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSbrd here',
     );
 
-    const stored = logManager
-      .getLogs()
-      .map((l: {message: string}) => l.message)
-      .join(' ');
-    expect(stored).not.toMatch(/deadbeef01|xprv9s21|cafebabe/);
-    expect(stored).toContain('walletPrivKey:[...]');
-
-    const crumbs = (Sentry.addBreadcrumb as jest.Mock).mock.calls
-      .map(([c]) => c.message)
-      .join(' ');
-    expect(crumbs).not.toMatch(/deadbeef01|xprv9s21|tprv8Zgx/);
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'log',
+      message: 'sentry [...] here',
+      level: 'warning',
+    });
+    expect(logManager.getLogs()).toEqual([
+      expect.objectContaining({message: 'local walletPrivKey:[...]'}),
+    ]);
   });
 });

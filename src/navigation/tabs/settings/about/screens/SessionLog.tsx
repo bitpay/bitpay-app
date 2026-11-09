@@ -33,7 +33,7 @@ import {APP_NAME_UPPERCASE, APP_VERSION} from '../../../../../constants/config';
 import {
   LogEntry,
   LogLevel,
-  sanitizeLogMessage,
+  sanitizeLogEntries,
 } from '../../../../../store/log/log.models';
 import {
   Action,
@@ -500,15 +500,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
     try {
       const parsedLogs = JSON.parse(value);
       if (Array.isArray(parsedLogs)) {
-        // Entries written by older builds went through a sanitizer whose patterns never
-        // matched, so redact again on read before they are shown or exported.
-        setPersistedLogs(
-          parsedLogs.map((log: LogEntry) =>
-            typeof log?.message === 'string'
-              ? {...log, message: sanitizeLogMessage(log.message)}
-              : log,
-          ),
-        );
+        setPersistedLogs(sanitizeLogEntries(parsedLogs));
       }
     } catch (err) {
       const errorMessage =
