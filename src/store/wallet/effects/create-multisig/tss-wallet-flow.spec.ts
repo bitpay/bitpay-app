@@ -42,6 +42,7 @@ const {
   createTSSChainWallets,
   joinTSSWithCode,
   cancelTSSCeremony,
+  tssChainWalletsConfig,
 } = require('./create-multisig');
 const {createWalletAddress} = require('../address/address');
 const {createTxProposal, publishTx} = require('../send/send');
@@ -53,6 +54,9 @@ const {
 const {BwcProvider} = require('../../../../lib/bwc');
 
 jest.setTimeout(120000);
+// CI runs this spec while other workers saturate the CPU; the default 20s
+// sibling-wallet deadline then expires and only the primary wallet is saved.
+tssChainWalletsConfig.timeoutMs = 90_000;
 
 const RECIPIENT = '0x000000000000000000000000000000000000dEaD';
 
