@@ -172,8 +172,8 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91212452
-        versionName "14.48.0"
+        versionCode 91212453
+        versionName "14.48.1"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
         // A perf build allows screenshots (no FLAG_SECURE) and is profileable, so
         // it must never be signed with the Play upload key: refuse the build if
