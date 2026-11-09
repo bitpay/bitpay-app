@@ -2319,6 +2319,5 @@
   "Some assets not charted": "Alguns ativos não estão no gráfico",
   "Not all assets are charted": "Nem todos os ativos estão no gráfico",
   "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "O gráfico e a sua variação ainda não incluem estes ativos, porque não foi possível reconstruir o histórico deles. O seu saldo do portefólio continua a incluí-los.",
-  "Unrecognized payment request": "Solicitação de pagamento não reconhecida",
   "This payment request does not come from BitPay and was blocked for your protection.": "Esta solicitação de pagamento não vem da BitPay e foi bloqueada para sua proteção."
 }

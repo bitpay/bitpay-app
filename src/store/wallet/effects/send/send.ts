@@ -63,12 +63,7 @@ import {
   getErrorName,
 } from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
-import {
-  assertTxpPayProUrlTrusted,
-  GetPayProDetails,
-  HandlePayPro,
-  PayProOptions,
-} from '../paypro/paypro';
+import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
   checkingBiometricForSending,
   dismissBottomNotificationModal,
@@ -1850,8 +1845,6 @@ export const signTx = (
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
-      // RN-3074 / IS-1457: BWC contacts txp.payProUrl itself while pushing signatures.
-      assertTxpPayProUrlTrusted(txp);
       const rootPath = wallet.getRootPath();
       const signatures = await key.methods?.sign(rootPath, txp, password);
 
@@ -1877,12 +1870,6 @@ export const broadcastTx = (
   txp: TransactionProposal,
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
-    try {
-      // RN-3074 / IS-1457: BWC posts the payment to txp.payProUrl itself on broadcast.
-      assertTxpPayProUrlTrusted(txp);
-    } catch (err) {
-      return reject(err);
-    }
     wallet.broadcastTxProposal(txp, (err: Error, broadcastedTxp: any) => {
       if (err) {
         return reject(err);

@@ -2320,6 +2320,5 @@
   "Some assets not charted": "Некоторые активы не отображены на графике",
   "Not all assets are charted": "Не все активы отображены на графике",
   "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "График и его изменение пока не учитывают эти активы, так как их историю не удалось восстановить. Баланс портфеля по-прежнему их включает.",
-  "Unrecognized payment request": "Нераспознанный запрос на оплату",
   "This payment request does not come from BitPay and was blocked for your protection.": "Этот запрос на оплату поступил не от BitPay и был заблокирован для вашей защиты."
 }

@@ -3,32 +3,74 @@ import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Effect} from '../../..';
 import {logManager} from '../../../../managers/LogManager';
-import {isTrustedBitPayPayProUrl} from '../../utils/decode-uri';
+import {t} from 'i18next';
+import {BASE_BITPAY_URLS} from '../../../../constants/config';
+import {Network} from '../../../../constants';
 
 const BWC = BwcProvider.getInstance();
 
-// SECURITY (RN-3074 / IS-1457): paymentUrl is attacker-controllable (scanned data, deep
-// links, pasted invoice URIs). Both PayPro fetches below hit this host and present the
-// result as a BitPay invoice, so enforce the BitPay-host allowlist centrally here — the
-// app's own PayPro fetches (scan, SendTo, HandlePayPro, WalletConnect) funnel through
-// these two effects, which closes the SendTo.tsx path the per-screen guards missed.
-// BWC also contacts txp.payProUrl by itself when signing and broadcasting a proposal
-// (pushSignatures / broadcastTxProposal -> getPayProV2), so those paths are guarded
-// separately with assertTxpPayProUrlTrusted.
-const assertTrustedPayProUrl = (paymentUrl: string): void => {
-  if (!isTrustedBitPayPayProUrl(paymentUrl)) {
-    logManager.warn(`Blocked PayPro request to untrusted host: ${paymentUrl}`);
-    throw new Error('Unrecognized payment request: untrusted PayPro host');
+// BWC only accepts a payment request signed by a trusted key for the request's
+// domain, so a request to any other host can never succeed. Refuse it before
+// contacting the host at all.
+const getTrustedPayProDomains = (): string[] =>
+  Object.values(BWC.getPayProV2().trustedKeys || {}).flatMap(
+    (key: {domains?: string[]}) => key?.domains || [],
+  );
+
+const isRegtestBitPayOrigin = (protocol: string, host: string): boolean => {
+  const base = BASE_BITPAY_URLS[Network.regtest];
+  if (!base) {
+    return false;
+  }
+  try {
+    const url = new URL(base);
+    return url.protocol === protocol && url.hostname.toLowerCase() === host;
+  } catch {
+    return false;
   }
 };
 
-// A proposal's payProUrl is set by whichever copayer created it. Refuse to sign or
-// broadcast one that points anywhere but BitPay, since BWC would contact it directly.
-export const assertTxpPayProUrlTrusted = (txp: {payProUrl?: string}): void => {
-  if (txp?.payProUrl) {
-    assertTrustedPayProUrl(txp.payProUrl);
+const getPayProUrlHost = (paymentUrl: string): string | undefined => {
+  // URL parsers disagree on backslashes, whitespace and control characters (the
+  // RN polyfill reads 'https://bitpay.com\@evil.com' as bitpay.com, BWC's url
+  // module as evil.com), so refuse them outright, along with userinfo.
+  if (
+    typeof paymentUrl !== 'string' ||
+    // eslint-disable-next-line no-control-regex
+    /[\\\s\u0000-\u001f\u007f]/.test(paymentUrl)
+  ) {
+    return undefined;
+  }
+  try {
+    const {protocol, username, password, hostname} = new URL(paymentUrl);
+    const host = hostname.toLowerCase();
+    if (username || password) {
+      return undefined;
+    }
+    // A local regtest BitPay (REGTEST_BASE_BITPAY_URL) may be served over http
+    if (protocol !== 'https:' && !isRegtestBitPayOrigin(protocol, host)) {
+      return undefined;
+    }
+    return host;
+  } catch {
+    return undefined;
   }
 };
+
+const assertTrustedPayProUrl = (paymentUrl: string): void => {
+  const host = getPayProUrlHost(paymentUrl);
+  if (!host || !getTrustedPayProDomains().includes(host)) {
+    logManager.warn(
+      `PayPro: refused request to untrusted host: ${host || 'invalid URL'}`,
+    );
+    throw new Error(
+      t(
+        'This payment request does not come from BitPay and was blocked for your protection.',
+      ),
+    );
+  }
+};
+
 export interface PayProPaymentOption {
   chain: string;
   currency: string;

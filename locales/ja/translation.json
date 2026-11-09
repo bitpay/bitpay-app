@@ -2290,6 +2290,5 @@
   "Some assets not charted": "一部の資産はチャートに含まれていません",
   "Not all assets are charted": "すべての資産がチャートに含まれているわけではありません",
   "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "これらの資産は履歴を再構築できなかったため、チャートとその変動にはまだ含まれていません。ポートフォリオ残高には引き続き含まれています。",
-  "Unrecognized payment request": "認識できない支払いリクエスト",
   "This payment request does not come from BitPay and was blocked for your protection.": "この支払いリクエストはBitPayからのものではないため、保護のためにブロックされました。"
 }

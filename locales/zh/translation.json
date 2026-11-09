@@ -2290,6 +2290,5 @@
   "Some assets not charted": "部分资产未显示在图表中",
   "Not all assets are charted": "并非所有资产都显示在图表中",
   "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "由于无法重建这些资产的历史记录，图表及其变化暂未包含这些资产。您的投资组合余额仍包含它们。",
-  "Unrecognized payment request": "无法识别的付款请求",
   "This payment request does not come from BitPay and was blocked for your protection.": "此付款请求并非来自 BitPay，为保护您的安全已被阻止。"
 }

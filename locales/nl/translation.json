@@ -2309,6 +2309,5 @@
   "Some assets not charted": "Sommige assets niet in de grafiek",
   "Not all assets are charted": "Niet alle assets staan in de grafiek",
   "The chart and its change don't include these assets yet, because their history couldn't be rebuilt. Your Portfolio Balance still includes them.": "De grafiek en de verandering ervan bevatten deze assets nog niet, omdat hun geschiedenis niet kon worden hersteld. Je walletsaldo bevat ze nog steeds.",
-  "Unrecognized payment request": "Onbekend betalingsverzoek",
   "This payment request does not come from BitPay and was blocked for your protection.": "Dit betalingsverzoek komt niet van BitPay en is voor uw bescherming geblokkeerd."
 }
