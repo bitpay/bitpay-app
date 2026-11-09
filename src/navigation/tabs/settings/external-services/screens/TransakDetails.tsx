@@ -119,10 +119,18 @@ const TransakDetails: React.FC = () => {
     const walletIsSupported = (wallet: Wallet): boolean =>
       !!(wallet.credentials && wallet.isComplete());
 
-    const selectedWallet = Object.values(allKeys)
-      .filter(key => key.backupComplete)
-      .flatMap(key => key.wallets ?? [])
-      .find(walletIsSupported);
+    // BWS only returns an order to the wallet that bought it (saved as user_id).
+    const selectedWallet =
+      Object.values(allKeys)
+        .flatMap(key => key.wallets ?? [])
+        .find(
+          wallet =>
+            wallet.id === paymentRequest.user_id && walletIsSupported(wallet),
+        ) ??
+      Object.values(allKeys)
+        .filter(key => key.backupComplete)
+        .flatMap(key => key.wallets ?? [])
+        .find(walletIsSupported);
 
     if (!selectedWallet) {
       logger.error('No supported wallet found for Transak order details');
