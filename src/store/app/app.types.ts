@@ -295,8 +295,6 @@ interface PinBannedUntil {
   type: typeof AppActionTypes.PIN_BANNED_UNTIL;
   payload: number | undefined;
 }
-// RN-3033/RN-3082: cumulative wrong-PIN attempts, persisted so the lockout
-// survives an app relaunch and can escalate across a brute-force session.
 interface PinFailedAttempts {
   type: typeof AppActionTypes.PIN_FAILED_ATTEMPTS;
   payload: number;

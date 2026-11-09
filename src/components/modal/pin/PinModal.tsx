@@ -118,22 +118,13 @@ const Pin = gestureHandlerRootHOC(
     const currentPin = useAppSelector(({APP}) => APP.currentPin);
     const currentSalt = useAppSelector(({APP}) => APP.currentSalt);
     const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
-    // RN-3033/RN-3082: read the persisted cumulative wrong-attempt counter rather
-    // than an in-memory useState, so the lockout survives an app relaunch and can
-    // escalate across a brute-force session.
     const attempts = useAppSelector(({APP}) => APP.pinFailedAttempts);
 
     const reset = useCallback(() => {
       setMessage(t('Please enter your PIN'));
       setPinStatus({pin: [], firstPinEntered: []});
-      // NOTE: do NOT reset the wrong-attempt counter here. 'reset' is emitted by a
-      // long-press on the delete key (VirtualKeyboard) and is meant only to clear the
-      // digits currently typed. Zeroing attempts here let an attacker defeat the lockout
-      // entirely: two wrong tries, long-press delete, repeat — the 3-try ban never fires.
     }, [setMessage, setPinStatus, t]);
 
-    // Blocks keypad input and re-entry while a PIN check is awaiting the native timer,
-    // so a second PIN can't be checked against a stale wrong-attempt count.
     const checkInFlightRef = useRef(false);
 
     const checkPin = useCallback(
@@ -153,40 +144,16 @@ const Pin = gestureHandlerRootHOC(
             setShakeDots(true);
             setMessage(t('Incorrect PIN, try again'));
             setPinStatus({pin: [], firstPinEntered: []});
-            // RN-3033/RN-3082: persist the wrong-attempt increment so it survives
-            // relaunch and keeps growing across a brute-force session. A ban is due on
-            // every multiple of ATTEMPT_LIMIT (3, 6, 9...) and escalates; it is issued
-            // here, in the same synchronous step as the increment, so both reach
-            // persisted state together. Issuing it later (e.g. from an effect after an
-            // async native call) left a window where killing the app persisted the
-            // count without the ban, and the ban was then skipped for good.
             const nextAttempts = attempts + 1;
-            let bannedUntil: number | undefined;
-            if (nextAttempts % PIN_CONFIG.ATTEMPT_LIMIT === 0) {
-              try {
-                const timeSinceBoot =
-                  await NativeModules.Timer.getRelativeTime();
-                bannedUntil =
-                  Number(timeSinceBoot) + getPinLockoutSeconds(nextAttempts);
-              } catch (err) {
-                // Fail closed: if the ban can't be timed, store a placeholder deadline
-                // the countdown clamps to a real one once the timer answers again.
-                bannedUntil = Number.MAX_SAFE_INTEGER;
-                logger.error(
-                  `checkPin lockout error: ${
-                    err instanceof Error ? err.message : JSON.stringify(err)
-                  }`,
-                );
-              }
-            }
             dispatch(AppActions.pinFailedAttempts(nextAttempts));
-            if (bannedUntil !== undefined) {
-              dispatch(AppActions.pinBannedUntil(bannedUntil));
+            if (nextAttempts % PIN_CONFIG.ATTEMPT_LIMIT === 0) {
+              // Placeholder deadline; the countdown clamps it to now + lockout.
+              dispatch(AppActions.pinBannedUntil(Number.MAX_SAFE_INTEGER));
             }
             return;
           }
 
-          // Correct PIN - genuine unlock, reset the cumulative wrong-attempt counter.
+          // Correct PIN
           dispatch(AppActions.pinFailedAttempts(0));
           if (result.needsMigration) {
             // Legacy user - save the new salt and hash
@@ -270,7 +237,7 @@ const Pin = gestureHandlerRootHOC(
     const handleCellPress = useCallback(
       (value: string) => {
         if (pinBannedUntil || checkInFlightRef.current) {
-          // banned (or a check is still in flight): wait before accepting input
+          // banned wait for entering new pin
           return;
         }
         setMessageError(null);
@@ -334,10 +301,6 @@ const Pin = gestureHandlerRootHOC(
     const attemptsRef = useRef(attempts);
     attemptsRef.current = attempts;
 
-    // Single owner of the ban countdown. Every tick re-reads device uptime instead of
-    // counting interval ticks: JS timers are paused while the app is backgrounded, so a
-    // tick counter froze the countdown and a 5m/1h ban only expired after that much
-    // continuous foreground time. Uptime keeps running through sleep on both platforms.
     useEffect(() => {
       if (!pinBannedUntil) {
         return;
@@ -349,7 +312,7 @@ const Pin = gestureHandlerRootHOC(
       const tick = async () => {
         try {
           const now = Number(await NativeModules.Timer.getRelativeTime());
-          if (cancelled) {
+          if (cancelled || !Number.isFinite(now) || now < 0) {
             return;
           }
           const remaining = pinBannedUntil - now;
@@ -364,12 +327,7 @@ const Pin = gestureHandlerRootHOC(
             return;
           }
 
-          // Uptime restarts from zero after a reboot, so a ban stored against the old
-          // boot looks far longer than it is. Clamp to the length of the ban the current
-          // attempt count earns (not the 1h maximum) so a reboot neither shortens a ban
-          // nor turns a 1-minute ban into an hour.
-          // A ban stored by an older build (fixed 2-minute lockout) has no persisted
-          // attempt count; clamp it to that old length rather than the 1-minute step.
+          // Clamps the placeholder deadline and a deadline from before a reboot.
           const cap =
             attemptsRef.current > 0
               ? getPinLockoutSeconds(attemptsRef.current)

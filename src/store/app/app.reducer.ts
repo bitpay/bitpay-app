@@ -134,8 +134,6 @@ export interface AppState {
   currentPin: string | undefined;
   currentSalt: string | undefined;
   pinBannedUntil: number | undefined;
-  // RN-3033/RN-3082: cumulative wrong-PIN attempts. Persisted (intentionally NOT
-  // in appReduxPersistBlackList) so the lockout survives relaunch and escalates.
   pinFailedAttempts: number;
   showBlur: boolean;
   colorScheme: AppColorScheme;

@@ -17,8 +17,6 @@ describe('PIN_CONFIG', () => {
 });
 
 describe('getPinLockoutSeconds', () => {
-  // A ban is only issued when the cumulative count lands on a multiple of
-  // ATTEMPT_LIMIT, so the schedule is checked at those ban points.
   it('escalates per ban: 1m, then 5m, then 1h', () => {
     expect(getPinLockoutSeconds(3)).toBe(60);
     expect(getPinLockoutSeconds(6)).toBe(300);
