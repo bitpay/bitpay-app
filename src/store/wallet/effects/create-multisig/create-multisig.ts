@@ -511,6 +511,9 @@ export const addCoSignerToTSS =
 
 const activeChainWallets = new Map<string, Promise<Key | undefined>>();
 
+// Exposed so tests on slow/contended machines can extend the 20s default.
+export const tssChainWalletsConfig = {timeoutMs: 20_000};
+
 export const createTSSChainWallets =
   (keyId: string): Effect<Promise<Key | undefined>> =>
   (dispatch, getState) => {
@@ -548,7 +551,7 @@ export const createTSSChainWallets =
         return key;
       }
 
-      const deadline = Date.now() + 20_000;
+      const deadline = Date.now() + tssChainWalletsConfig.timeoutMs;
       const isCurrentKey = () =>
         getState().WALLET.keys[keyId]?.methods === tssKey;
       const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
