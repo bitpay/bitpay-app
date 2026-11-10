@@ -105,6 +105,38 @@ export function backupPersistRoot(rawJson: string): Promise<void> {
   return run;
 }
 
+// Removes .bak after any queued backup write. Resolves false when the caller
+// should try again later.
+export function discardRollingBackup(): Promise<boolean> {
+  if (backupsSuspended) {
+    return Promise.resolve(false);
+  }
+  const run = backupQueue.then(async () => {
+    // .bak may be the only backup left after a failed promotion
+    if (!(await RNFS.exists(FINAL_FILE))) {
+      return false;
+    }
+    if (await RNFS.exists(BACKUP_FILE)) {
+      await RNFS.unlink(BACKUP_FILE);
+    }
+    return true;
+  });
+  backupQueue = run.then(
+    () => {},
+    () => {},
+  );
+  return run.catch(err => {
+    initLogs.add(
+      LogActions.persistLog(
+        LogActions.error(
+          `Rolling backup discard failed - ${getErrorString(err)}`,
+        ),
+      ),
+    );
+    return false;
+  });
+}
+
 export function removePersistRootBackups(): Promise<void> {
   requireVaultActive();
   backupsSuspended = true;

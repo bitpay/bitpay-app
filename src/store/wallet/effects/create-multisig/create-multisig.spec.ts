@@ -331,6 +331,32 @@ const advanceAndFlush = async (ms: number, steps = 10) => {
   }
 };
 
+// The completed key is saved first, then its party key is cleared from the
+// session by CLEAR_TSS_SESSION_SECRETS, which also rewrites the fs backup.
+const expectPartyKeyClearedAfterCompletion = (
+  store: MockStore,
+  keyId: string,
+) => {
+  const actions = store.getActions();
+  const completedAt = actions.findIndex(
+    (a: any) =>
+      a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+      a.payload.key.id === keyId &&
+      a.payload.key.tssSession.status === 'complete',
+  );
+  const clears = actions.filter(
+    (a: any) => a.type === WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+  );
+  expect(completedAt).toBeGreaterThan(-1);
+  expect(clears).toEqual([
+    {
+      type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+      payload: {keyIds: [keyId]},
+    },
+  ]);
+  expect(actions.indexOf(clears[0])).toBeGreaterThan(completedAt);
+};
+
 // ─── encodeJoinerSessionId / decodeJoinerSessionId ─────────────────────────
 
 describe('encodeJoinerSessionId / decodeJoinerSessionId', () => {
@@ -402,11 +428,7 @@ describe('startCreateTSSKey', () => {
 
     const {key} = await store.dispatch(startCreateTSSKey(baseOpts));
 
-    expect(lastKeyGen.newKey).toHaveBeenCalledWith({
-      m: 2,
-      n: 3,
-      password: undefined,
-    });
+    expect(lastKeyGen.newKey).toHaveBeenCalledWith({m: 2, n: 3});
     expect(key.tssSession).toMatchObject({
       id: 'new-session-id',
       isCreator: true,
@@ -417,6 +439,16 @@ describe('startCreateTSSKey', () => {
       myName: 'Alice',
       walletName: 'Shared Wallet',
     });
+  });
+
+  it('never sets a session join password or stores one in the session', async () => {
+    const store = configureTestStore();
+    const {key} = await store.dispatch(
+      startCreateTSSKey({...baseOpts, password: 'source-key-password'} as any),
+    );
+
+    expect(lastKeyGen.newKey.mock.calls[0][0]).not.toHaveProperty('password');
+    expect(key.tssSession).not.toHaveProperty('password');
   });
 
   it('builds n-1 pending copayer placeholders', async () => {
@@ -1319,6 +1351,28 @@ describe('startTSSCeremony', () => {
     expect(finalKey.wallets[0].credentials.walletPrivKey).toBe(
       'recovered-wallet-private-key',
     );
+  });
+
+  it('clears the party key from the completed session', async () => {
+    const keyId = 'ceremony-clears-party-key';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    const finalKey = await resultPromise;
+
+    expectPartyKeyClearedAfterCompletion(store, finalKey.id);
   });
 
   it('creates the first address only after the refresh brings every co-signer into the publicKeyRing', async () => {
@@ -2230,6 +2284,7 @@ describe('joinTSSWithCode — fresh join', () => {
     );
     expect(finalKey.wallets[0].pendingTssSession).toBeUndefined();
     expect(finalKey.tssSession!.status).toBe('complete');
+    expectPartyKeyClearedAfterCompletion(store, finalKey.id);
   });
 
   it('does not restore a deleted joiner key while the first address is pending', async () => {

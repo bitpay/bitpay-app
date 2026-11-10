@@ -535,7 +535,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     try {
       let opts: Partial<KeyOptions> = {};
       if (key) {
-        if (key.isPrivKeyEncrypted) {
+        if (key.isPrivKeyEncrypted && !isTSS) {
           opts.password = await dispatch(getDecryptPassword(key));
         }
         showOngoingProcess('ADDING_WALLET');
@@ -579,7 +579,6 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           network: opts.networkName!,
           m: opts.m,
           n: opts.n,
-          password: opts.password,
           myName: opts.myName,
           walletName: opts.name,
         }),

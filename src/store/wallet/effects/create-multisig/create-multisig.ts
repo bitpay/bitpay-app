@@ -13,6 +13,7 @@ import {
   successUpdateKey,
   setPendingJoinerSession,
   removePendingJoinerSession,
+  clearTssSessionSecrets,
 } from '../../wallet.actions';
 import {
   JoinerSessionId,
@@ -284,22 +285,12 @@ export const startCreateTSSKey =
     network: string;
     m: number;
     n: number;
-    password?: string;
     myName: string;
     walletName: string;
   }): Effect<Promise<{key: Key}>> =>
   async (dispatch): Promise<{key: Key}> => {
     try {
-      const {
-        coin,
-        chain: _chain,
-        network,
-        m,
-        n,
-        password,
-        walletName,
-        myName,
-      } = opts;
+      const {coin, chain: _chain, network, m, n, walletName, myName} = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
       const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
@@ -319,7 +310,6 @@ export const startCreateTSSKey =
       await tssKeyGen.newKey({
         m: m,
         n: n,
-        password: password,
       });
 
       const sessionId = tssKeyGen.id;
@@ -387,7 +377,6 @@ export const startCreateTSSKey =
         network,
         m,
         n,
-        password,
         myName,
         walletName,
         createdAt: Date.now(),
@@ -1136,6 +1125,7 @@ export const startTSSCeremony =
         }
 
         dispatch(successUpdateKey({key: finalKey}));
+        dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(keyId, 'complete');
         activeCeremonies.delete(keyId);
         clearCeremonyStats(keyId);
@@ -1784,6 +1774,7 @@ export const joinTSSWithCode =
         };
 
         dispatch(successUpdateKey({key: finalKey}));
+        dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(finalKey.id, 'complete');
         activeCeremonies.delete(finalKey.id);
         clearCeremonyStats(finalKey.id);

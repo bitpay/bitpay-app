@@ -1279,6 +1279,42 @@ describe('REMOVE_PENDING_JOINER_SESSION', () => {
   });
 });
 
+describe('CLEAR_TSS_SESSION_SECRETS', () => {
+  const tssSession = {
+    id: 'session-1',
+    partyKey: {xPrivKey: 'party-xpriv'},
+    status: 'complete',
+    isCreator: true,
+  } as any;
+
+  it('drops partyKey from the listed keys and keeps the rest of the session', () => {
+    const base: WalletState = {
+      ...freshState(),
+      keys: {
+        'key-1': makeKey({id: 'key-1', tssSession}),
+        'key-2': makeKey({id: 'key-2', tssSession}),
+        'key-3': makeKey({id: 'key-3'}),
+      },
+    };
+    const state = walletReducer(base, {
+      type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+      payload: {keyIds: ['key-1', 'key-3']},
+    });
+
+    expect(state.keys['key-1'].tssSession).toEqual({
+      id: 'session-1',
+      status: 'complete',
+      isCreator: true,
+    });
+    expect(state.keys['key-2'].tssSession!.partyKey).toEqual({
+      xPrivKey: 'party-xpriv',
+    });
+    expect(state.keys['key-3'].tssSession).toBeUndefined();
+    // the input session object is not mutated
+    expect(tssSession.partyKey).toEqual({xPrivKey: 'party-xpriv'});
+  });
+});
+
 describe('SET_SHOW_TESTNET_WALLETS', () => {
   it('starts unset so existing users keep their current view', () => {
     expect(initialState.showTestnetWallets).toBeNull();

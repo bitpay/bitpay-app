@@ -141,6 +141,19 @@ export const walletSecretsReducer = (
     case WalletActionTypes.REMOVE_PENDING_JOINER_SESSION:
       return {...state, pendingJoinerSession: null};
 
+    case WalletActionTypes.CLEAR_TSS_SESSION_SECRETS: {
+      const tssSessionByKeyId = {...(state.tssSessionByKeyId || {})};
+      action.payload.keyIds.forEach(keyId => {
+        const session = tssSessionByKeyId[keyId];
+        if (session) {
+          const scrubbed = {...session};
+          delete scrubbed.partyKey;
+          tssSessionByKeyId[keyId] = scrubbed;
+        }
+      });
+      return {...state, tssSessionByKeyId};
+    }
+
     case WalletActionTypes.DELETE_KEY: {
       const {keyId} = action.payload;
       const byKeyId = {...state.byKeyId};

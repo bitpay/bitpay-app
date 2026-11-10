@@ -601,7 +601,6 @@ export interface TssSessionData {
   network: string;
   m: number;
   n: number;
-  password?: string;
   myName: string;
   walletName?: string;
   createdAt: number;

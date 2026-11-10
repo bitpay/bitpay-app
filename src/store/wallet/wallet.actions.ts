@@ -298,6 +298,11 @@ export const removePendingJoinerSession = () => ({
   type: WalletActionTypes.REMOVE_PENDING_JOINER_SESSION,
 });
 
+export const clearTssSessionSecrets = (keyIds: string[]): WalletActionType => ({
+  type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+  payload: {keyIds},
+});
+
 export const setShowTestnetWallets = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_SHOW_TESTNET_WALLETS,
   payload,
