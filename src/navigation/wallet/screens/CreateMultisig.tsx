@@ -1,5 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '../../../contexts';
 import {
@@ -216,7 +220,11 @@ const styles = StyleSheet.create({
 export const MultisigContainer: React.FC<
   React.ComponentProps<typeof SafeAreaView>
 > = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.multisigContainer, style]} {...rest} />
+  <SafeAreaView
+    style={[styles.multisigContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
 );
 
 const ScrollViewContainer: React.FC<

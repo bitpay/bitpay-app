@@ -1,5 +1,6 @@
 import React, {useCallback} from 'react';
-import {FlatList, SafeAreaView, StyleSheet, View} from 'react-native';
+import {FlatList, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useAppSelector} from '../../../utils/hooks';
 import {Key} from '../../../store/wallet/wallet.models';
 import KeyGlobalSelectRow from '../../../components/list/KeyGlobalSelectRow';

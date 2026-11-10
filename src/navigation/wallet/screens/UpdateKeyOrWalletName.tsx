@@ -1,7 +1,8 @@
 import React, {useLayoutEffect} from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList} from '../WalletGroup';
 import BoxInput from '../../../components/form/BoxInput';

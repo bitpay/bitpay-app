@@ -1,5 +1,6 @@
 import React, {useCallback} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {

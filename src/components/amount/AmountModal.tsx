@@ -1,7 +1,8 @@
 import {useTheme} from '../../contexts';
 import React from 'react';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../safe-area/SafeAreaView';
 import CloseModal from '../../../assets/img/close-modal-icon.svg';
 import Button from '../../components/button/Button';
 import {BaseText} from '../../components/styled/Text';

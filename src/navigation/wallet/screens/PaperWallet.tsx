@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';

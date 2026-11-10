@@ -3,10 +3,13 @@ import {
   ActivityIndicator,
   ScrollView,
   View,
-  SafeAreaView,
   StyleSheet,
   ViewProps,
 } from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../../components/safe-area/SafeAreaView';
 import {findTokenByCoinAndChain} from '../../utils/token-lookup';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme as useStyledTheme} from '../../../../contexts';
@@ -322,7 +325,11 @@ const styles = StyleSheet.create({
 });
 
 const SwapCryptoContainer: React.FC<ViewProps> = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.swapCryptoContainer, style]} {...rest} />
+  <SafeAreaView
+    style={[styles.swapCryptoContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
 );
 
 const GlobalSelectContainer: React.FC<ViewProps> = ({style, ...rest}) => {

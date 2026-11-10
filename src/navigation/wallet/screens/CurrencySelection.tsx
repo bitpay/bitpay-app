@@ -16,13 +16,11 @@ import CurrencySelectionRow, {
   CurrencySelectionRowProps,
 } from '../../../components/list/CurrencySelectionRow';
 import Button from '../../../components/button/Button';
+import {FlatList, ListRenderItem, StyleSheet, View} from 'react-native';
 import {
-  FlatList,
-  ListRenderItem,
+  ALL_EDGES,
   SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+} from '../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
@@ -112,7 +110,11 @@ const styles = StyleSheet.create({
 export const CurrencySelectionContainer: React.FC<
   React.ComponentProps<typeof SafeAreaView>
 > = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.currencySelectionContainer, style]} {...rest} />
+  <SafeAreaView
+    style={[styles.currencySelectionContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
 );
 
 const ListContainer: React.FC<React.ComponentProps<typeof View>> = ({

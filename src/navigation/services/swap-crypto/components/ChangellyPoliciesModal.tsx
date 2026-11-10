@@ -1,5 +1,9 @@
 import React from 'react';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../../components/safe-area/SafeAreaView';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {Black, SlateDark, White, Slate} from '../../../../styles/colors';
@@ -58,6 +62,7 @@ const ChangellyPoliciesContainer: React.FC<
   const theme = useTheme();
   return (
     <SafeAreaView
+      edges={ALL_EDGES}
       style={[
         styles.changellyPoliciesContainer,
         {backgroundColor: theme.dark ? Black : White},

@@ -32,7 +32,8 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import {Platform, Modal, SafeAreaView, StyleSheet, View} from 'react-native';
+import {Platform, Modal, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
 import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';

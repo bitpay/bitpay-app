@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, StyleSheet, Text, View, ViewProps} from 'react-native';
+import {StyleSheet, Text, View, ViewProps} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../contexts';
 import {ButtonState} from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';

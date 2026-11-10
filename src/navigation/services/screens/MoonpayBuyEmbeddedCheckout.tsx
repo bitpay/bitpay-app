@@ -9,10 +9,10 @@ import {
   View,
   StyleSheet,
   Text,
-  SafeAreaView,
   ViewProps,
   TextProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Modal from 'react-native-modal';
 import {
   useTheme,

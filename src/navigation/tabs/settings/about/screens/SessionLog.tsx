@@ -12,14 +12,8 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import {useTranslation} from 'react-i18next';
-import {
-  Alert,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Alert, Platform, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import Mailer from 'react-native-mail';
 import {useTheme} from '../../../../../contexts';
 import {

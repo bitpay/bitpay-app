@@ -6,8 +6,11 @@ import {
   ViewProps,
   TextProps,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../components/safe-area/SafeAreaView';
 import {useNavigation} from '@react-navigation/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {BaseText} from '../../../components/styled/Text';
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
 });
 
 const Container: React.FC<ViewProps> = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.container, style]} {...rest} />
+  <SafeAreaView style={[styles.container, style]} edges={ALL_EDGES} {...rest} />
 );
 
 const HeaderContainer: React.FC<ViewProps> = ({style, ...rest}) => (

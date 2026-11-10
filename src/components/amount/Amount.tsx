@@ -18,7 +18,8 @@ import {useAppDispatch} from '../../utils/hooks';
 import useAppSelector from '../../utils/hooks/useAppSelector';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../archax/archax-footer';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {ALL_EDGES, SafeAreaView} from '../safe-area/SafeAreaView';
 import {createSelector} from 'reselect';
 import {RootState} from '../../store';
 import {logReactProfiler} from '../../utils/reactPerformanceProfiler';
@@ -513,7 +514,7 @@ const Amount: React.FC<AmountProps> = ({
   );
 
   return (
-    <SafeAreaView style={styles.amountContainer}>
+    <SafeAreaView style={styles.amountContainer} edges={ALL_EDGES}>
       <View
         style={[
           styles.viewContainer,

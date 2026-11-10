@@ -1,6 +1,7 @@
 import React, {useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, SafeAreaView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTheme} from '../../../../../contexts';
 import LinearGradient from 'react-native-linear-gradient';

@@ -39,13 +39,8 @@ import {
   TSSSigningStatus,
   TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
-import {
-  RefreshControl,
-  SafeAreaView,
-  SectionList,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {RefreshControl, SectionList, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';

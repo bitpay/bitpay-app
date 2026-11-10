@@ -12,7 +12,8 @@ import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../../contexts';
 import Button from '../../../../../components/button/Button';
 import {

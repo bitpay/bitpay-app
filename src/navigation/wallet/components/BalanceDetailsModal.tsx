@@ -5,7 +5,11 @@ import {BaseText} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SheetContainer} from '../../../components/styled/Containers';
 import {Black, White, Success, Caution, Warning} from '../../../styles/colors';
-import {ScrollView, SafeAreaView, Text} from 'react-native';
+import {ScrollView, Text} from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../components/safe-area/SafeAreaView';
 import Button from '../../../components/button/Button';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import LockSvg from '../../../../assets/img/wallet/balance/lock.svg';
@@ -158,7 +162,7 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
           styles.balanceDetailsContainer,
           {backgroundColor: theme.dark ? Black : White},
         ]}>
-        <SafeAreaView style={{height: '100%'}}>
+        <SafeAreaView style={{height: '100%'}} edges={ALL_EDGES}>
           <View style={styles.modalHeader}>
             <BaseText style={styles.modalHeaderText}>
               {t('Spendable balance')}

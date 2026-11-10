@@ -1,5 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {ScrollView, SafeAreaView, StyleSheet, ViewProps} from 'react-native';
+import {ScrollView, StyleSheet, ViewProps} from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   useTheme,
@@ -122,7 +126,13 @@ const styles = StyleSheet.create({
 export const SellCheckoutContainer: React.FC<ViewProps> = ({
   style,
   ...rest
-}) => <SafeAreaView style={[styles.sellCheckoutContainer, style]} {...rest} />;
+}) => (
+  <SafeAreaView
+    style={[styles.sellCheckoutContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
+);
 
 export interface RampSellCheckoutProps {
   rampQuoteOffer: SellCryptoOffer;

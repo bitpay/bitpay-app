@@ -15,7 +15,8 @@ import {
   ScreenGutter,
   SettingTitle,
 } from '../../../../components/styled/Containers';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {shareNative} from '../../../../utils/share';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';

@@ -3,13 +3,8 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {
-  Keyboard,
-  SafeAreaView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import {Keyboard, StyleSheet, TextInput, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import Button from '../../../../../components/button/Button';
 import BoxInput from '../../../../../components/form/BoxInput';
 import yup from '../../../../../lib/yup';

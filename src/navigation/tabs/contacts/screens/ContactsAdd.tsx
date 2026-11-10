@@ -1,7 +1,8 @@
 import React, {useState, useLayoutEffect, useEffect, useCallback} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';

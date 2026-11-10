@@ -18,11 +18,11 @@ import {
   FlatList,
   ActivityIndicator,
   Keyboard,
-  SafeAreaView,
   SectionList,
   StyleSheet,
   View,
 } from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {BaseText} from '../../../../../components/styled/Text';
 import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';

@@ -1,6 +1,7 @@
 import {useNavigation, useRoute} from '@react-navigation/native';
 import React, {useLayoutEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {HeaderTitle, Paragraph, H5} from '../../../components/styled/Text';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';

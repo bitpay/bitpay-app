@@ -61,6 +61,7 @@ import {
   SendingTo,
   WalletSelector,
 } from './Shared';
+import {ALL_EDGES} from '../../../../../components/safe-area/SafeAreaView';
 import {AppActions} from '../../../../../store/app';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
@@ -406,7 +407,7 @@ const PayProConfirm = () => {
   }, [resetSwipeButton]);
 
   return (
-    <ConfirmContainer>
+    <ConfirmContainer edges={ALL_EDGES}>
       <ConfirmScrollView
         extraScrollHeight={50}
         contentContainerStyle={{paddingBottom: 50}}
