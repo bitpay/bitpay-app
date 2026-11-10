@@ -1,5 +1,5 @@
 import Modal from 'react-native-modal';
-import React, {useEffect, useState, useCallback, useMemo, useRef} from 'react';
+import React, {useState, useCallback, useMemo} from 'react';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {useDispatch, useSelector} from 'react-redux';
@@ -17,7 +17,6 @@ import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
 import {
   Animated,
-  AppState,
   NativeModules,
   DeviceEventEmitter,
   StyleSheet,
@@ -28,6 +27,7 @@ import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {useTranslation} from 'react-i18next';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {useLogger} from '../../../utils/hooks';
+import {useBiometricAutoPrompt} from './useBiometricAutoPrompt';
 
 const styles = StyleSheet.create({
   biometricContainer: {
@@ -73,8 +73,6 @@ export interface BiometricModalConfig {
 
 const modalStyle = {margin: 0};
 
-const BIOMETRIC_PROMPT_SETTLE_MS = 300;
-
 const BiometricModalContentComponent: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
@@ -84,7 +82,6 @@ const BiometricModalContentComponent: React.FC = () => {
   const {onClose} =
     useSelector(({APP}: RootState) => APP.biometricModalConfig) || {};
   const [animation] = useState(() => new Animated.Value(0));
-  const isPromptingRef = useRef(false);
 
   const inputRange = useMemo(() => [0, 1], []);
   const outputRange = useMemo(() => [1, 1.2], []);
@@ -132,11 +129,7 @@ const BiometricModalContentComponent: React.FC = () => {
   );
 
   const authenticate = useCallback(async () => {
-    if (isPromptingRef.current) {
-      return;
-    }
     try {
-      isPromptingRef.current = true;
       const {success, error} = await rnBiometrics.simplePrompt({
         promptMessage: t('Verify your identity'),
       });
@@ -156,46 +149,10 @@ const BiometricModalContentComponent: React.FC = () => {
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.warn(`Error providing biometrics: ${errMsg}`);
-    } finally {
-      isPromptingRef.current = false;
     }
   }, [dispatch, logger, onClose, pulse, rnBiometrics, t]);
 
-  // Only prompt while the app is really in the foreground. When the screen
-  // locks, iOS can report a short-lived 'active' between 'inactive' and
-  // 'background'; prompting then makes Face ID wake the screen back up.
-  useEffect(() => {
-    if (!isVisible) {
-      return;
-    }
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const schedulePrompt = () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-      timer = setTimeout(() => {
-        timer = undefined;
-        if (AppState.currentState === 'active') {
-          authenticate();
-        }
-      }, BIOMETRIC_PROMPT_SETTLE_MS);
-    };
-    schedulePrompt();
-    const subscription = AppState.addEventListener('change', status => {
-      if (status === 'active') {
-        schedulePrompt();
-      } else if (timer) {
-        clearTimeout(timer);
-        timer = undefined;
-      }
-    });
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-      subscription.remove();
-    };
-  }, [isVisible, authenticate]);
+  const requestPrompt = useBiometricAutoPrompt(isVisible, authenticate);
 
   const transformStyle = useMemo(() => ({transform: [{scale}]}), [scale]);
 
@@ -233,7 +190,7 @@ const BiometricModalContentComponent: React.FC = () => {
           </View>
           <TouchableOpacity
             style={styles.biometricModalImgContainer}
-            onPress={authenticate}>
+            onPress={requestPrompt}>
             <Animated.View style={[styles.imgContainer, transformStyle]}>
               <BitpaySvg width={80} height={80} />
             </Animated.View>
