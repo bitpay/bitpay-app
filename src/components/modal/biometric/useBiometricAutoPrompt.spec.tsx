@@ -147,6 +147,51 @@ describe('useBiometricAutoPrompt', () => {
     expect(prompt).toHaveBeenCalledTimes(1);
   });
 
+  it('does not auto-prompt after a manual request made before the pending auto timer fires', async () => {
+    const prompt = jest.fn().mockResolvedValue(undefined);
+    mount(prompt);
+    await advance(BIOMETRIC_PROMPT_SETTLE_MS);
+    prompt.mockClear();
+
+    // Modal already open, app goes to background and comes back.
+    await setAppState('inactive');
+    await setAppState('background');
+    await setAppState('inactive');
+    await setAppState('active'); // schedules the auto prompt
+
+    // User taps the logo before the 300 ms timer fires.
+    await advance(BIOMETRIC_PROMPT_SETTLE_MS - 100);
+    await act(async () => {
+      await requestPrompt();
+    });
+    expect(prompt).toHaveBeenCalledTimes(1);
+
+    // Face ID sheet goes inactive and back to active after Cancel.
+    await setAppState('inactive');
+    await setAppState('active');
+    await advance(BIOMETRIC_PROMPT_SETTLE_MS * 5);
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not auto-prompt after a manual request made while the app was inactive after background', async () => {
+    const prompt = jest.fn().mockResolvedValue(undefined);
+    mount(prompt);
+    await advance(BIOMETRIC_PROMPT_SETTLE_MS);
+    prompt.mockClear();
+
+    await setAppState('inactive');
+    await setAppState('background');
+    await act(async () => {
+      await requestPrompt();
+    });
+    await setAppState('inactive');
+    await setAppState('active');
+    await advance(BIOMETRIC_PROMPT_SETTLE_MS * 5);
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
   it('prompts again after the app returns from background even if the previous prompt was cancelled', async () => {
     const prompt = jest.fn().mockResolvedValue(undefined);
     mount(prompt);

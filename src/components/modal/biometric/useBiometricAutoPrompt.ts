@@ -24,8 +24,22 @@ export const useBiometricAutoPrompt = (
 ) => {
   const latestPrompt = useLatestCallback(prompt);
   const isPromptingRef = useRef(false);
+  const needsAutoPromptRef = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = undefined;
+    }
+  }, []);
+
+  // Any prompt (automatic or manual) consumes the pending automatic attempt:
+  // the 'active' that follows a manual prompt's Face ID sheet must not
+  // schedule another one.
   const requestPrompt = useCallback(async () => {
+    needsAutoPromptRef.current = false;
+    clearTimer();
     if (isPromptingRef.current) {
       return;
     }
@@ -35,27 +49,19 @@ export const useBiometricAutoPrompt = (
     } finally {
       isPromptingRef.current = false;
     }
-  }, [latestPrompt]);
+  }, [clearTimer, latestPrompt]);
 
   useEffect(() => {
     if (!enabled) {
       return;
     }
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let needsAutoPrompt = true;
+    needsAutoPromptRef.current = true;
 
-    const clearTimer = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = undefined;
-      }
-    };
     const schedulePrompt = () => {
       clearTimer();
-      timer = setTimeout(() => {
-        timer = undefined;
+      timerRef.current = setTimeout(() => {
+        timerRef.current = undefined;
         if (AppState.currentState === 'active') {
-          needsAutoPrompt = false;
           requestPrompt();
         }
       }, BIOMETRIC_PROMPT_SETTLE_MS);
@@ -64,13 +70,13 @@ export const useBiometricAutoPrompt = (
     schedulePrompt();
     const subscription = AppState.addEventListener('change', status => {
       if (status === 'active') {
-        if (needsAutoPrompt) {
+        if (needsAutoPromptRef.current) {
           schedulePrompt();
         }
       } else {
         clearTimer();
         if (status === 'background') {
-          needsAutoPrompt = true;
+          needsAutoPromptRef.current = true;
         }
       }
     });
@@ -79,7 +85,7 @@ export const useBiometricAutoPrompt = (
       clearTimer();
       subscription.remove();
     };
-  }, [enabled, requestPrompt]);
+  }, [enabled, clearTimer, requestPrompt]);
 
   return requestPrompt;
 };
