@@ -7,13 +7,8 @@ import {Black, LightBlack, SlateDark, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
 import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {
-  Platform,
-  ScrollView,
-  View,
-  SafeAreaView,
-  StyleSheet,
-} from 'react-native';
+import {Platform, ScrollView, View, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch} from '../../../utils/hooks';
 import {

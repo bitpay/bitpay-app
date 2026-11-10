@@ -1,13 +1,13 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useCallback} from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {useTheme} from '../../../contexts';
 import {OnboardingImage} from '../components/Containers';

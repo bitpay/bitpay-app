@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useDispatch, useSelector} from 'react-redux';
-import {SafeAreaView, View, ViewProps, StyleSheet} from 'react-native';
+import {View, ViewProps, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Spinner from '../../../components/spinner/Spinner';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import {RootState} from '../../../store';

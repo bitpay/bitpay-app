@@ -16,13 +16,8 @@ import CurrencySelectionRow, {
   CurrencySelectionRowProps,
 } from '../../../components/list/CurrencySelectionRow';
 import Button from '../../../components/button/Button';
-import {
-  FlatList,
-  ListRenderItem,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {FlatList, ListRenderItem, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../contexts';
 import {useNavigation} from '@react-navigation/native';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';

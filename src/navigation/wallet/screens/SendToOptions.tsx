@@ -1,5 +1,6 @@
 import React, {useCallback, useLayoutEffect, useMemo, useState} from 'react';
-import {Keyboard, SafeAreaView, StyleSheet, View} from 'react-native';
+import {Keyboard, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';

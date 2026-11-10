@@ -3,7 +3,8 @@ import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useTheme} from '../../../../contexts';
 import {Black, White} from '../../../../styles/colors';
 import BottomAmount, {BottomAmountProps, LimitsOpts} from './BottomAmount';
-import {Platform, SafeAreaView, StyleSheet, ViewProps} from 'react-native';
+import {Platform, StyleSheet, ViewProps} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {BottomAmountPillsProps} from './BottomAmountPills';
 

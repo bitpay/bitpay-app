@@ -24,12 +24,8 @@ import {
   FeeLevelStepsHeader,
   FeeLevelStepsHeaderSubTitle,
 } from '../../../../wallet/screens/send/TransactionLevel';
-import {
-  SafeAreaView,
-  ScrollView as RNScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {ScrollView as RNScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import NetworkPolicyPlaceholder from '../../components/NetworkPolicyPlaceholder';

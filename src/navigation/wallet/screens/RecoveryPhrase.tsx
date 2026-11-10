@@ -1,11 +1,6 @@
 import React, {useLayoutEffect, useMemo, useRef} from 'react';
-import {
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {Platform, ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../contexts';
 import {
   BaseText,

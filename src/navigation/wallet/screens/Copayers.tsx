@@ -8,10 +8,10 @@ import {
   Image,
   ScrollView,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   View,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   Paragraph,

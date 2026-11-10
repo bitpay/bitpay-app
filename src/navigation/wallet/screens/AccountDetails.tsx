@@ -38,7 +38,6 @@ import {
 import {
   DeviceEventEmitter,
   RefreshControl,
-  SafeAreaView,
   SectionList,
   StyleProp,
   StyleSheet,
@@ -46,6 +45,7 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {
   TouchableOpacity,
   TouchableOpacityProps,

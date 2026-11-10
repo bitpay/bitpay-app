@@ -1,11 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {
-  ScrollView,
-  SafeAreaView,
-  StyleSheet,
-  View,
-  ViewProps,
-} from 'react-native';
+import {ScrollView, StyleSheet, View, ViewProps} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {

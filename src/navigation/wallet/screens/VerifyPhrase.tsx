@@ -23,13 +23,8 @@ import {Slate30, SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import SuccessIcon from '../../../../assets/img/success.svg';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {KeyboardAvoidingView, Platform, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 type VerifyPhraseScreenProps = NativeStackScreenProps<
