@@ -144,7 +144,10 @@ export type WalletGroupParamList = {
   Import: ImportParamList;
   CreateEncryptPassword: {keyId: string};
   ExtendedPrivateKey: {xPrivKey: string};
-  DeleteKey: {keyId: string};
+  DeleteKey: {
+    keyId: string;
+    confirmed?: boolean;
+  };
   KeyInformation: undefined;
   ExportKey: {code: string; keyName: string | undefined};
   WalletAmountScreen: AmountScreenParamList;

@@ -19,6 +19,7 @@ export interface ImportParamList {
   context?: string;
   keyId?: string;
   importQrCodeData?: string;
+  importTab?: 'phrase' | 'file';
 }
 
 const Tab = createMaterialTopTabNavigator();
@@ -41,6 +42,12 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
     });
   }, [navigation, t]);
 
+  useLayoutEffect(() => {
+    if (route.params?.importQrCodeData) {
+      navigation.setParams({importQrCodeData: undefined});
+    }
+  }, [navigation, route.params?.importQrCodeData]);
+
   return (
     <SafeAreaView
       style={styles.importContainer}
@@ -48,6 +55,9 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
       onLayout={onPerformanceLayout}>
       <Tab.Navigator
         screenOptions={{lazy: true, lazyPreloadDistance: 0}}
+        initialRouteName={
+          route.params?.importTab === 'file' ? t('File') : t('Phrase')
+        }
         tabBar={props => <CustomTabBar {...props} />}>
         <Tab.Screen
           name={t('Phrase')}
@@ -57,7 +67,7 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
         <Tab.Screen
           name={t('File')}
           component={FileOrText}
-          initialParams={route.params}
+          initialParams={{...route.params, importQrCodeData: undefined}}
         />
       </Tab.Navigator>
     </SafeAreaView>

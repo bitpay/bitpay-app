@@ -2513,6 +2513,27 @@ export const checkBiometricForSending =
     }
   };
 
+export const verifyIdentity =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    const {biometricLockActive, pinLockActive, showPinModal} = getState().APP;
+    if (biometricLockActive) {
+      await dispatch(checkBiometricForSending());
+      return;
+    }
+    if (!pinLockActive || showPinModal) {
+      throw new Error('PIN verification is unavailable');
+    }
+    await new Promise<void>((resolve, reject) =>
+      dispatch(
+        AppActions.showPinModal({
+          type: 'check',
+          onClose: checked =>
+            checked ? resolve() : reject(new Error('PIN check cancelled')),
+        }),
+      ),
+    );
+  };
+
 export const sendCrypto =
   (
     loggerContext: string,

@@ -71,6 +71,7 @@ import {addCustomTokenOption} from '../currencies/currencies';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import {Analytics} from '../../../analytics/analytics.effects';
+import {sanitizeLogMessage} from '../../../log/log.models';
 
 const runWithConcurrency = async <T, R>(
   items: T[],
@@ -139,6 +140,7 @@ export const startCreateKey =
       tokenAddress?: string;
     }>,
     context?: string,
+    isCurrentRequest?: () => boolean,
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -157,9 +159,21 @@ export const startCreateKey =
             options: {
               network,
             },
+            isCurrentRequest,
           }),
         );
 
+        if (isCurrentRequest && !isCurrentRequest()) {
+          throw new Error('Key creation cancelled');
+        }
+        if (
+          context === 'onboarding' &&
+          !wallets.some(
+            wallet => !wallet.credentials.token && wallet.receiveAddress,
+          )
+        ) {
+          throw new Error('No wallets were created');
+        }
         const key = buildKeyObj({key: _key, wallets});
 
         if (context !== 'onboarding') {
@@ -429,6 +443,7 @@ export const createMultipleWallets =
     key,
     currencies,
     options,
+    isCurrentRequest,
   }: {
     key: KeyMethods;
     currencies: Array<{
@@ -438,6 +453,7 @@ export const createMultipleWallets =
       tokenAddress?: string;
     }>;
     options: CreateOptions;
+    isCurrentRequest?: () => boolean;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
     const {
@@ -536,6 +552,9 @@ export const createMultipleWallets =
     });
 
     defer(() => {
+      if (isCurrentRequest && !isCurrentRequest()) {
+        return;
+      }
       result.forEach(wallet => {
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(wallet, brazeEid!));
@@ -889,7 +908,9 @@ export const startCreateKeyWithOpts =
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.error(`Error creating key with opts: ${errstring}`);
+        logManager.error(
+          sanitizeLogMessage(`Error creating key with opts: ${errstring}`),
+        );
         reject(err);
       }
     });
