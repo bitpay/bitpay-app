@@ -30,7 +30,11 @@ import {
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_DESKTOP, IS_IOS} from '../../../../../constants';
 import {APP_NAME_UPPERCASE, APP_VERSION} from '../../../../../constants/config';
-import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
+import {
+  LogEntry,
+  LogLevel,
+  sanitizeLogEntries,
+} from '../../../../../store/log/log.models';
 import {
   Action,
   Caution,
@@ -496,7 +500,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
     try {
       const parsedLogs = JSON.parse(value);
       if (Array.isArray(parsedLogs)) {
-        setPersistedLogs(parsedLogs);
+        setPersistedLogs(sanitizeLogEntries(parsedLogs));
       }
     } catch (err) {
       const errorMessage =

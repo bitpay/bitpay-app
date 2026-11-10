@@ -74,6 +74,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
@@ -476,7 +477,7 @@ const RecoveryPhrase = () => {
         showBottomNotificationModal({
           type: 'warning',
           title: t('Something went wrong'),
-          message: e.message,
+          message: BWCErrorMessage(e),
           enableBackdropDismiss: true,
           actions: [
             {

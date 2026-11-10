@@ -1,5 +1,5 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
-import {LogEntry, LogLevel} from '../store/log/log.models';
+import {LogEntry, LogLevel, sanitizeLogMessage} from '../store/log/log.models';
 import * as Sentry from '@sentry/react-native';
 import {isSessionLogsEnabled} from '../utils/sessionLogs';
 
@@ -99,8 +99,9 @@ class LogManager {
       }
     }
 
-    const message = messages.join(' ');
-    const breadcrumbMessage = sentryMessage ?? message;
+    const message = sanitizeLogMessage(messages.join(' '));
+    const breadcrumbMessage =
+      sentryMessage !== undefined ? sanitizeLogMessage(sentryMessage) : message;
 
     switch (LogLevel[level]) {
       case 'Debug':

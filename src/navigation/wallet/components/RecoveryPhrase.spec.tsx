@@ -7,6 +7,7 @@ import {
   startCreateKeyWithOpts,
   startImportMnemonic,
 } from '../../../store/wallet/effects';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 
 const mockDispatch = jest.fn();
 const mockClearSensitive = jest.fn();
@@ -269,6 +270,31 @@ describe('RecoveryPhrase uncontrolled input', () => {
     await waitFor(() => {
       expect(mockStartCreateKeyWithOpts).toHaveBeenCalledWith(
         expect.objectContaining({mnemonic: phrase}),
+      );
+    });
+  });
+
+  it('shows the translated invalid phrase message when the import rejects the phrase', async () => {
+    mockDispatch.mockImplementation(action => {
+      if (action?.type === 'TEST/IMPORT_MNEMONIC') {
+        return Promise.reject(new Error('INVALID_BACKUP'));
+      }
+      return action;
+    });
+    const {getByTestId} = render(<RecoveryPhrase />);
+
+    fireEvent.changeText(getByTestId('import-text-input'), 'one two three');
+    await act(async () => {
+      fireEvent.press(getByTestId('import-wallet-button'));
+    });
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(
+        showBottomNotificationModal(
+          expect.objectContaining({
+            message: 'Wallet Recovery Phrase is invalid',
+          }),
+        ),
       );
     });
   });
