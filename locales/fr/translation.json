@@ -2326,5 +2326,10 @@
   "Back up your wallet": "Sauvegardez votre portefeuille",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Si {{count}} cosignataire perd l'accès, les fonds ne pourront plus être déplacés. BitPay ne peut pas les récupérer.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._many": "Si {{count}} cosignataires perdent l'accès, les fonds ne pourront plus être déplacés. BitPay ne peut pas les récupérer.",
-  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Si {{count}} cosignataires perdent l'accès, les fonds ne pourront plus être déplacés. BitPay ne peut pas les récupérer."
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Si {{count}} cosignataires perdent l'accès, les fonds ne pourront plus être déplacés. BitPay ne peut pas les récupérer.",
+  "Transfer function": "Fonction de transfert",
+  "Token": "Jeton",
+  "Amount (base units)": "Montant (unités de base)",
+  "Unrecognized contract call": "Appel de contrat non reconnu",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Cette demande appelle une méthode de contrat que l'application ne peut pas résumer. L'effet réel se trouve dans les données ci-dessous : n'approuvez que si vous faites confiance à ce site."
 }

@@ -2315,5 +2315,10 @@
   "Any {{m}} of {{n}} can approve": "Any {{m}} of {{n}} can approve",
   "Back up your wallet": "Back up your wallet",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "If {{count}} co-signer loses access, funds can’t be moved. BitPay can’t recover them.",
-  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them."
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them.",
+  "Transfer function": "Transfer function",
+  "Token": "Token",
+  "Amount (base units)": "Amount (base units)",
+  "Unrecognized contract call": "Unrecognized contract call",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site."
 }

@@ -2326,5 +2326,10 @@
   "Back up your wallet": "Respalde su billetera",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Si {{count}} cofirmante pierde el acceso, los fondos no podrán moverse. BitPay no puede recuperarlos.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._many": "Si {{count}} cofirmantes pierden el acceso, los fondos no podrán moverse. BitPay no puede recuperarlos.",
-  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Si {{count}} cofirmantes pierden el acceso, los fondos no podrán moverse. BitPay no puede recuperarlos."
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Si {{count}} cofirmantes pierden el acceso, los fondos no podrán moverse. BitPay no puede recuperarlos.",
+  "Transfer function": "Función de transferencia",
+  "Token": "Token",
+  "Amount (base units)": "Monto (unidades base)",
+  "Unrecognized contract call": "Llamada a contrato no reconocida",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Esta solicitud llama a un método de contrato que la aplicación no puede resumir. El efecto real está en los datos de abajo: apruebe solo si confía en este sitio."
 }

@@ -2328,5 +2328,10 @@
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Если {{count}} соподписант потеряет доступ, средства нельзя будет перевести. BitPay не сможет их восстановить.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._few": "Если {{count}} соподписанта потеряют доступ, средства нельзя будет перевести. BitPay не сможет их восстановить.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._many": "Если {{count}} соподписантов потеряют доступ, средства нельзя будет перевести. BitPay не сможет их восстановить.",
-  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Если {{count}} соподписанта потеряют доступ, средства нельзя будет перевести. BitPay не сможет их восстановить."
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Если {{count}} соподписанта потеряют доступ, средства нельзя будет перевести. BitPay не сможет их восстановить.",
+  "Transfer function": "Функция перевода",
+  "Token": "Токен",
+  "Amount (base units)": "Сумма (базовые единицы)",
+  "Unrecognized contract call": "Нераспознанный вызов контракта",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Этот запрос вызывает метод контракта, который приложение не может описать. Реальное действие указано в данных ниже — подтверждайте, только если доверяете этому сайту."
 }

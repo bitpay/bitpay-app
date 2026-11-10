@@ -2315,5 +2315,10 @@
   "Any {{m}} of {{n}} can approve": "Die Freigabe durch {{m}} der {{n}} genügt",
   "Back up your wallet": "Sichern Sie Ihr Wallet",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Wenn {{count}} Mitunterzeichner den Zugriff verliert, kann das Guthaben nicht mehr bewegt werden. BitPay kann es nicht wiederherstellen.",
-  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Wenn {{count}} Mitunterzeichner den Zugriff verlieren, kann das Guthaben nicht mehr bewegt werden. BitPay kann es nicht wiederherstellen."
+  "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Wenn {{count}} Mitunterzeichner den Zugriff verlieren, kann das Guthaben nicht mehr bewegt werden. BitPay kann es nicht wiederherstellen.",
+  "Transfer function": "Übertragungsfunktion",
+  "Token": "Token",
+  "Amount (base units)": "Betrag (Basiseinheiten)",
+  "Unrecognized contract call": "Unbekannter Vertragsaufruf",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Diese Anfrage ruft eine Vertragsmethode auf, die die App nicht zusammenfassen kann. Die tatsächliche Wirkung steht in den Daten unten – genehmigen Sie nur, wenn Sie dieser Website vertrauen."
 }
