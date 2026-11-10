@@ -13,7 +13,7 @@ export default defineConfig({
     transComponents: ['Trans'],
     removeUnusedKeys: false,
     extractFromComments: false,
-    sort: false,
+    sort: (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
     ignore: ['**/*.spec.tsx', '**/*.spec.ts', 'node_modules/**'],
   },
 });
