@@ -50,8 +50,9 @@
     "reset-allowed-url-prefixes": "node ./scripts/allowed-url-prefixes.js reset",
     "reset-braze": "node ./scripts/braze-config-reset.js",
     "reset-google-maps": "node ./scripts/google-maps-reset.js",
-    "translation:extract": "npx i18next-cli extract",
-    "translation:check": "node --test scripts/check-translations.test.js && node scripts/check-translations.js"
+    "translation:extract": "yarn translation:sort && npx i18next-cli extract",
+    "translation:sort": "node scripts/sort-translations.js",
+    "translation:check": "node --test scripts/check-translations.test.js scripts/translation-catalog.test.js scripts/merge-translations.test.js && node scripts/check-translations.js"
   },
   "dependencies": {
     "@bitpay-labs/bitcore-wallet-client": "11.11.3",
