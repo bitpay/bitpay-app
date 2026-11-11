@@ -91,6 +91,13 @@ import PaperWallet from './screens/PaperWallet';
 import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
+import CloudBackupPassword, {
+  CloudBackupPasswordParamList,
+} from './screens/CloudBackupPassword';
+import RestoreFromCloud from './screens/RestoreFromCloud';
+import RestoreFromCloudPassword, {
+  RestoreFromCloudPasswordParamList,
+} from './screens/RestoreFromCloudPassword';
 import {Root} from '../../Root';
 import KeyInformation from './screens/KeyInformation';
 import BackupSharedKeyScreen, {
@@ -111,6 +118,9 @@ export type WalletGroupParamList = {
   AddCustomToken: AddCustomTokenParamList;
   BackupKey: BackupParamList;
   BackupOnboarding: BackupOnboardingParamList;
+  CloudBackupPassword: CloudBackupPasswordParamList;
+  RestoreFromCloud: {context?: string};
+  RestoreFromCloudPassword: RestoreFromCloudPasswordParamList;
   BackupSharedKey: BackupSharedKeyParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
@@ -147,6 +157,7 @@ export type WalletGroupParamList = {
   DeleteKey: {
     keyId: string;
     confirmed?: boolean;
+    deletedCloudBackup?: boolean;
   };
   KeyInformation: undefined;
   ExportKey: {code: string; keyName: string | undefined};
@@ -242,6 +253,9 @@ export enum WalletScreens {
   ADD_CUSTOM_TOKEN = 'AddCustomToken',
   BACKUP_KEY = 'BackupKey',
   BACKUP_ONBOARDING = 'BackupOnboarding',
+  CLOUD_BACKUP_PASSWORD = 'CloudBackupPassword',
+  RESTORE_FROM_CLOUD = 'RestoreFromCloud',
+  RESTORE_FROM_CLOUD_PASSWORD = 'RestoreFromCloudPassword',
   BACKUP_SHARED_KEY = 'BackupSharedKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
@@ -324,6 +338,18 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.BACKUP_ONBOARDING}
         component={BackupOnboarding}
+      />
+      <Wallet.Screen
+        name={WalletScreens.CLOUD_BACKUP_PASSWORD}
+        component={CloudBackupPassword}
+      />
+      <Wallet.Screen
+        name={WalletScreens.RESTORE_FROM_CLOUD}
+        component={RestoreFromCloud}
+      />
+      <Wallet.Screen
+        name={WalletScreens.RESTORE_FROM_CLOUD_PASSWORD}
+        component={RestoreFromCloudPassword}
       />
       <Wallet.Screen
         options={{

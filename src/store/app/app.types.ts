@@ -107,6 +107,8 @@ export enum AppActionTypes {
   RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
   SET_ONBOARDING_KEY_STATUS = 'APP/SET_ONBOARDING_KEY_STATUS',
   SET_BACKUP_NUDGE_SHOWN = 'APP/SET_BACKUP_NUDGE_SHOWN',
+  BACKUP_PASSWORD_BANNED_UNTIL = 'APP/BACKUP_PASSWORD_BANNED_UNTIL',
+  BACKUP_PASSWORD_FAILED_ATTEMPTS = 'APP/BACKUP_PASSWORD_FAILED_ATTEMPTS',
 }
 
 interface NetworkChanged {
@@ -474,6 +476,16 @@ interface SetBackupNudgeShown {
   type: typeof AppActionTypes.SET_BACKUP_NUDGE_SHOWN;
 }
 
+interface BackupPasswordBannedUntil {
+  type: typeof AppActionTypes.BACKUP_PASSWORD_BANNED_UNTIL;
+  payload: number | undefined;
+}
+
+interface BackupPasswordFailedAttempts {
+  type: typeof AppActionTypes.BACKUP_PASSWORD_FAILED_ATTEMPTS;
+  payload: number;
+}
+
 interface DismissMarketingContentCard {
   type: typeof AppActionTypes.DISMISS_MARKETING_CONTENT_CARD;
   payload: string;
@@ -571,4 +583,6 @@ export type AppActionType =
   | SetShowKycGetVerifiedModal
   | ResetKycGetVerifiedModal
   | SetOnboardingKeyStatus
-  | SetBackupNudgeShown;
+  | SetBackupNudgeShown
+  | BackupPasswordBannedUntil
+  | BackupPasswordFailedAttempts;

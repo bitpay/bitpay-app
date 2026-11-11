@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -34,7 +34,13 @@ export const RestoreOrImportSheet = ({
 }) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
   const options = [
+    {
+      id: 'restore-or-import-cloud',
+      label: t('Restore from {{cloudName}}', {cloudName}),
+      onPress: () => navigation.navigate('RestoreFromCloud', {context}),
+    },
     {
       id: 'restore-or-import-phrase',
       label: t('Recovery Phrase'),

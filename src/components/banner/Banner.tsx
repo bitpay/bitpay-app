@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   description: {
     marginVertical: 0,

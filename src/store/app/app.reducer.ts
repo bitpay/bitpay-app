@@ -66,7 +66,8 @@ export type ModalId =
   | 'ongoingProcess'
   | 'pin'
   | 'inAppNotification'
-  | 'inAppMessage';
+  | 'inAppMessage'
+  | 'backupBusy';
 
 export type FeedbackType = {
   time: number;
@@ -182,6 +183,8 @@ export interface AppState {
   kycGetVerifiedModalShown: boolean;
   onboardingKeyStatus: OnboardingKeyStatus;
   backupNudgeShown: boolean;
+  backupPasswordBannedUntil: number | undefined;
+  backupPasswordFailedAttempts: number;
 }
 
 const initialState: AppState = {
@@ -288,6 +291,8 @@ const initialState: AppState = {
   kycGetVerifiedModalShown: false,
   onboardingKeyStatus: 'idle',
   backupNudgeShown: false,
+  backupPasswordBannedUntil: undefined,
+  backupPasswordFailedAttempts: 0,
 };
 
 export const appReducer = (
@@ -882,6 +887,18 @@ export const appReducer = (
       return {
         ...state,
         backupNudgeShown: true,
+      };
+
+    case AppActionTypes.BACKUP_PASSWORD_BANNED_UNTIL:
+      return {
+        ...state,
+        backupPasswordBannedUntil: action.payload,
+      };
+
+    case AppActionTypes.BACKUP_PASSWORD_FAILED_ATTEMPTS:
+      return {
+        ...state,
+        backupPasswordFailedAttempts: action.payload,
       };
 
     default:

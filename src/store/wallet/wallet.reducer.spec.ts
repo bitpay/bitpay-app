@@ -214,6 +214,27 @@ describe('SET_BACKUP_COMPLETE', () => {
   });
 });
 
+describe('SET_CLOUD_BACKUP_COMPLETE', () => {
+  it('marks the targeted key backed up and stores the backup time', () => {
+    const base = stateWithKey({backupComplete: false});
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE,
+      payload: {keyId: 'key-1', timestamp: 1793836800000},
+    });
+    expect(state.keys['key-1'].backupComplete).toBe(true);
+    expect(state.keys['key-1'].cloudBackupTimestamp).toBe(1793836800000);
+  });
+
+  it('returns unchanged state when keyId does not exist', () => {
+    const base = freshState();
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE,
+      payload: {keyId: 'nonexistent-key', timestamp: 1793836800000},
+    });
+    expect(state).toBe(base);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // DELETE_KEY
 // ---------------------------------------------------------------------------

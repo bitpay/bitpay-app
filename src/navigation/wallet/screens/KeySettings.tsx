@@ -23,7 +23,9 @@ import {
   FlatList,
   SafeAreaView,
   StyleSheet,
+  Platform,
 } from 'react-native';
+import moment from 'moment';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ActiveOpacity,
@@ -82,6 +84,12 @@ import {logManager} from '../../../managers/LogManager';
 import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
 import Banner from '../../../components/banner/Banner';
 import {StatusTag} from '../../../components/backup/BackupCards';
+import {verifyIdentity} from '../../../store/wallet/effects/send/send';
+import {
+  CloudBackupError,
+  connectToCloud,
+  deleteCloudBackupFiles,
+} from '../../../utils/cloud-backup/storage';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
@@ -225,7 +233,11 @@ const KeySettings = () => {
   const accountInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[keyId]?.evmAccountsInfo,
   );
+  const hasAppLock = useAppSelector(
+    ({APP}) => APP.biometricLockActive || APP.pinLockActive,
+  );
   const {keyName} = _key || {};
+  const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
   const hasRecoveryPhrase = !!(
     _key &&
     !_key.isReadOnly &&
@@ -441,10 +453,156 @@ const KeySettings = () => {
 
   const onDeleteKeyPress = useCallback(() => {
     haptic('impactLight');
+    const deleteOnlyKey = () =>
+      navigation.navigate('DeleteKey', {keyId, confirmed: true});
+    const deleteKeyAndCloudBackup = async () => {
+      showOngoingProcess('DELETING_KEY');
+      try {
+        await connectToCloud();
+        const deletedFiles = await deleteCloudBackupFiles(
+          _key.properties?.fingerPrint || _key.id,
+        );
+        hideOngoingProcess();
+        if (!deletedFiles) {
+          await sleep(500);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('Couldn’t find the {{cloudName}} backup', {cloudName}),
+              message: t(
+                'It may be in another {{cloudName}} account. Your key is still on this phone.',
+                {cloudName},
+              ),
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('Delete Key, Keep Backup'),
+                  destructive: true,
+                  action: deleteOnlyKey,
+                },
+                {
+                  text: t('Cancel'),
+                  action: () => {},
+                },
+              ],
+            }),
+          );
+          return;
+        }
+        navigation.navigate('DeleteKey', {
+          keyId,
+          confirmed: true,
+          deletedCloudBackup: true,
+        });
+      } catch (err) {
+        hideOngoingProcess();
+        if (err instanceof CloudBackupError && err.reason === 'cancelled') {
+          return;
+        }
+        logManager.error(
+          '[KeySettings] Cloud backup delete failed',
+          err instanceof CloudBackupError ? err.reason : 'unknown',
+        );
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'error',
+            title: t('Couldn’t delete the {{cloudName}} backup', {cloudName}),
+            message: t(
+              'Your key is still on this phone. Check your connection and try again, or delete only the key.',
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('Try Again'),
+                primary: true,
+                action: deleteKeyAndCloudBackup,
+              },
+              {
+                text: t('Delete Key, Keep Backup'),
+                destructive: true,
+                action: deleteOnlyKey,
+              },
+              {
+                text: t('Cancel'),
+                action: () => {},
+              },
+            ],
+          }),
+        );
+      }
+    };
+    const title = t('Delete {{keyName}}?', {keyName});
+    if (_key.cloudBackupTimestamp) {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title,
+          message: t(
+            'This removes it from this phone. Keep the {{cloudName}} backup to restore it later.',
+            {cloudName},
+          ),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('Delete Key, Keep Backup'),
+              primary: true,
+              destructive: true,
+              action: deleteOnlyKey,
+            },
+            {
+              text: t('Delete Key and Backup'),
+              destructive: true,
+              action: async () => {
+                await sleep(500);
+                dispatch(
+                  showBottomNotificationModal({
+                    type: 'error',
+                    title: t('Delete the {{cloudName}} backup too?', {
+                      cloudName,
+                    }),
+                    message: t(
+                      'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.',
+                      {keyName, cloudName},
+                    ),
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: t('Delete Key and Backup'),
+                        destructive: true,
+                        action: async () => {
+                          if (hasAppLock) {
+                            try {
+                              await dispatch(verifyIdentity());
+                            } catch {
+                              return;
+                            }
+                          }
+                          await deleteKeyAndCloudBackup();
+                        },
+                      },
+                      {
+                        text: t('Cancel'),
+                        action: () => {},
+                      },
+                    ],
+                  }),
+                );
+              },
+            },
+            {
+              text: t('Cancel'),
+              action: () => {},
+            },
+          ],
+        }),
+      );
+      return;
+    }
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: t('Delete {{keyName}}?', {keyName}),
+        title,
         message: !hasRecoveryPhrase
           ? t('Permanently deletes all wallets using this key.') +
             '\n' +
@@ -462,8 +620,7 @@ const KeySettings = () => {
             text: t('Delete Key'),
             primary: true,
             destructive: true,
-            action: () =>
-              navigation.navigate('DeleteKey', {keyId, confirmed: true}),
+            action: deleteOnlyKey,
           },
           {
             text: t('Cancel'),
@@ -472,7 +629,20 @@ const KeySettings = () => {
         ],
       }),
     );
-  }, [dispatch, hasRecoveryPhrase, keyId, keyName, navigation, needsBackup, t]);
+  }, [
+    _key,
+    cloudName,
+    dispatch,
+    hasAppLock,
+    hasRecoveryPhrase,
+    hideOngoingProcess,
+    keyId,
+    keyName,
+    navigation,
+    needsBackup,
+    showOngoingProcess,
+    t,
+  ]);
 
   const onPressItem = useCallback(
     (item: AccountRowProps) => {
@@ -595,6 +765,18 @@ const KeySettings = () => {
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
               {!_key.backupComplete ? (
                 <StatusTag>{t('Backup Required')}</StatusTag>
+              ) : _key.cloudBackupTimestamp ? (
+                <SettingDescription>
+                  {t('{{cloudName}} · {{date}}', {
+                    cloudName,
+                    date: moment(_key.cloudBackupTimestamp).isSame(
+                      Date.now(),
+                      'day',
+                    )
+                      ? t('Today')
+                      : moment(_key.cloudBackupTimestamp).format('MMM D, YYYY'),
+                  })}
+                </SettingDescription>
               ) : hasRecoveryPhrase ? (
                 <SettingDescription>{t('Manual')}</SettingDescription>
               ) : null}
@@ -792,6 +974,7 @@ const KeySettings = () => {
   }, [
     _key,
     buildEncryptModalConfig,
+    cloudName,
     dispatch,
     hasRecoveryPhrase,
     keyId,

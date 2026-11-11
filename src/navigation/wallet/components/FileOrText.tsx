@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput, {INPUT_HEIGHT} from '../../../components/form/BoxInput';
@@ -66,6 +66,9 @@ import UploadDarkSvg from '../../../../assets/img/upload-dark.svg';
 import CancelSvg from '../../../../assets/img/cancel.svg';
 import CancelDarkSvg from '../../../../assets/img/cancel-dark.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
+import {classifyBackupFile} from '../../../utils/cloud-backup/codec';
+import {useBackupPasswordLockout, useCloudBackupRestore} from './CloudRestore';
+import {PassphraseOptions} from '../../../components/backup/PassphraseOptions';
 
 const BWCProvider = BwcProvider.getInstance();
 const Encryption = BWCProvider.getEncryption();
@@ -237,11 +240,6 @@ interface FileOrTextFieldValues {
   password: string;
 }
 
-const schema = yup.object().shape({
-  text: yup.string().required(),
-  password: yup.string().required(),
-});
-
 const FileOrText = () => {
   const onPerformanceLayout = useScreenRenderPerformance('Import.FileOrText');
   const {t} = useTranslation();
@@ -260,19 +258,91 @@ const FileOrText = () => {
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isFromClipboard, setIsFromClipboard] = useState(false);
   const [fileFocused, setFileFocused] = useState(false);
+  const [isCloudBackup, setIsCloudBackup] = useState(false);
+  const [passwordError, setPasswordError] = useState<string>();
+  const [passphrase, setPassphrase] = useState('');
+
+  useEffect(
+    () => navigation.addListener('blur', () => setPassphrase('')),
+    [navigation],
+  );
+  const {locked: cloudLocked, lockMessage: cloudLockMessage} =
+    useBackupPasswordLockout();
+  const locked = isCloudBackup && cloudLocked;
+  const lockMessage = isCloudBackup ? cloudLockMessage : undefined;
+  const usePhrase = () => navigation.navigate(t('Phrase') as never);
+  const {restoreBackup} = useCloudBackupRestore({
+    context: route.params?.context,
+    onUsePhrase: usePhrase,
+  });
+
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        text: yup.string().required(t('Required')),
+        password: yup.string().required(t('Required')),
+      }),
+    [t],
+  );
 
   const {
     control,
     handleSubmit,
     setValue,
+    clearErrors,
     formState: {errors},
   } = useForm<FileOrTextFieldValues>({resolver: yupResolver(schema)});
 
   const handleClearFile = useCallback(() => {
     setUploadedFileName('');
     setIsFromClipboard(false);
+    setIsCloudBackup(false);
+    setPassphrase('');
     setValue('text', '');
   }, [setValue]);
+
+  const showInvalidFile = (reason: 'not_bitpay' | 'damaged') => {
+    dispatch(Analytics.track('Cloud Restore Failed', {source: 'file', reason}));
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title:
+          reason === 'not_bitpay'
+            ? t('Not a BitPay backup file')
+            : t('This file is damaged'),
+        message:
+          reason === 'not_bitpay'
+            ? t(
+                'Choose the file you saved from BitPay, or use your 12-word recovery phrase.',
+              )
+            : t(
+                'We can’t read it. Try another copy, or use your 12-word recovery phrase.',
+              ),
+        enableBackdropDismiss: true,
+        actions: [
+          {text: t('Use 12-Word Phrase'), action: usePhrase, primary: true},
+          {text: t('Try Another File'), action: () => {}},
+        ],
+      }),
+    );
+  };
+
+  const loadBackupText = (
+    raw: string,
+    name: string,
+    fromClipboard: boolean,
+  ) => {
+    const backupFile = classifyBackupFile(raw);
+    if (backupFile.type === 'invalid') {
+      showInvalidFile(backupFile.reason);
+      return;
+    }
+    setValue('text', backupFile.text);
+    clearErrors('text');
+    setIsCloudBackup(backupFile.type === 'cloud');
+    setUploadedFileName(name);
+    setIsFromClipboard(fromClipboard);
+  };
 
   const clearSensitive = useCallback(() => {
     handleClearFile();
@@ -361,10 +431,30 @@ const FileOrText = () => {
     );
   };
 
-  const onSubmit = handleSubmit(formData => {
+  const rejectPassword = () =>
+    setPasswordError(t('Incorrect password, try again'));
+
+  const onSubmit = handleSubmit(async formData => {
+    if (locked) {
+      return;
+    }
     const {text, password} = formData;
     setValue('password', '');
     Keyboard.dismiss();
+
+    if (isCloudBackup) {
+      const outcome = await restoreBackup(
+        {source: 'file', text},
+        password,
+        passphrase,
+      );
+      if (outcome === 'wrong_password') {
+        rejectPassword();
+      } else if (outcome === 'unlocked') {
+        handleClearFile();
+      }
+      return;
+    }
 
     let opts: Partial<KeyOptions> = {};
     if (route.params?.keyId) {
@@ -379,7 +469,7 @@ const FileOrText = () => {
       ).toString();
     } catch (e: any) {
       logger.error(`Import: could not decrypt file ${e.message}`);
-      showErrorModal(t('Could not decrypt file, check your password'));
+      rejectPassword();
       return;
     }
 
@@ -498,22 +588,10 @@ const FileOrText = () => {
       });
 
       if (result.fileCopyUri) {
-        const fileContent = await RNFS.readFile(
-          decodeURIComponent(result.fileCopyUri),
-          'utf8',
-        );
-        const encryptedMatch = fileContent.match(/\{[^}]+\}/);
-
-        if (encryptedMatch) {
-          const encryptedText = encryptedMatch[0];
-          setValue('text', encryptedText);
-          setUploadedFileName(result.name || 'file uploaded');
-          setIsFromClipboard(false);
-        } else {
-          setValue('text', fileContent.trim());
-          setUploadedFileName(result.name || 'file uploaded');
-          setIsFromClipboard(false);
-        }
+        const path = decodeURIComponent(result.fileCopyUri);
+        const fileContent = await RNFS.readFile(path, 'utf8');
+        RNFS.unlink(path).catch(() => {});
+        loadBackupText(fileContent, result.name || 'file uploaded', false);
       }
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -534,18 +612,7 @@ const FileOrText = () => {
         return;
       }
 
-      const encryptedMatch = clipboardContent.match(/\{[^}]+\}/);
-
-      if (encryptedMatch) {
-        setValue('text', encryptedMatch[0]);
-        setUploadedFileName(t('Clipboard'));
-        setIsFromClipboard(true);
-        logManager.debug('[FileOrText] Pasted encrypted text from clipboard');
-      } else {
-        setValue('text', clipboardContent.trim());
-        setUploadedFileName(t('Clipboard'));
-        setIsFromClipboard(true);
-      }
+      loadBackupText(clipboardContent, t('Clipboard'), true);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
       logManager.error(`[FileOrText] Error pasting clipboard: ${errorMsg}`);
@@ -656,11 +723,7 @@ const FileOrText = () => {
           </FileInputContainer>
 
           {fileError ? (
-            <BaseText style={styles.errorText}>
-              {typeof fileError === 'string'
-                ? fileError.charAt(0).toUpperCase() + fileError.slice(1)
-                : String(fileError)}
-            </BaseText>
+            <BaseText style={styles.errorText}>{fileError}</BaseText>
           ) : null}
         </View>
 
@@ -674,10 +737,14 @@ const FileOrText = () => {
                 label={t('PASSWORD')}
                 placeholder={'strongPassword123'}
                 type={'password'}
-                onChangeText={onChange}
+                disabled={locked}
+                onChangeText={(text: string) => {
+                  setPasswordError(undefined);
+                  onChange(text);
+                }}
                 onBlur={onBlur}
                 value={value}
-                error={errors.password?.message}
+                error={lockMessage || passwordError || errors.password?.message}
               />
             )}
             name="password"
@@ -685,11 +752,16 @@ const FileOrText = () => {
           />
         </View>
 
+        {isCloudBackup ? (
+          <PassphraseOptions value={passphrase} onChange={setPassphrase} />
+        ) : null}
+
         <Button
           testID="import-wallet-button"
           accessibilityLabel={t('Import Wallet')}
           buttonStyle={'primary'}
           state={importButtonState}
+          disabled={locked}
           onPress={onSubmit}>
           {t('Import Wallet')}
         </Button>
