@@ -3,6 +3,7 @@ import {Pressable, StyleSheet, View} from 'react-native';
 import {BaseText} from '../styled/Text';
 import {Hr} from '../styled/Containers';
 import {useBackupColors} from './colors';
+import {Action} from '../../styles/colors';
 import ChevronUpLight from '../../../assets/img/chevron-up-lightmode.svg';
 import ChevronUpDark from '../../../assets/img/chevron-up-darkmode.svg';
 import ChevronDownLight from '../../../assets/img/chevron-down-lightmode.svg';
@@ -53,6 +54,23 @@ const styles = StyleSheet.create({
   accordionBody: {paddingHorizontal: 16, paddingBottom: 4},
   accordionItem: {paddingVertical: 14},
   accordionItemText: {fontSize: 14},
+  selectable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioDot: {width: 11, height: 11, borderRadius: 6, backgroundColor: Action},
   pill: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -73,7 +91,7 @@ const IconCircle = ({children}: {children: React.ReactNode}) => {
   );
 };
 
-export type StatusTagTone = 'on';
+export type StatusTagTone = 'on' | 'rec';
 
 export const StatusTag = ({
   children,
@@ -83,8 +101,18 @@ export const StatusTag = ({
   tone?: StatusTagTone;
 }) => {
   const colors = useBackupColors();
-  const backgroundColor = tone === 'on' ? colors.surfaceSuccess : 'transparent';
-  const color = tone === 'on' ? colors.gain : colors.tagText;
+  const backgroundColor =
+    tone === 'on'
+      ? colors.surfaceSuccess
+      : tone === 'rec'
+      ? colors.surfaceAccent
+      : 'transparent';
+  const color =
+    tone === 'on'
+      ? colors.gain
+      : tone === 'rec'
+      ? colors.textLink
+      : colors.tagText;
   return (
     <View
       style={[
@@ -220,6 +248,58 @@ export const AdvancedMethods = ({
         </View>
       ) : null}
     </View>
+  );
+};
+
+export const Radio = ({selected, dim}: {selected?: boolean; dim?: boolean}) => {
+  const colors = useBackupColors();
+  return (
+    <View
+      style={[
+        styles.radio,
+        {
+          borderColor: dim
+            ? colors.surfaceMuted
+            : selected
+            ? Action
+            : colors.inputBorder,
+        },
+      ]}>
+      {selected ? <View style={styles.radioDot} /> : null}
+    </View>
+  );
+};
+
+export const SelectableCard = ({
+  selected,
+  onPress,
+  children,
+  accessibilityLabel,
+}: {
+  selected: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+  accessibilityLabel?: string;
+}) => {
+  const colors = useBackupColors();
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{checked: selected}}
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      style={[
+        styles.selectable,
+        {
+          backgroundColor: selected
+            ? colors.rowSelectedBg
+            : colors.surfaceMuted,
+          borderColor: selected ? colors.rowSelectedBorder : 'transparent',
+        },
+      ]}>
+      <View style={styles.cardBody}>{children}</View>
+      <Radio selected={selected} />
+    </Pressable>
   );
 };
 

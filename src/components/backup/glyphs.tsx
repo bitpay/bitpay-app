@@ -14,6 +14,15 @@ const strokeProps = (color: string, width = 2) => ({
   strokeLinejoin: 'round' as const,
 });
 
+export const CloudGlyph = ({color, size = 20}: GlyphProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path
+      d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"
+      {...strokeProps(color)}
+    />
+  </Svg>
+);
+
 export const PenGlyph = ({color, size = 20}: GlyphProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24">
     <Path
@@ -29,6 +38,18 @@ export const PrintGlyph = ({color, size = 20}: GlyphProps) => (
       d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"
       {...strokeProps(color)}
     />
+  </Svg>
+);
+
+export const XGlyph = ({color, size = 24}: GlyphProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path d="M6 6l12 12M18 6 6 18" {...strokeProps(color, 2.2)} />
+  </Svg>
+);
+
+export const BangGlyph = ({color, size = 24}: GlyphProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Path d="M12 6v8M12 18v.5" {...strokeProps(color, 2.6)} />
   </Svg>
 );
 

@@ -449,6 +449,20 @@ export const setBackupNudgeShown = (): AppActionType => ({
   type: AppActionTypes.SET_BACKUP_NUDGE_SHOWN,
 });
 
+export const backupPasswordBannedUntil = (
+  bannedUntil: number | undefined,
+): AppActionType => ({
+  type: AppActionTypes.BACKUP_PASSWORD_BANNED_UNTIL,
+  payload: bannedUntil,
+});
+
+export const backupPasswordFailedAttempts = (
+  attempts: number,
+): AppActionType => ({
+  type: AppActionTypes.BACKUP_PASSWORD_FAILED_ATTEMPTS,
+  payload: attempts,
+});
+
 export const setShowKycGetVerifiedModal = (
   payload: boolean,
 ): AppActionType => ({

@@ -5,10 +5,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {ScrollView, StyleSheet} from 'react-native';
+import {Platform, ScrollView, StyleSheet, View} from 'react-native';
+import moment from 'moment';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
+import Banner from '../../../components/banner/Banner';
 import {useTranslation} from 'react-i18next';
 import {
   useAppDispatch,
@@ -30,8 +32,9 @@ import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 import {verifyIdentity} from '../../../store/wallet/effects/send/send';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {CloudBackupPasswordMode} from './CloudBackupPassword';
 import {useBackupColors} from '../../../components/backup/colors';
-import {PenGlyph} from '../../../components/backup/glyphs';
+import {CloudGlyph, PenGlyph} from '../../../components/backup/glyphs';
 import {
   AdvancedMethods,
   BackupMethodCard,
@@ -49,6 +52,7 @@ const styles = StyleSheet.create({
   content: {gap: 14, paddingTop: 10, paddingHorizontal: 12, paddingBottom: 20},
   paragraph: {fontSize: 16, lineHeight: 25},
   sectionTitle: {fontSize: 18, lineHeight: 24, fontWeight: '700', marginTop: 6},
+  banner: {marginTop: 6},
 });
 
 interface DecryptedKey {
@@ -77,7 +81,10 @@ const BackupOnboarding: React.FC = () => {
   const hasMnemonic = !!(
     key?.properties?.mnemonic || key?.properties?.mnemonicEncrypted
   );
-  const manualBackedUp = !!key?.backupComplete;
+  const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
+  const canBackUpToCloud = hasMnemonic;
+  const cloudBackedUp = canBackUpToCloud && !!key?.cloudBackupTimestamp;
+  const manualBackedUp = !!key?.backupComplete && !key?.cloudBackupTimestamp;
   const hasPrivateKey = !!(
     key?.properties?.xPrivKey || key?.properties?.xPrivKeyEncrypted
   );
@@ -176,6 +183,22 @@ const BackupOnboarding: React.FC = () => {
     } else {
       navigation.navigate('RecoveryPhrase', params);
     }
+  };
+
+  const onCloudBackupPress = (mode: CloudBackupPasswordMode) => {
+    if (!identityVerified) {
+      return;
+    }
+    haptic('impactLight');
+    dispatch(Analytics.track('Clicked Cloud Backup', {mode}));
+    withDecryptedKey(({mnemonic}) =>
+      navigation.navigate('CloudBackupPassword', {
+        keyId,
+        words: mnemonic.trim().split(/[\u3000\s]+/),
+        mode,
+        context,
+      }),
+    );
   };
 
   const onManualBackupPress = () => {
@@ -355,6 +378,40 @@ const BackupOnboarding: React.FC = () => {
       <BaseText accessibilityRole="header" style={styles.sectionTitle}>
         {t('Back Up Methods')}
       </BaseText>
+      {canBackUpToCloud ? (
+        <BackupMethodCard
+          testID="cloud-backup-button"
+          icon={<CloudGlyph color={colors.iconButtonGlyph} />}
+          title={t('{{cloudName}} Backup', {cloudName})}
+          tag={cloudBackedUp ? t('Completed') : t('Recommended')}
+          tagTone={cloudBackedUp ? 'on' : 'rec'}
+          description={
+            cloudBackedUp
+              ? t('Last backed up {{date}}.', {
+                  date: moment(key.cloudBackupTimestamp).format('ll'),
+                })
+              : t(
+                  'Saves an encrypted copy to {{cloudName}}, locked with a password you create.',
+                  {cloudName},
+                )
+          }
+          action={
+            cloudBackedUp ? (
+              <>
+                <BannerLink onPress={() => onCloudBackupPress('again')}>
+                  {t('Back Up Again')}
+                </BannerLink>
+                <BannerLink onPress={() => onCloudBackupPress('change')}>
+                  {t('Change Backup Password')}
+                </BannerLink>
+              </>
+            ) : null
+          }
+          onPress={
+            cloudBackedUp ? undefined : () => onCloudBackupPress('create')
+          }
+        />
+      ) : null}
       {hasMnemonic ? (
         <BackupMethodCard
           testID="write-down-backup-button"
@@ -398,6 +455,14 @@ const BackupOnboarding: React.FC = () => {
             : []),
         ]}
       />
+      <View style={styles.banner}>
+        <Banner
+          type={'info'}
+          description={t(
+            'Encrypted on this phone. BitPay never sees your recovery phrase or backup password.',
+          )}
+        />
+      </View>
     </ScrollView>
   );
 };

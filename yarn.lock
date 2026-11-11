@@ -3563,6 +3563,11 @@
   resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-5.0.1.tgz#478789e526af31e0660c6f49fa5c5429d8d4287b"
   integrity sha512-K3JRWkIW4wQ79YJ6+BPZzp1SamoikxfPRw7Yw4B4PElEQmqZFrmH9M5LxvIo460/3QSrZF/wCgi3qizJt7g/iw==
 
+"@react-native-google-signin/google-signin@17.0.0":
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-17.0.0.tgz#4e50f283765ce29b92a03d89a58a55382c2cc31d"
+  integrity sha512-FAnq5tkoq01np7jCzGjBYK1QPS61hJxjLJHJyJjQN3gaTwAZiGll18Xn3nygITMsZ/WoJ0jmskuHSG/oknUskQ==
+
 "@react-native-masked-view/masked-view@0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@react-native-masked-view/masked-view/-/masked-view-0.3.2.tgz#7064533a573e3539ec912f59c1f457371bf49dd9"
@@ -13438,6 +13443,11 @@ react-native-clean-project@3.6.7:
   version "3.6.7"
   resolved "https://registry.yarnpkg.com/react-native-clean-project/-/react-native-clean-project-3.6.7.tgz#6d22ad22fe3a1e6efdb040eb66f9bdfb2273ac2e"
   integrity sha512-GSJG1oNRJKtINPMzfHgRmu7HJs7phwgtwQ6GvyGARiySqQlU/bAc5zsI9rOeNPGlpgYongQtjOGdmqSpsWMJTw==
+
+react-native-cloud-storage@3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-cloud-storage/-/react-native-cloud-storage-3.3.0.tgz#7f5294c0e93e4dee395a3d8a446ed85ecedb7130"
+  integrity sha512-2NTuBzT+TN/oOSGqkgB2UlDSiwClNouqNJjE49CXp3ybnRpVpDXLoe3IdIoQJ2wk/h3XC/pbgHcL1px2YyvHbA==
 
 react-native-config@1.5.0:
   version "1.5.0"

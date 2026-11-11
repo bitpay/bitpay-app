@@ -14,6 +14,14 @@
 		<string>applinks:bitpay.onelink.me</string>
 		<string>webcredentials:test.bitpay.com</string>
 	</array>
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.bitpay.wallet</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudDocuments</string>
+	</array>
 	<key>com.apple.developer.in-app-payments</key>
 	<array>
 		<string>merchant.com.bitpay.wallet.applepay</string>
@@ -24,5 +32,9 @@
 	</array>
 	<key>com.apple.developer.payment-pass-provisioning</key>
 	<true/>
+	<key>com.apple.developer.ubiquity-container-identifiers</key>
+	<array>
+		<string>iCloud.com.bitpay.wallet</string>
+	</array>
 </dict>
 </plist>

@@ -23,7 +23,10 @@ const mockState = {
         id: 'key-1',
         keyName: 'My Key',
         backupComplete: false,
-        properties: {mnemonic: 'abandon ability able'},
+        properties: {mnemonic: 'abandon ability able'} as {
+          mnemonic: string;
+          mnemonicHasPassphrase?: boolean;
+        },
         wallets: [] as Array<{pendingTssSession?: boolean}>,
       },
     },
@@ -72,6 +75,18 @@ describe('BackupOnboarding', () => {
     );
     mockState.APP.pinLockActive = true;
     mockState.WALLET.keys['key-1'].wallets = [];
+    mockState.WALLET.keys['key-1'].properties = {
+      mnemonic: 'abandon ability able',
+    };
+  });
+
+  it('offers the cloud backup for a key whose recovery phrase has a password', async () => {
+    mockState.WALLET.keys['key-1'].properties.mnemonicHasPassphrase = true;
+    const {getByTestId} = render(<BackupOnboarding />);
+
+    await act(async () => {});
+
+    expect(getByTestId('cloud-backup-button')).toBeTruthy();
   });
 
   it('does not open the recovery phrase until the identity is verified', async () => {

@@ -148,6 +148,24 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE: {
+      const {keyId, timestamp} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      const updatedKey = {
+        ...keyToUpdate,
+        backupComplete: true,
+        cloudBackupTimestamp: timestamp,
+      };
+
+      return {
+        ...state,
+        keys: {...state.keys, [keyId]: updatedKey},
+      };
+    }
+
     case WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS: {
       const {keyId, walletId, status} = action.payload;
       const keyToUpdate = state.keys[keyId];
