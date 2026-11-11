@@ -1,5 +1,5 @@
 import Modal from 'react-native-modal';
-import React, {useEffect, useState, useCallback, useMemo} from 'react';
+import React, {useState, useCallback, useMemo} from 'react';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {useDispatch, useSelector} from 'react-redux';
@@ -13,7 +13,6 @@ import {
 } from '../../../styles/colors';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import {useTheme} from '../../../contexts';
-import useModalContentLifecycle from '../base/useModalContentLifecycle';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
 import {
@@ -28,6 +27,7 @@ import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {useTranslation} from 'react-i18next';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {useLogger} from '../../../utils/hooks';
+import {useBiometricAutoPrompt} from './useBiometricAutoPrompt';
 
 const styles = StyleSheet.create({
   biometricContainer: {
@@ -73,9 +73,7 @@ export interface BiometricModalConfig {
 
 const modalStyle = {margin: 0};
 
-const BiometricModalContentComponent: React.FC<{
-  onModalHide: () => void;
-}> = ({onModalHide}) => {
+const BiometricModalContentComponent: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const logger = useLogger();
@@ -84,7 +82,6 @@ const BiometricModalContentComponent: React.FC<{
   const {onClose} =
     useSelector(({APP}: RootState) => APP.biometricModalConfig) || {};
   const [animation] = useState(() => new Animated.Value(0));
-  const [isActive, setIsActive] = useState(false);
 
   const inputRange = useMemo(() => [0, 1], []);
   const outputRange = useMemo(() => [1, 1.2], []);
@@ -133,7 +130,6 @@ const BiometricModalContentComponent: React.FC<{
 
   const authenticate = useCallback(async () => {
     try {
-      setIsActive(true);
       const {success, error} = await rnBiometrics.simplePrompt({
         promptMessage: t('Verify your identity'),
       });
@@ -146,7 +142,6 @@ const BiometricModalContentComponent: React.FC<{
         dispatch(AppActions.showBlur(false));
         onClose?.(true);
         DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
-        setIsActive(false);
       } else {
         logger.warn(`Error providing biometrics: ${error}`);
         pulse();
@@ -157,11 +152,7 @@ const BiometricModalContentComponent: React.FC<{
     }
   }, [dispatch, logger, onClose, pulse, rnBiometrics, t]);
 
-  useEffect(() => {
-    if (isVisible && !isActive) {
-      authenticate();
-    }
-  }, [isVisible, isActive, authenticate]);
+  const requestPrompt = useBiometricAutoPrompt(isVisible, authenticate);
 
   const transformStyle = useMemo(() => ({transform: [{scale}]}), [scale]);
 
@@ -171,7 +162,6 @@ const BiometricModalContentComponent: React.FC<{
     <View>
       <Modal
         isVisible={isVisible}
-        onModalHide={onModalHide}
         coverScreen={true}
         backdropTransitionOutTiming={0}
         hideModalContentWhileAnimating
@@ -200,7 +190,7 @@ const BiometricModalContentComponent: React.FC<{
           </View>
           <TouchableOpacity
             style={styles.biometricModalImgContainer}
-            onPress={authenticate}>
+            onPress={requestPrompt}>
             <Animated.View style={[styles.imgContainer, transformStyle]}>
               <BitpaySvg width={80} height={80} />
             </Animated.View>
@@ -216,12 +206,10 @@ const BiometricModalContent = React.memo(BiometricModalContentComponent);
 
 const BiometricModal: React.FC = React.memo(() => {
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
-  const {shouldRenderModal, handleModalHide} =
-    useModalContentLifecycle(isVisible);
-
-  return shouldRenderModal ? (
-    <BiometricModalContent onModalHide={handleModalHide} />
-  ) : null;
+  // Unmount as soon as the lock is dismissed. Keeping the RN Modal mounted
+  // with isVisible=false leaves an empty RCTFabricModalHostViewController
+  // presented on iOS, which swallows every touch on Home.
+  return isVisible ? <BiometricModalContent /> : null;
 });
 
 export default BiometricModal;
