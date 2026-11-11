@@ -1,3 +1,4 @@
+import {BuyCryptoActions} from '../buy-crypto';
 import * as appActions from '../app/app.actions';
 import {logManager} from '../../managers/LogManager';
 import * as Root from '../../Root';
@@ -1896,17 +1897,62 @@ describe('incomingData', () => {
     expect(navigationResetSpy).toHaveBeenCalled();
   });
 
-  it('Should handle sardine URI with no sardineExternalId — logs warn and returns early', async () => {
+  it('Should not route a sardine URI that has no sardineExternalId', async () => {
     const data = 'bitpay://sardine?someOtherParam=123';
     const store = configureTestStore({});
-    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
     const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
     const promiseResult = await store.dispatch(incomingData(data));
-    expect(promiseResult).toBe(true);
-    expect(loggerWarnSpy).toHaveBeenCalledWith(
-      'No sardineExternalId present. Do not redir',
-    );
+    expect(promiseResult).toBe(false);
     expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  describe('Sardine return URL', () => {
+    const localOrder = {
+      address: 'local-address',
+      chain: 'eth',
+      created_on: 1700000000000,
+      crypto_amount: 0.5,
+      coin: 'ETH',
+      env: 'prod' as const,
+      fiat_base_amount: 100,
+      fiat_total_amount: 105,
+      fiat_total_amount_currency: 'USD',
+      payment_method: 'debitCard' as const,
+      external_id: 'ext-1',
+      status: 'paymentRequestSent',
+      user_id: 'wallet-1',
+    };
+
+    it('ignores a redirect for an order this device did not create', async () => {
+      const store = configureTestStore({});
+      const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+      await store.dispatch(
+        incomingData(
+          'bitpay://sardine?sardineExternalId=forged&order_id=o1&status=Complete&address=attacker&cryptoAmount=99',
+        ),
+      );
+      expect(store.getState().BUY_CRYPTO.sardine.forged).toBeUndefined();
+      expect(navigationResetSpy).not.toHaveBeenCalled();
+    });
+
+    it('updates only status and order id of a local order', async () => {
+      const store = configureTestStore({});
+      store.dispatch(
+        BuyCryptoActions.successPaymentRequestSardine({
+          sardinePaymentData: localOrder,
+        }),
+      );
+      await store.dispatch(
+        incomingData(
+          'bitpay://sardine?sardineExternalId=ext-1&walletId=wallet-1&status=pending?order_id=o1&address=attacker&cryptoAmount=99&coin=BTC&paymentMethod=ach',
+        ),
+      );
+      expect(store.getState().BUY_CRYPTO.sardine['ext-1']).toEqual({
+        ...localOrder,
+        order_id: 'o1',
+        status: 'pending',
+      });
+    });
   });
 
   it('Should handle simplex URI with no paymentId (buy flow) — logs warn and returns early', async () => {

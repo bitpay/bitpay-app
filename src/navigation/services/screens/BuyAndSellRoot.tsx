@@ -124,6 +124,7 @@ import {
   MoonpayPaymentData,
   MoonpayPaymentType,
   SardineGetAuthTokenRequestData,
+  SardinePaymentData,
   SardinePaymentUrlConfigParams,
   SimplexPaymentData,
   TransakAccessTokenData,
@@ -3201,27 +3202,7 @@ const BuyAndSellRoot = ({
       sardineExternalId +
       '&walletId=' +
       selectedWallet.id +
-      '&status=pending' +
-      '&address=' +
-      address +
-      '&chain=' +
-      destinationChain +
-      '&createdOn=' +
-      Date.now() +
-      '&cryptoAmount=' +
-      Number(offer.amountReceiving) +
-      '&coin=' +
-      coin.toUpperCase() +
-      '&env=' +
-      (__DEV__ ? 'dev' : 'prod') +
-      '&fiatBaseAmount=' +
-      offer.buyAmount +
-      '&fiatTotalAmount=' +
-      offer.amountCost +
-      '&fiatTotalAmountCurrency=' +
-      offer.fiatCurrency +
-      '&paymentMethod=' +
-      paymentMethod.method;
+      '&status=pending';
 
     const quoteData: SardinePaymentUrlConfigParams = {
       env: sardineEnv,
@@ -3263,6 +3244,27 @@ const BuyAndSellRoot = ({
       showError(title, err, reason);
       return;
     }
+
+    // Saved before checkout, as the other providers do; the return URL only
+    // updates an order saved here
+    const sardinePaymentData: SardinePaymentData = {
+      address,
+      chain: destinationChain,
+      created_on: Date.now(),
+      crypto_amount: Number(offer.amountReceiving),
+      coin: coin.toUpperCase(),
+      env: __DEV__ ? 'dev' : 'prod',
+      fiat_base_amount: offer.buyAmount!,
+      fiat_total_amount: offer.amountCost!,
+      fiat_total_amount_currency: offer.fiatCurrency,
+      external_id: sardineExternalId,
+      payment_method: paymentMethod?.method,
+      status: 'paymentRequestSent',
+      user_id: selectedWallet.id,
+    };
+    dispatch(
+      BuyCryptoActions.successPaymentRequestSardine({sardinePaymentData}),
+    );
 
     await openCheckoutWithInAppBrowser(
       checkoutUrl,

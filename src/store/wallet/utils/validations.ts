@@ -143,7 +143,7 @@ export const isValidRampUri = (data: string): boolean => {
 
 export const isValidSardineUri = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!data?.includes('sardine');
+  return !!data && /sardineExternalId=/i.test(data);
 };
 
 export const isValidSimplexUri = (data: string): boolean => {
