@@ -9,7 +9,7 @@ import {AppActions} from '../../../store/app';
 import {BottomSheetModal} from '@gorhom/bottom-sheet';
 import {ThemeProvider} from '../../../contexts';
 import {BitPayDarkTheme} from '../../../themes/bitpay';
-import {LightBlack} from '../../../styles/colors';
+import {Caution, LightBlack} from '../../../styles/colors';
 
 // Preserve ScrollView props now that notifications use a sheet-aware scrollable.
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
@@ -117,6 +117,26 @@ describe('Bottom Notification Modal', () => {
     );
     const button = getByTestId('bottom-notification-secondary-action-button');
     fireEvent.press(button);
+  });
+
+  it('renders a destructive action in Caution', async () => {
+    const destructiveStore = configureTestStore({
+      APP: {
+        ...initialState.APP,
+        bottomNotificationModalConfig: {
+          ...initialState.APP.bottomNotificationModalConfig,
+          actions: [{text: 'delete key', destructive: true, action: mockFn}],
+        },
+      },
+    });
+    const {findByText} = render(
+      <Provider store={destructiveStore}>
+        <BottomNotification />
+      </Provider>,
+    );
+
+    const cta = await findByText('DELETE KEY');
+    expect(StyleSheet.flatten(cta.props.style).color).toBe(Caution);
   });
 
   it('preserves its config until the close animation finishes', () => {

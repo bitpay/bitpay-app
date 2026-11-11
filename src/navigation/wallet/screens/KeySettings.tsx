@@ -32,13 +32,14 @@ import {
   InfoTriangle,
   ScreenGutter,
   Setting,
+  SettingDescription,
   SettingTitle,
   SettingView,
   InfoImageContainer,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Slate, SlateDark, White} from '../../../styles/colors';
+import {Caution, Slate, SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import InfoIcon from '../../../components/icons/info/Info';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
@@ -79,6 +80,8 @@ import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
+import Banner from '../../../components/banner/Banner';
+import {StatusTag} from '../../../components/backup/BackupCards';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
@@ -122,6 +125,9 @@ const styles = StyleSheet.create({
   searchComponentContainer: {
     marginTop: 20,
     marginBottom: 20,
+  },
+  deleteKeySetting: {
+    marginBottom: 50,
   },
 });
 
@@ -220,6 +226,14 @@ const KeySettings = () => {
     ({WALLET}) => WALLET.keys[keyId]?.evmAccountsInfo,
   );
   const {keyName} = _key || {};
+  const hasRecoveryPhrase = !!(
+    _key &&
+    !_key.isReadOnly &&
+    !isTSSKey(_key) &&
+    !_key.wallets.some(wallet => wallet.pendingTssSession) &&
+    (_key.properties?.mnemonic || _key.properties?.mnemonicEncrypted)
+  );
+  const needsBackup = hasRecoveryPhrase && !_key?.backupComplete;
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
@@ -392,6 +406,74 @@ const KeySettings = () => {
     ],
   );
 
+  const onBackupPress = useCallback(() => {
+    const fullWalletObj = _key.wallets?.[0];
+    if (fullWalletObj?.pendingTssSession && _key.tssSession) {
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t('Pending TSS session. Retry after session completion.'),
+          }),
+        ),
+      );
+      return;
+    } else if (isTSSKey(_key)) {
+      navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
+        context: 'backupExistingTSSKey',
+        key: _key,
+      });
+      return;
+    }
+    navigation.navigate('BackupOnboarding', {
+      keyId: _key.id,
+      context: 'keySettings',
+    });
+  }, [_key, dispatch, navigation, t]);
+
+  const onViewRecoveryPhrasePress = useCallback(() => {
+    haptic('impactLight');
+    navigation.navigate('BackupOnboarding', {
+      keyId,
+      context: 'keySettings',
+      viewRecoveryPhrase: true,
+    });
+  }, [keyId, navigation]);
+
+  const onDeleteKeyPress = useCallback(() => {
+    haptic('impactLight');
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title: t('Delete {{keyName}}?', {keyName}),
+        message: !hasRecoveryPhrase
+          ? t('Permanently deletes all wallets using this key.') +
+            '\n' +
+            t('THIS ACTION CANNOT BE REVERSED.')
+          : needsBackup
+          ? t(
+              'Its recovery phrase isn’t backed up. If you delete it, any funds in it are gone for good.',
+            )
+          : t(
+              'This removes it from this phone. You can restore it with your recovery phrase.',
+            ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Delete Key'),
+            primary: true,
+            destructive: true,
+            action: () =>
+              navigation.navigate('DeleteKey', {keyId, confirmed: true}),
+          },
+          {
+            text: t('Cancel'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  }, [dispatch, hasRecoveryPhrase, keyId, keyName, navigation, needsBackup, t]);
+
   const onPressItem = useCallback(
     (item: AccountRowProps) => {
       haptic('impactLight');
@@ -424,6 +506,17 @@ const KeySettings = () => {
   const renderListHeaderComponent = useCallback(() => {
     return (
       <>
+        {needsBackup ? (
+          <Banner
+            type="warning"
+            hasBackgroundColor
+            title={t('Recovery phrase isn’t backed up')}
+            description={t(
+              'Back up your recovery phrase so you can get your funds back if you lose this phone.',
+            )}
+            link={{text: t('Back Up Now'), onPress: onBackupPress}}
+          />
+        ) : null}
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -472,6 +565,8 @@ const KeySettings = () => {
     keyName,
     memorizedAccountList,
     navigation,
+    needsBackup,
+    onBackupPress,
     searchResults,
     searchVal,
     t,
@@ -496,35 +591,28 @@ const KeySettings = () => {
         {_key && !_key.isReadOnly ? (
           <VerticalPadding>
             <Title>{t('Security')}</Title>
-            <Setting
-              onPress={async () => {
-                const fullWalletObj = _key.wallets?.[0];
-                if (fullWalletObj?.pendingTssSession && _key.tssSession) {
-                  dispatch(
-                    showBottomNotificationModal(
-                      CustomErrorMessage({
-                        errMsg: t(
-                          'Pending TSS session. Retry after session completion.',
-                        ),
-                      }),
-                    ),
-                  );
-                  return;
-                } else if (isTSSKey(_key)) {
-                  navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
-                    context: 'backupExistingTSSKey',
-                    key: _key,
-                  });
-                  return;
-                }
-                navigation.navigate('BackupOnboarding', {
-                  keyId: _key.id,
-                });
-              }}>
+            <Setting onPress={onBackupPress}>
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
+              {!_key.backupComplete ? (
+                <StatusTag>{t('Backup Required')}</StatusTag>
+              ) : hasRecoveryPhrase ? (
+                <SettingDescription>{t('Manual')}</SettingDescription>
+              ) : null}
             </Setting>
 
             <Hr />
+
+            {_key.backupComplete && hasRecoveryPhrase ? (
+              <>
+                <Setting onPress={onViewRecoveryPhrasePress}>
+                  <WalletSettingsTitle>
+                    {t('View Recovery Phrase')}
+                  </WalletSettingsTitle>
+                </Setting>
+
+                <Hr />
+              </>
+            ) : null}
 
             <Setting
               onPress={() => {
@@ -692,12 +780,11 @@ const KeySettings = () => {
 
           <Setting
             activeOpacity={ActiveOpacity}
-            style={{marginBottom: 50}}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('DeleteKey', {keyId});
-            }}>
-            <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
+            style={styles.deleteKeySetting}
+            onPress={onDeleteKeyPress}>
+            <WalletSettingsTitle style={{color: Caution}}>
+              {t('Delete Key')}
+            </WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </>
@@ -706,8 +793,12 @@ const KeySettings = () => {
     _key,
     buildEncryptModalConfig,
     dispatch,
+    hasRecoveryPhrase,
     keyId,
     navigation,
+    onBackupPress,
+    onDeleteKeyPress,
+    onViewRecoveryPhrasePress,
     startSyncWallets,
     t,
     theme.dark,

@@ -3,14 +3,25 @@ import {keyBackupRequired} from '../../navigation/tabs/home/components/Crypto';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import {
+  isOnboardingKeyPending,
+  showOnboardingKeyPendingToast,
+} from '../../store/app/onboardingKey.effects';
 
 export const useRequireKeyAndWalletRedirect = (cta: () => void) => {
   const {t} = useTranslation();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const onboardingKeyStatus = useAppSelector(
+    ({APP}) => APP.onboardingKeyStatus,
+  );
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
   return () => {
+    if (isOnboardingKeyPending(onboardingKeyStatus)) {
+      showOnboardingKeyPendingToast();
+      return;
+    }
     const allKeys = Object.values(keys);
     const backedUpKey = allKeys.find(key => key.backupComplete);
     const hasWallet = !!allKeys.find(key => key.wallets);

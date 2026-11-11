@@ -49,4 +49,14 @@ describe('log actions', () => {
       },
     );
   });
+
+  it('redacts private data from the Sentry breadcrumb', () => {
+    LogActions.error('Mnemonic string is invalid: abandon\nability able');
+
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'log',
+      message: 'Mnemonic string is invalid: [...]',
+      level: 'error',
+    });
+  });
 });

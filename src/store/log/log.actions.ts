@@ -1,6 +1,6 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {AddLog, LogActionType, LogActionTypes} from './log.types';
-import {LogEntry, LogLevel} from './log.models';
+import {LogEntry, LogLevel, sanitizeLogMessage} from './log.models';
 import * as Sentry from '@sentry/react-native';
 
 export const clear = (): LogActionType => {
@@ -54,7 +54,7 @@ function _log(
     }
   }
   if (filteredMessages.length > 0) {
-    const message = filteredMessages.join(' ');
+    const message = sanitizeLogMessage(filteredMessages.join(' '));
     switch (LogLevel[level]) {
       case 'Debug':
         Sentry.addBreadcrumb({

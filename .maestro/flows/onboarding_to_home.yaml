@@ -11,39 +11,9 @@ appId: com.bitpay.wallet
 - takeScreenshot: "01-onboarding-start"
 - waitForAnimationToEnd
 - tapOn:
-    id: "continue-without-an-account-button"
-
-# Notifications screen
-- extendedWaitUntil:
-    visible:
-      id: "set-notifications-view"
-    timeout: 15000
-- takeScreenshot: "02-notifications"
-- waitForAnimationToEnd
-- tapOn:
-    id: "deny-button"
-- takeScreenshot: "03-after-notifications-deny"
-
-# Protect your wallet (security) screen
-- extendedWaitUntil:
-    visible:
-      id: "security-view"
-    timeout: 30000
-- takeScreenshot: "04-security-view"
-- waitForAnimationToEnd
-- tapOn:
-    id: "skip-security-button"
-- takeScreenshot: "05-after-security-skip"
-
-# Create key screen
-- extendedWaitUntil:
-    visible:
-      id: "create-key-view"
-    timeout: 15000
-- takeScreenshot: "06-create-key"
-- waitForAnimationToEnd
-- tapOn:
     id: "i-already-have-a-key-button"
+- tapOn:
+    id: "restore-or-import-phrase"
 
 # Import screen - enter seed phrase
 - extendedWaitUntil:
@@ -52,18 +22,34 @@ appId: com.bitpay.wallet
     timeout: 15000
 - takeScreenshot: "07-import"
 - tapOn:
-    id: "import-text-input"
-- inputText: "gown pizza sell law yard laundry gown action enemy speed embark awkward"
+    id: "phrase-word-input"
+- inputText: "gown pizza sell law yard laundry gown action enemy speed embark awkward "
 
 # Import wallet (keyboardShouldPersistTaps='handled' allows tap through keyboard)
 - tapOn:
     id: "import-wallet-button"
 
-# Wait for import to complete and terms screen to appear (may take time on slow networks)
+- extendedWaitUntil:
+    visible:
+      id: "security-view"
+    timeout: 120000
+- tapOn:
+    id: "pin-button"
+- assertVisible:
+    id: "virtual-key-container"
+- tapOn: "3"
+- tapOn: "7"
+- tapOn: "2"
+- tapOn: "9"
+- waitForAnimationToEnd
+- tapOn: "3"
+- tapOn: "7"
+- tapOn: "2"
+- tapOn: "9"
 - extendedWaitUntil:
     visible:
       id: "terms-of-use-container"
-    timeout: 120000
+    timeout: 15000
 - takeScreenshot: "08-terms"
 
 # Important - tap all 3 checkboxes and agree
@@ -77,6 +63,10 @@ appId: com.bitpay.wallet
     id: "third-term-checkbox"
 - tapOn:
     id: "agree-and-continue-button"
+
+- tapOn:
+    text: "(?i)don.t allow"
+    optional: true
 
 # Verify home screen is visible
 - assertVisible:
