@@ -48,17 +48,32 @@ jest.mock('../managers/LogManager', () => ({
   },
 }));
 
-import {backupFileExists, backupPersistRoot} from './backup/fs-backup';
-import {reduxStorage} from './index';
+import {
+  backupFileExists,
+  backupPersistRoot,
+  discardRollingBackup,
+} from './backup/fs-backup';
+import {fsBackupTriggerMiddleware, reduxStorage} from './index';
 import {activateVaultStorage} from './vault-storage';
+import {WalletActionTypes} from './wallet/wallet.types';
 
 jest.mock('./backup/fs-backup', () => ({
   backupFileExists: jest.fn(),
   backupPersistRoot: jest.fn(),
+  discardRollingBackup: jest.fn(),
   readBackupPersistRoot: jest.fn(),
 }));
 
 const flush = () => new Promise(resolve => setImmediate(resolve));
+
+const dispatchThroughMiddleware = (type: string) =>
+  fsBackupTriggerMiddleware({} as any)((action: any) => action)({type});
+
+const deferred = <T>() => {
+  let resolve: (value: T) => void = () => {};
+  const promise = new Promise<T>(r => (resolve = r));
+  return {promise, resolve};
+};
 
 describe('persist:root filesystem backup scheduling', () => {
   beforeAll(() => activateVaultStorage());
@@ -95,5 +110,83 @@ describe('persist:root filesystem backup scheduling', () => {
     await flush();
     expect(backupPersistRoot).toHaveBeenCalledTimes(3);
     expect(backupFileExists).not.toHaveBeenCalled();
+  });
+
+  describe('rolling .bak discard after CLEAR_TSS_SESSION_SECRETS', () => {
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      (backupFileExists as jest.Mock).mockResolvedValue(true);
+      (backupPersistRoot as jest.Mock).mockResolvedValue(undefined);
+      (discardRollingBackup as jest.Mock).mockResolvedValue(true);
+      // Leave any earlier failure streak and pending discard behind
+      dispatchThroughMiddleware(WalletActionTypes.SUCCESS_CREATE_KEY);
+      await reduxStorage.setItem('persist:root', '{"reset":1}');
+      await flush();
+      jest.clearAllMocks();
+    });
+
+    it('discards .bak only after a backup of a write made after the clear', async () => {
+      const inFlight = deferred<void>();
+      (backupPersistRoot as jest.Mock).mockReturnValueOnce(inFlight.promise);
+
+      dispatchThroughMiddleware(WalletActionTypes.SUCCESS_CREATE_KEY);
+      await reduxStorage.setItem('persist:root', '{"partyKey":"x","n":1}');
+      await flush();
+      // Coalesced behind the in-flight backup, but written before the clear
+      await reduxStorage.setItem('persist:root', '{"partyKey":"x","n":2}');
+      dispatchThroughMiddleware(WalletActionTypes.CLEAR_TSS_SESSION_SECRETS);
+      inFlight.resolve();
+      await flush();
+      expect(backupPersistRoot).toHaveBeenLastCalledWith(
+        '{"partyKey":"x","n":2}',
+      );
+      expect(discardRollingBackup).not.toHaveBeenCalled();
+
+      await reduxStorage.setItem('persist:root', '{"cleared":1}');
+      await flush();
+      expect(backupPersistRoot).toHaveBeenLastCalledWith('{"cleared":1}');
+      expect(discardRollingBackup).toHaveBeenCalledTimes(1);
+
+      // Done: later writes do not discard again
+      dispatchThroughMiddleware(WalletActionTypes.UPDATE_KEY_NAME);
+      await reduxStorage.setItem('persist:root', '{"later":1}');
+      await flush();
+      expect(backupPersistRoot).toHaveBeenLastCalledWith('{"later":1}');
+      expect(discardRollingBackup).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a pending discard for a clear dispatched while one is in progress', async () => {
+      const firstDiscard = deferred<boolean>();
+      (discardRollingBackup as jest.Mock).mockReturnValueOnce(
+        firstDiscard.promise,
+      );
+
+      dispatchThroughMiddleware(WalletActionTypes.CLEAR_TSS_SESSION_SECRETS);
+      await reduxStorage.setItem('persist:root', '{"clearedA":1}');
+      await flush();
+      expect(discardRollingBackup).toHaveBeenCalledTimes(1);
+
+      dispatchThroughMiddleware(WalletActionTypes.CLEAR_TSS_SESSION_SECRETS);
+      firstDiscard.resolve(true);
+      await flush();
+
+      await reduxStorage.setItem('persist:root', '{"clearedB":1}');
+      await flush();
+      expect(backupPersistRoot).toHaveBeenLastCalledWith('{"clearedB":1}');
+      expect(discardRollingBackup).toHaveBeenCalledTimes(2);
+    });
+
+    it('retries the discard on the next write when it fails', async () => {
+      (discardRollingBackup as jest.Mock).mockResolvedValueOnce(false);
+
+      dispatchThroughMiddleware(WalletActionTypes.CLEAR_TSS_SESSION_SECRETS);
+      await reduxStorage.setItem('persist:root', '{"cleared":1}');
+      await flush();
+      await reduxStorage.setItem('persist:root', '{"cleared":2}');
+      await flush();
+
+      expect(backupPersistRoot).toHaveBeenCalledTimes(2);
+      expect(discardRollingBackup).toHaveBeenCalledTimes(2);
+    });
   });
 });

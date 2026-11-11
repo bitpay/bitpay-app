@@ -54,7 +54,10 @@ import {BwcProvider} from '../lib/bwc';
 import {findAssociatedTokenPda} from '@solana-program/token-2022';
 import {tokenManager} from '../managers/TokenManager';
 import {logManager} from '../managers/LogManager';
-import {TokenApproval} from '../store/wallet-connect-v2/wallet-connect-v2.models';
+import {
+  TokenApproval,
+  TokenTransfer,
+} from '../store/wallet-connect-v2/wallet-connect-v2.models';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -896,6 +899,8 @@ interface RequestUiValues {
   decodedInstructions?: any;
   tokenApproval?: TokenApproval;
   tokenApprovalDecodeError?: boolean;
+  tokenTransfer?: TokenTransfer;
+  unknownContractCall?: boolean;
 }
 
 export const processOtherMethodsRequest =
@@ -1226,6 +1231,45 @@ export const getTokenApproval = (
   };
 };
 
+const isTokenTransferFunction = (
+  name: string,
+): name is TokenTransfer['functionName'] =>
+  name === 'transfer' || name === 'transferFrom';
+
+const formatTokenAmount = (
+  amount: string,
+  decimals: unknown,
+): string | undefined =>
+  typeof decimals === 'number' &&
+  Number.isInteger(decimals) &&
+  decimals >= 0 &&
+  decimals <= 255
+    ? atomicToUnitString(BigInt(amount), decimals)
+    : undefined;
+
+export const getTokenTransfer = (
+  transactionData: ethers.utils.TransactionDescription,
+  token: Pick<Token, 'symbol' | 'decimals'>,
+): TokenTransfer | undefined => {
+  const {name, args} = transactionData;
+  if (!isTokenTransferFunction(name)) {
+    return undefined;
+  }
+  const amount = args[name === 'transferFrom' ? 2 : 1].toString();
+  const formattedAmount = formatTokenAmount(amount, token.decimals);
+  return {
+    functionName: name,
+    ...(name === 'transferFrom' ? {from: args[0]} : {}),
+    recipient: args[name === 'transferFrom' ? 1 : 0],
+    amount,
+    ...(formattedAmount !== undefined ? {formattedAmount} : {}),
+    ...(token.symbol ? {symbol: token.symbol} : {}),
+  };
+};
+
+const hasContractCalldata = (data: unknown): boolean =>
+  typeof data === 'string' && data !== '' && data !== '0x';
+
 export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -1237,9 +1281,12 @@ export const processSwapRequest =
 
     const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
-    const tokenOptions = {
+    const knownTokenOptions = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
+    };
+    const tokenOptions = {
+      ...knownTokenOptions,
       ...customTokenOptionsByAddress,
     };
 
@@ -1247,7 +1294,7 @@ export const processSwapRequest =
     const {chainId} = params;
     const {method} = params.request;
 
-    const {data, from, value} = params.request.params[0];
+    const {data, from, to, value} = params.request.params[0];
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
 
     if (data === '0x') {
@@ -1266,7 +1313,7 @@ export const processSwapRequest =
       let {transactionData, abi} = parseStandardTokenTransactionData(data);
       if (!transactionData && !abi) {
         logManager.debug('Continue anyway building a default transaction');
-        return handleDefaultTransaction(
+        const transaction = await handleDefaultTransaction(
           keys,
           swapFromChain,
           from,
@@ -1274,6 +1321,10 @@ export const processSwapRequest =
           dispatch,
           value,
         );
+        return {
+          ...transaction,
+          ...(hasContractCalldata(data) ? {unknownContractCall: true} : {}),
+        };
         // logManager.debug(
         //     'No standard token data - fetching contract ABI from Etherscan',
         //   );
@@ -1322,7 +1373,24 @@ export const processSwapRequest =
         value,
       );
       const tokenApproval = getTokenApproval(transactionData!);
-      return {...transaction, ...(tokenApproval ? {tokenApproval} : {})};
+      const knownToken =
+        WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.network === Network.mainnet &&
+        typeof to === 'string'
+          ? knownTokenOptions[
+              addTokenChainSuffix(to.toLowerCase(), swapFromChain)
+            ]
+          : undefined;
+      const tokenTransfer = knownToken
+        ? getTokenTransfer(transactionData!, knownToken)
+        : undefined;
+      const unknownContractCall =
+        !tokenApproval && !tokenTransfer && hasContractCalldata(data);
+      return {
+        ...transaction,
+        ...(tokenApproval ? {tokenApproval} : {}),
+        ...(tokenTransfer ? {tokenTransfer} : {}),
+        ...(unknownContractCall ? {unknownContractCall} : {}),
+      };
     } catch (error) {
       logManager.error(`Error processing swap request: ${error}`);
       logManager.debug('Continue anyway building a default transaction');
@@ -1336,7 +1404,11 @@ export const processSwapRequest =
       );
       return {
         ...transaction,
-        ...(isTokenApprovalRequest ? {tokenApprovalDecodeError: true} : {}),
+        ...(isTokenApprovalRequest
+          ? {tokenApprovalDecodeError: true}
+          : hasContractCalldata(data)
+          ? {unknownContractCall: true}
+          : {}),
       };
     }
   };

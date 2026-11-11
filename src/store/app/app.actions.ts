@@ -225,6 +225,11 @@ export const pinBannedUntil = (
   payload: bannedUntil,
 });
 
+export const pinFailedAttempts = (attempts: number): AppActionType => ({
+  type: AppActionTypes.PIN_FAILED_ATTEMPTS,
+  payload: attempts,
+});
+
 export const currentPin = (pin: string | undefined): AppActionType => ({
   type: AppActionTypes.CURRENT_PIN,
   payload: pin,

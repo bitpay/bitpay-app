@@ -58,6 +58,10 @@ import {useAppSelector} from './src/utils/hooks';
 import {useResolvedColorScheme} from './src/utils/hooks/useResolvedColorScheme';
 import {DklsWorkerHost} from './src/dkls/DklsWorker';
 import * as Sentry from '@sentry/react-native';
+import {
+  redactExtendedPrivateKeys,
+  sanitizeLogMessage,
+} from './src/store/log/log.models';
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -83,12 +87,22 @@ Sentry.init({
     if (event.breadcrumbs) {
       event.breadcrumbs = event.breadcrumbs.filter(b => b.category === 'log');
     }
+    if (typeof event.message === 'string') {
+      event.message = redactExtendedPrivateKeys(event.message);
+    }
+    event.exception?.values?.forEach(v => {
+      if (typeof v?.value === 'string') {
+        v.value = redactExtendedPrivateKeys(v.value);
+      }
+    });
     return event;
   },
   beforeBreadcrumb(breadcrumb) {
     // Only keep our custom log breadcrumbs, discard everything else
     if (breadcrumb.category === 'log') {
-      return breadcrumb;
+      return typeof breadcrumb.message === 'string'
+        ? {...breadcrumb, message: sanitizeLogMessage(breadcrumb.message)}
+        : breadcrumb;
     }
     return null;
   },

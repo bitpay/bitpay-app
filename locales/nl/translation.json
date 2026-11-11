@@ -2316,5 +2316,10 @@
   "Back up your wallet": "Maak een back-up van uw wallet",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Als {{count}} medeondertekenaar de toegang verliest, kunnen de tegoeden niet meer worden verplaatst. BitPay kan ze niet herstellen.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Als {{count}} medeondertekenaars de toegang verliezen, kunnen de tegoeden niet meer worden verplaatst. BitPay kan ze niet herstellen.",
+  "Transfer function": "Overdrachtsfunctie",
+  "Token": "Token",
+  "Amount (base units)": "Bedrag (basiseenheden)",
+  "Unrecognized contract call": "Onbekende contractaanroep",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Dit verzoek roept een contractmethode aan die de app niet kan samenvatten. Het werkelijke effect staat in de gegevens hieronder – keur alleen goed als u deze site vertrouwt.",
   "This payment request does not come from BitPay and was blocked for your protection.": "Dit betalingsverzoek komt niet van BitPay en is voor uw bescherming geblokkeerd."
 }

@@ -18,6 +18,7 @@ import {Selector} from 'reselect';
 import {
   backupFileExists,
   backupPersistRoot,
+  discardRollingBackup,
   readBackupPersistRoot,
 } from './backup/fs-backup';
 import {
@@ -129,6 +130,7 @@ export {storage};
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
   WalletActionTypes.SUCCESS_IMPORT,
+  WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
   WalletActionTypes.SUCCESS_ADD_WALLET,
   WalletActionTypes.DELETE_KEY,
   WalletActionTypes.UPDATE_KEY_NAME,
@@ -157,6 +159,11 @@ let backupInFlight = false;
 // Latest persist:root not yet handed to a backup; writes arriving while one is
 // in flight coalesce here instead of queueing attempts past the failure limit
 let pendingPersistRoot: string | null = null;
+// .bak is discarded only after a backup of a persist:root write made after the
+// last CLEAR_TSS_SESSION_SECRETS
+let persistRootWriteSeq = 0;
+let pendingPersistRootSeq = 0;
+let discardBakAfterSeq: number | null = null;
 
 let storeDispatch: ((action: AnyAction) => void) | null = null;
 // Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
@@ -226,9 +233,15 @@ const runFsBackup = async (): Promise<void> => {
   }
   backupInFlight = true;
   pendingPersistRoot = null;
+  const seq = pendingPersistRootSeq;
+  const scrubsPendingBak =
+    discardBakAfterSeq !== null && seq > discardBakAfterSeq;
   let label = backupTriggerAction;
   backupTriggerAction = null;
   try {
+    if (!label && scrubsPendingBak && backupFailures < 3) {
+      label = WalletActionTypes.CLEAR_TSS_SESSION_SECRETS;
+    }
     // A fresh trigger action always gets one attempt, as before retries existed
     if (!label && backupFailures < 3) {
       label =
@@ -243,6 +256,12 @@ const runFsBackup = async (): Promise<void> => {
       backupFailures = 0;
       backupRetryLabel = null;
       logManager.debug(`Backed up store to filesystem, triggered by ${label}.`);
+      if (scrubsPendingBak && (await discardRollingBackup())) {
+        // A clear dispatched during the awaits keeps its pending discard
+        if (discardBakAfterSeq !== null && seq > discardBakAfterSeq) {
+          discardBakAfterSeq = null;
+        }
+      }
     } catch {
       // Retry on the next persist:root write rather than waiting for another
       // trigger action, which may never come
@@ -294,6 +313,7 @@ export const reduxStorage: Storage = {
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
         pendingPersistRoot = valueToStore;
+        pendingPersistRootSeq = ++persistRootWriteSeq;
         runFsBackup();
       }
     } catch {}
@@ -387,6 +407,22 @@ const flushPersistenceSoon = () => {
     activePersistor?.flush().catch(() => {});
   }, 0);
 };
+
+export const fsBackupTriggerMiddleware: Middleware =
+  () => next => (action: AnyAction) => {
+    try {
+      if (action && typeof action.type === 'string') {
+        if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
+          backupTriggerAction = action.type;
+          if (action.type === WalletActionTypes.CLEAR_TSS_SESSION_SECRETS) {
+            discardBakAfterSeq = persistRootWriteSeq;
+          }
+          flushPersistenceSoon();
+        }
+      }
+    } catch {}
+    return next(action);
+  };
 
 let persistFlushSubscription: {remove: () => void} | null = null;
 
@@ -626,19 +662,6 @@ const initializeStore = async () => {
     };
   };
 
-  const lastActionMiddleware =
-    (): Middleware => () => next => (action: AnyAction) => {
-      try {
-        if (action && typeof action.type === 'string') {
-          if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
-            backupTriggerAction = action.type;
-            flushPersistenceSoon();
-          }
-        }
-      } catch {}
-      return next(action);
-    };
-
   const invalidateWalletDerivedCachesMiddleware: Middleware =
     () => next => (action: AnyAction) => {
       const result = next(action);
@@ -665,7 +688,7 @@ const initializeStore = async () => {
       return result;
     });
   }
-  middlewares.push(lastActionMiddleware());
+  middlewares.push(fsBackupTriggerMiddleware);
   middlewares.push(invalidateWalletDerivedCachesMiddleware);
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 

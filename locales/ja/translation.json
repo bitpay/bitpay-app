@@ -2296,5 +2296,10 @@
   "Any {{m}} of {{n}} can approve": "{{n}}人中いずれか{{m}}人が承認できます",
   "Back up your wallet": "ウォレットをバックアップしてください",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "{{count}}人の共同署名者がアクセスを失うと、資金を移動できなくなります。BitPay は資金を復元できません。",
+  "Transfer function": "送金関数",
+  "Token": "トークン",
+  "Amount (base units)": "金額（基本単位）",
+  "Unrecognized contract call": "認識できないコントラクト呼び出し",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "このリクエストは、アプリが要約できないコントラクトメソッドを呼び出します。実際の効果は以下のデータに含まれています。このサイトを信頼できる場合のみ承認してください。",
   "This payment request does not come from BitPay and was blocked for your protection.": "この支払いリクエストはBitPayからのものではないため、保護のためにブロックされました。"
 }

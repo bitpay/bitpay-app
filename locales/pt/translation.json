@@ -2327,5 +2327,10 @@
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._one": "Se {{count}} cossignatário perder o acesso, os fundos não poderão ser movimentados. A BitPay não pode recuperá-los.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._many": "Se {{count}} cossignatários perderem o acesso, os fundos não poderão ser movimentados. A BitPay não pode recuperá-los.",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "Se {{count}} cossignatários perderem o acesso, os fundos não poderão ser movimentados. A BitPay não pode recuperá-los.",
+  "Transfer function": "Função de transferência",
+  "Token": "Token",
+  "Amount (base units)": "Valor (unidades base)",
+  "Unrecognized contract call": "Chamada de contrato não reconhecida",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Esta solicitação chama um método de contrato que o aplicativo não consegue resumir. O efeito real está nos dados abaixo — aprove somente se você confiar neste site.",
   "This payment request does not come from BitPay and was blocked for your protection.": "Esta solicitação de pagamento não vem da BitPay e foi bloqueada para sua proteção."
 }

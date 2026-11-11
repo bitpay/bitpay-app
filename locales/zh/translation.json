@@ -2296,5 +2296,10 @@
   "Any {{m}} of {{n}} can approve": "{{n}} 人中任意 {{m}} 人即可批准",
   "Back up your wallet": "备份您的钱包",
   "If {{count}} co-signers lose access, funds can’t be moved. BitPay can’t recover them._other": "如果 {{count}} 位共同签署人失去访问权限，资金将无法转移。BitPay 无法找回这些资金。",
+  "Transfer function": "转账函数",
+  "Token": "代币",
+  "Amount (base units)": "金额（基本单位）",
+  "Unrecognized contract call": "无法识别的合约调用",
+  "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "此请求调用了应用无法概括的合约方法。实际效果在下方数据中——仅当您信任此网站时才批准。",
   "This payment request does not come from BitPay and was blocked for your protection.": "此付款请求并非来自 BitPay，为保护您的安全已被阻止。"
 }

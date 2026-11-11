@@ -16,6 +16,17 @@ export const PIN_CONFIG = {
   ATTEMPT_LOCK_OUT_TIME: 2 * 60,
 } as const;
 
+/** Lockout in seconds after the given number of failed attempts. */
+export const getPinLockoutSeconds = (totalFailures: number): number => {
+  if (totalFailures >= 9) {
+    return 3600;
+  }
+  if (totalFailures >= 6) {
+    return 300;
+  }
+  return 60;
+};
+
 /**
  * Common weak 4-digit PINs to block
  */
