@@ -1576,6 +1576,9 @@ export const publishAndSign =
             );
           }, 3000);
         } else {
+          if (isTSSSigning && signedTx.status === 'broadcasted') {
+            tssCallbacks?.onStatusChange('complete');
+          }
           dispatch(startUpdateWalletStatus({key, wallet, force: true}));
         }
 
