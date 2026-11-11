@@ -1861,6 +1861,7 @@
   "This invoice is priced in BTC, not BCH. Please try with a BTC wallet instead": "此发票以 BTC 而非 BCH 计价。请尝试改用 BTC 钱包",
   "This operator can transfer all your NFTs in this contract. Approve only if you fully trust this operator.": "此操作方可以转移您在此合约中的所有 NFT。仅在您完全信任此操作方时才批准。",
   "This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.": "此密码无法找回。如果此密码丢失，只能通过重新导入 12 字恢复短语来找回资金。",
+  "This payment request does not come from BitPay and was blocked for your protection.": "此付款请求并非来自 BitPay，为保护您的安全已被阻止。",
   "This process may take a few minutes to complete.": "此过程可能需要几分钟才能完成。",
   "This purchase was made through your MoonPay account, and the status shown may be out of date. Connect again to see its latest status.": "此购买是通过您的 MoonPay 账户进行的，显示的状态可能不是最新的。请重新连接以查看最新状态。",
   "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "此请求调用了应用无法概括的合约方法。实际效果在下方数据中——仅当您信任此网站时才批准。",

@@ -1872,6 +1872,7 @@
   "This invoice is priced in BTC, not BCH. Please try with a BTC wallet instead": "This invoice is priced in BTC, not BCH. Please try with a BTC wallet instead",
   "This operator can transfer all your NFTs in this contract. Approve only if you fully trust this operator.": "This operator can transfer all your NFTs in this contract. Approve only if you fully trust this operator.",
   "This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.": "This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.",
+  "This payment request does not come from BitPay and was blocked for your protection.": "This payment request does not come from BitPay and was blocked for your protection.",
   "This process may take a few minutes to complete.": "This process may take a few minutes to complete.",
   "This purchase was made through your MoonPay account, and the status shown may be out of date. Connect again to see its latest status.": "This purchase was made through your MoonPay account, and the status shown may be out of date. Connect again to see its latest status.",
   "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.",

@@ -1878,6 +1878,7 @@
   "This invoice is priced in BTC, not BCH. Please try with a BTC wallet instead": "Esta fatura está em BTC, não em BCH. Tente usar uma carteira BTC",
   "This operator can transfer all your NFTs in this contract. Approve only if you fully trust this operator.": "Este operador pode transferir todos os seus NFTs deste contrato. Aprove somente se confiar totalmente neste operador.",
   "This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.": "Esta senha não pode ser recuperada. Se você perdê-la, os fundos só poderão ser recuperados ao importar novamente sua frase de recuperação de 12 palavras.",
+  "This payment request does not come from BitPay and was blocked for your protection.": "Esta solicitação de pagamento não vem da BitPay e foi bloqueada para sua proteção.",
   "This process may take a few minutes to complete.": "Este processo pode levar alguns minutos para ser concluído.",
   "This purchase was made through your MoonPay account, and the status shown may be out of date. Connect again to see its latest status.": "Esta compra foi feita pela sua conta da MoonPay, e o estado exibido pode estar desatualizado. Conecte-se novamente para ver o estado mais recente.",
   "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.": "Esta solicitação chama um método de contrato que o aplicativo não consegue resumir. O efeito real está nos dados abaixo — aprove somente se você confiar neste site.",
