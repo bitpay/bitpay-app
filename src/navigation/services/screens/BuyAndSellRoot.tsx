@@ -208,6 +208,7 @@ import {MoonpayClientCredentials} from '../utils/moonpayFrameCrypto';
 import {
   getPayoutMethodKeyFromRampType,
   getRampSellCoinFormat,
+  getRampCheckoutHost,
   getRampSellCurrenciesFixedProps,
   rampSellEnv,
 } from '../sell-crypto/utils/ramp-sell-utils';
@@ -3873,6 +3874,13 @@ const BuyAndSellRoot = ({
     }
     if (!offer) {
       logger.error('handleRampCheckoutMessage: offer is undefined');
+      return;
+    }
+    // Only act on messages sent by a Ramp frame
+    if (!getRampCheckoutHost(event?.nativeEvent?.url)) {
+      logger.warn(
+        'handleRampCheckoutMessage: ignored message from non-Ramp frame',
+      );
       return;
     }
     if (event?.nativeEvent?.data) {
