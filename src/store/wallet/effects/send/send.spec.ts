@@ -28,6 +28,7 @@ import {
   publishAndSign,
   sendCrypto,
   startSendPayment,
+  verifyIdentity,
 } from './send';
 import * as Root from '../../../../Root';
 import {ethers} from 'ethers';
@@ -371,5 +372,45 @@ describe('sendCrypto', () => {
       context: 'send',
       assetContext,
     });
+  });
+});
+
+describe('verifyIdentity', () => {
+  it.each([
+    [true, 'resolves'],
+    [false, 'rejects'],
+  ])('with PIN lock, a %s check %s', async (checked, outcome) => {
+    const store = configureTestStore({
+      APP: {pinLockActive: true, biometricLockActive: false},
+    });
+
+    const verification = store.dispatch(verifyIdentity());
+    store.getState().APP.pinModalConfig?.onClose?.(checked);
+
+    if (outcome === 'resolves') {
+      await expect(verification).resolves.toBeUndefined();
+    } else {
+      await expect(verification).rejects.toThrow();
+    }
+  });
+
+  it('rejects without a prompt when no app lock is set', async () => {
+    const store = configureTestStore({
+      APP: {pinLockActive: false, biometricLockActive: false},
+    });
+
+    await expect(store.dispatch(verifyIdentity())).rejects.toThrow();
+    expect(store.getState().APP.pinModalConfig).toBeUndefined();
+  });
+
+  it('does not replace an active app lock prompt', async () => {
+    const pinModalConfig = {type: 'check' as const};
+    const store = configureTestStore({
+      APP: {pinLockActive: true, showPinModal: true, pinModalConfig},
+    });
+
+    await expect(store.dispatch(verifyIdentity())).rejects.toThrow();
+
+    expect(store.getState().APP.pinModalConfig).toBe(pinModalConfig);
   });
 });

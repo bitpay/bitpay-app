@@ -1,15 +1,21 @@
 import React from 'react';
 import {NativeModules} from 'react-native';
+import {StackActions} from '@react-navigation/native';
 import {Provider} from 'react-redux';
 import {act, fireEvent, render} from '@test/render';
 import configureTestStore from '@test/store';
 import {AppActions} from '../../../store/app';
 import {appReduxPersistBlackList} from '../../../store/app/app.reducer';
-import {createPin} from '../../../utils/pin';
+import {createPin, hashPinLegacy} from '../../../utils/pin';
 import PinModal from './PinModal';
 
+const mockNavigationDispatch = jest.fn();
+
 jest.mock('../../../Root', () => ({
-  navigationRef: {navigate: jest.fn()},
+  navigationRef: {
+    navigate: jest.fn(),
+    dispatch: (action: unknown) => mockNavigationDispatch(action),
+  },
 }));
 
 jest.mock('../base/sheet/SheetModal', () => ({
@@ -85,7 +91,9 @@ const longPressDelete = (screen: ReturnType<typeof mount>) => {
 
 const app = (store: TestStore) => store.getState().APP;
 
-describe('PinModal lockout', () => {
+describe('PinModal', () => {
+  const originalTimer = NativeModules.Timer;
+
   beforeEach(() => {
     jest.useFakeTimers();
     uptime = 1000;
@@ -95,6 +103,7 @@ describe('PinModal lockout', () => {
   });
 
   afterEach(() => {
+    NativeModules.Timer = originalTimer;
     jest.useRealTimers();
   });
 
@@ -249,6 +258,161 @@ describe('PinModal lockout', () => {
     const screen = mount(store);
     await flush();
     expect(app(store).pinBannedUntil).toBe(10 + 300);
+    screen.unmount();
+  });
+
+  it.each(['set', 'check'] as const)(
+    'reports a cancelled backup PIN %s',
+    type => {
+      const onClose = jest.fn();
+      const store = createStore();
+      store.dispatch(AppActions.showPinModal({type, onClose}));
+      const screen = mount(store);
+
+      fireEvent.press(screen.getByLabelText('Back'));
+
+      expect(onClose).toHaveBeenCalledWith(false);
+      expect(app(store).showPinModal).toBe(false);
+      screen.unmount();
+    },
+  );
+
+  it('reports successful PIN setup to the backup flow', async () => {
+    const onClose = jest.fn();
+    const store = createStore();
+    store.dispatch(AppActions.showPinModal({type: 'set', onClose}));
+    const screen = mount(store);
+
+    await enterPin(screen, CORRECT_PIN);
+    await enterPin(screen, CORRECT_PIN);
+
+    expect(onClose).toHaveBeenCalledWith(true);
+    expect(app(store).pinLockActive).toBe(true);
+    expect(app(store).showPinModal).toBe(false);
+    screen.unmount();
+  });
+
+  it('replaces the onboarding lock screen with the terms once the PIN is set', async () => {
+    const store = createStore();
+    store.dispatch(
+      AppActions.showPinModal({type: 'set', context: 'onboarding'}),
+    );
+    const screen = mount(store);
+
+    await enterPin(screen, CORRECT_PIN);
+    await enterPin(screen, CORRECT_PIN);
+    await flush(10);
+
+    expect(mockNavigationDispatch).toHaveBeenCalledWith(
+      StackActions.replace('TermsOfUse'),
+    );
+    expect(app(store).pinInteractionDone).toBe(true);
+    screen.unmount();
+  });
+
+  it('removes the back button when a global PIN check replaces a cancelable check', () => {
+    const store = createStore();
+    store.dispatch(
+      AppActions.showPinModal({type: 'check', onClose: jest.fn()}),
+    );
+    const screen = mount(store);
+
+    expect(screen.getByLabelText('Back')).toBeTruthy();
+
+    act(() => store.dispatch(AppActions.showPinModal({type: 'check'})));
+
+    expect(screen.queryByLabelText('Back')).toBeNull();
+    expect(app(store).showPinModal).toBe(true);
+    screen.unmount();
+  });
+
+  it('keeps a replacement global lock open when an earlier PIN check finishes', async () => {
+    let releaseTimer: (uptime: string) => void = () => {};
+    getRelativeTime.mockImplementation(
+      () =>
+        new Promise<string>(resolve => {
+          releaseTimer = resolve;
+        }),
+    );
+    const onClose = jest.fn();
+    const store = createStore();
+    store.dispatch(AppActions.currentPin(hashPinLegacy(['3', '7', '2', '9'])));
+    store.dispatch(AppActions.currentSalt(undefined));
+    store.dispatch(AppActions.showPinModal({type: 'check', onClose}));
+    const screen = mount(store);
+
+    await enterPin(screen, '3729');
+    act(() => store.dispatch(AppActions.showPinModal({type: 'check'})));
+    await act(async () => releaseTimer('1000'));
+
+    expect(app(store).showPinModal).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+    screen.unmount();
+  });
+
+  it('allows a replacement global PIN check while the earlier timer is pending', async () => {
+    let releaseTimer: (uptime: string) => void = () => {};
+    getRelativeTime.mockImplementationOnce(
+      () =>
+        new Promise<string>(resolve => {
+          releaseTimer = resolve;
+        }),
+    );
+    const onClose = jest.fn();
+    const store = createStore();
+    store.dispatch(AppActions.showPinModal({type: 'check', onClose}));
+    const screen = mount(store);
+
+    await enterPin(screen, CORRECT_PIN);
+    act(() => store.dispatch(AppActions.showPinModal({type: 'check'})));
+    await enterPin(screen, CORRECT_PIN);
+
+    expect(getRelativeTime).toHaveBeenCalledTimes(2);
+    expect(app(store).showPinModal).toBe(false);
+    expect(onClose).not.toHaveBeenCalled();
+
+    await act(async () => releaseTimer('1000'));
+    expect(onClose).not.toHaveBeenCalled();
+    screen.unmount();
+  });
+
+  it('keeps replacement PIN input blocked until its own check finishes', async () => {
+    let releaseEarlierTimer: (uptime: string) => void = () => {};
+    let releaseCurrentTimer: (uptime: string) => void = () => {};
+    getRelativeTime
+      .mockImplementationOnce(
+        () =>
+          new Promise<string>(resolve => {
+            releaseEarlierTimer = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<string>(resolve => {
+            releaseCurrentTimer = resolve;
+          }),
+      );
+    const onClose = jest.fn();
+    const store = createStore();
+    store.dispatch(AppActions.showPinModal({type: 'check', onClose}));
+    const screen = mount(store);
+
+    await enterPin(screen, CORRECT_PIN);
+    act(() => store.dispatch(AppActions.showPinModal({type: 'check'})));
+    await enterPin(screen, CORRECT_PIN);
+    await act(async () => releaseEarlierTimer('1000'));
+
+    expect(app(store).showPinModal).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+
+    longPressDelete(screen);
+    await enterPin(screen, WRONG_PIN);
+
+    expect(getRelativeTime).toHaveBeenCalledTimes(2);
+    expect(app(store).pinFailedAttempts).toBe(0);
+
+    await act(async () => releaseCurrentTimer('1000'));
+    expect(app(store).showPinModal).toBe(false);
     screen.unmount();
   });
 });

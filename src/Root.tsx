@@ -31,6 +31,7 @@ import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
 import ArchaxBanner from './components/archax/archax-banner';
 import {AppEffects, AppActions} from './store/app';
+import type {RootState} from './store';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {
@@ -157,6 +158,7 @@ import {PERF_DEBUG, performanceLog} from './utils/performanceDebug';
 import PerformanceProfiler from './components/performance/PerformanceProfiler';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
+import {TopToast} from './components/backup/TopToast';
 import AllAssets from './navigation/tabs/home/screens/AllAssets';
 import Allocation from './navigation/tabs/home/screens/Allocation';
 import {
@@ -429,6 +431,8 @@ export default () => {
     WalletScreens.WALLET_DETAILS,
     WalletScreens.VERIFY_PHRASE,
     WalletScreens.EXTENDED_PRIVATE_KEY,
+    WalletScreens.CLOUD_BACKUP_PASSWORD,
+    WalletScreens.RESTORE_FROM_CLOUD_PASSWORD,
     AuthScreens.LOGIN,
     AuthScreens.CREATE_ACCOUNT,
     AuthScreens.SECURE_ACCOUNT,
@@ -597,7 +601,11 @@ export default () => {
         if (biometricLockActive) {
           dispatch(AppActions.showBiometricModal({}));
         } else if (pinLockActive) {
-          dispatch(AppActions.showPinModal({type: 'check'}));
+          const {pinModalConfig} = (reduxStore.getState() as RootState).APP;
+          if (pinModalConfig?.type !== 'check' || pinModalConfig.onClose) {
+            dispatch(AppActions.showPinModal({type: 'check'}));
+            pinModalConfig?.onClose?.(false);
+          }
         } else {
           dispatch(AppActions.showBlur(false));
         }
@@ -662,6 +670,7 @@ export default () => {
     biometricLockActive,
     checkingBiometricForSending,
     failedAppInit,
+    reduxStore,
   ]);
 
   // Silent Push Notifications
@@ -1273,6 +1282,7 @@ export default () => {
             onRender={logReactProfiler}>
             <MoonpayEmbeddedCredentialManager />
           </PerformanceProfiler>
+          <TopToast />
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

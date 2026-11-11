@@ -14,6 +14,7 @@ import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {Key} from '../../../../store/wallet/wallet.models';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {keyBackupRequired} from '../../home/components/Crypto';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {SettingsComponent} from '../SettingsRoot';
 import {resolveKeySettingsAccountList} from '../../../wallet/screens/keySettingsAccountListCache';
 import {
@@ -66,17 +67,23 @@ const WalletsAndKeys = () => {
   };
 
   const onPressKey = (key: Key) => {
-    if (key.backupComplete || key.wallets[0]?.pendingTssSession) {
-      warmKeySettingsAccountList(key);
-      navigation.navigate('KeySettings', {keyId: key.id});
+    warmKeySettingsAccountList(key);
+    navigation.navigate('KeySettings', {keyId: key.id});
+  };
+
+  const onPressBackup = (key: Key) => {
+    if (isTSSKey(key)) {
+      dispatch(
+        showBottomNotificationModal(
+          keyBackupRequired(key, navigation, dispatch, 'settings'),
+        ),
+      );
       return;
     }
-
-    dispatch(
-      showBottomNotificationModal(
-        keyBackupRequired(key, navigation, dispatch, 'settings'),
-      ),
-    );
+    navigation.navigate('BackupOnboarding', {
+      keyId: key.id,
+      context: 'settings',
+    });
   };
 
   return (
@@ -85,14 +92,10 @@ const WalletsAndKeys = () => {
         ? keyList.map(key => (
             <View key={key.id}>
               <Setting
-                onPressIn={() => {
-                  if (key.backupComplete) {
-                    warmKeySettingsAccountList(key);
-                  }
-                }}
+                onPressIn={() => warmKeySettingsAccountList(key)}
                 onPress={() => onPressKey(key)}>
                 <SettingTitle>{key.keyName}</SettingTitle>
-                {key.backupComplete ? (
+                {key.backupComplete || key.wallets[0]?.pendingTssSession ? (
                   <KeyStatusButton
                     buttonType={'pill'}
                     onPressIn={() => warmKeySettingsAccountList(key)}
@@ -104,8 +107,8 @@ const WalletsAndKeys = () => {
                 ) : (
                   <KeyStatusButton
                     buttonType={'pill'}
-                    onPress={() => onPressKey(key)}>
-                    {t('Needs Backup')}
+                    onPress={() => onPressBackup(key)}>
+                    {t('Backup Required')}
                   </KeyStatusButton>
                 )}
               </Setting>

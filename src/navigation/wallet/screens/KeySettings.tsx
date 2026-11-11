@@ -23,7 +23,9 @@ import {
   FlatList,
   SafeAreaView,
   StyleSheet,
+  Platform,
 } from 'react-native';
+import moment from 'moment';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ActiveOpacity,
@@ -32,13 +34,14 @@ import {
   InfoTriangle,
   ScreenGutter,
   Setting,
+  SettingDescription,
   SettingTitle,
   SettingView,
   InfoImageContainer,
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Slate, SlateDark, White} from '../../../styles/colors';
+import {Caution, Slate, SlateDark, White} from '../../../styles/colors';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import InfoIcon from '../../../components/icons/info/Info';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
@@ -79,6 +82,14 @@ import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
+import Banner from '../../../components/banner/Banner';
+import {StatusTag} from '../../../components/backup/BackupCards';
+import {verifyIdentity} from '../../../store/wallet/effects/send/send';
+import {
+  CloudBackupError,
+  connectToCloud,
+  deleteCloudBackupFiles,
+} from '../../../utils/cloud-backup/storage';
 
 const SCREEN_GUTTER = Number(ScreenGutter.replace('px', ''));
 
@@ -122,6 +133,9 @@ const styles = StyleSheet.create({
   searchComponentContainer: {
     marginTop: 20,
     marginBottom: 20,
+  },
+  deleteKeySetting: {
+    marginBottom: 50,
   },
 });
 
@@ -219,7 +233,19 @@ const KeySettings = () => {
   const accountInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[keyId]?.evmAccountsInfo,
   );
+  const hasAppLock = useAppSelector(
+    ({APP}) => APP.biometricLockActive || APP.pinLockActive,
+  );
   const {keyName} = _key || {};
+  const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
+  const hasRecoveryPhrase = !!(
+    _key &&
+    !_key.isReadOnly &&
+    !isTSSKey(_key) &&
+    !_key.wallets.some(wallet => wallet.pendingTssSession) &&
+    (_key.properties?.mnemonic || _key.properties?.mnemonicEncrypted)
+  );
+  const needsBackup = hasRecoveryPhrase && !_key?.backupComplete;
 
   useEffect(() => {
     if (context === 'createEncryptPassword') {
@@ -392,6 +418,232 @@ const KeySettings = () => {
     ],
   );
 
+  const onBackupPress = useCallback(() => {
+    const fullWalletObj = _key.wallets?.[0];
+    if (fullWalletObj?.pendingTssSession && _key.tssSession) {
+      dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t('Pending TSS session. Retry after session completion.'),
+          }),
+        ),
+      );
+      return;
+    } else if (isTSSKey(_key)) {
+      navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
+        context: 'backupExistingTSSKey',
+        key: _key,
+      });
+      return;
+    }
+    navigation.navigate('BackupOnboarding', {
+      keyId: _key.id,
+      context: 'keySettings',
+    });
+  }, [_key, dispatch, navigation, t]);
+
+  const onViewRecoveryPhrasePress = useCallback(() => {
+    haptic('impactLight');
+    navigation.navigate('BackupOnboarding', {
+      keyId,
+      context: 'keySettings',
+      viewRecoveryPhrase: true,
+    });
+  }, [keyId, navigation]);
+
+  const onDeleteKeyPress = useCallback(() => {
+    haptic('impactLight');
+    const deleteOnlyKey = () =>
+      navigation.navigate('DeleteKey', {keyId, confirmed: true});
+    const deleteKeyAndCloudBackup = async () => {
+      showOngoingProcess('DELETING_KEY');
+      try {
+        await connectToCloud();
+        const deletedFiles = await deleteCloudBackupFiles(
+          _key.properties?.fingerPrint || _key.id,
+        );
+        hideOngoingProcess();
+        if (!deletedFiles) {
+          await sleep(500);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('Couldn’t find the {{cloudName}} backup', {cloudName}),
+              message: t(
+                'It may be in another {{cloudName}} account. Your key is still on this phone.',
+                {cloudName},
+              ),
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('Delete Key, Keep Backup'),
+                  destructive: true,
+                  action: deleteOnlyKey,
+                },
+                {
+                  text: t('Cancel'),
+                  action: () => {},
+                },
+              ],
+            }),
+          );
+          return;
+        }
+        navigation.navigate('DeleteKey', {
+          keyId,
+          confirmed: true,
+          deletedCloudBackup: true,
+        });
+      } catch (err) {
+        hideOngoingProcess();
+        if (err instanceof CloudBackupError && err.reason === 'cancelled') {
+          return;
+        }
+        logManager.error(
+          '[KeySettings] Cloud backup delete failed',
+          err instanceof CloudBackupError ? err.reason : 'unknown',
+        );
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'error',
+            title: t('Couldn’t delete the {{cloudName}} backup', {cloudName}),
+            message: t(
+              'Your key is still on this phone. Check your connection and try again, or delete only the key.',
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('Try Again'),
+                primary: true,
+                action: deleteKeyAndCloudBackup,
+              },
+              {
+                text: t('Delete Key, Keep Backup'),
+                destructive: true,
+                action: deleteOnlyKey,
+              },
+              {
+                text: t('Cancel'),
+                action: () => {},
+              },
+            ],
+          }),
+        );
+      }
+    };
+    const title = t('Delete {{keyName}}?', {keyName});
+    if (_key.cloudBackupTimestamp) {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title,
+          message: t(
+            'This removes it from this phone. Keep the {{cloudName}} backup to restore it later.',
+            {cloudName},
+          ),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('Delete Key, Keep Backup'),
+              primary: true,
+              destructive: true,
+              action: deleteOnlyKey,
+            },
+            {
+              text: t('Delete Key and Backup'),
+              destructive: true,
+              action: async () => {
+                await sleep(500);
+                dispatch(
+                  showBottomNotificationModal({
+                    type: 'error',
+                    title: t('Delete the {{cloudName}} backup too?', {
+                      cloudName,
+                    }),
+                    message: t(
+                      'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.',
+                      {keyName, cloudName},
+                    ),
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: t('Delete Key and Backup'),
+                        destructive: true,
+                        action: async () => {
+                          if (hasAppLock) {
+                            try {
+                              await dispatch(verifyIdentity());
+                            } catch {
+                              return;
+                            }
+                          }
+                          await deleteKeyAndCloudBackup();
+                        },
+                      },
+                      {
+                        text: t('Cancel'),
+                        action: () => {},
+                      },
+                    ],
+                  }),
+                );
+              },
+            },
+            {
+              text: t('Cancel'),
+              action: () => {},
+            },
+          ],
+        }),
+      );
+      return;
+    }
+    dispatch(
+      showBottomNotificationModal({
+        type: 'error',
+        title,
+        message: !hasRecoveryPhrase
+          ? t('Permanently deletes all wallets using this key.') +
+            '\n' +
+            t('THIS ACTION CANNOT BE REVERSED.')
+          : needsBackup
+          ? t(
+              'Its recovery phrase isn’t backed up. If you delete it, any funds in it are gone for good.',
+            )
+          : t(
+              'This removes it from this phone. You can restore it with your recovery phrase.',
+            ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('Delete Key'),
+            primary: true,
+            destructive: true,
+            action: deleteOnlyKey,
+          },
+          {
+            text: t('Cancel'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  }, [
+    _key,
+    cloudName,
+    dispatch,
+    hasAppLock,
+    hasRecoveryPhrase,
+    hideOngoingProcess,
+    keyId,
+    keyName,
+    navigation,
+    needsBackup,
+    showOngoingProcess,
+    t,
+  ]);
+
   const onPressItem = useCallback(
     (item: AccountRowProps) => {
       haptic('impactLight');
@@ -424,6 +676,17 @@ const KeySettings = () => {
   const renderListHeaderComponent = useCallback(() => {
     return (
       <>
+        {needsBackup ? (
+          <Banner
+            type="warning"
+            hasBackgroundColor
+            title={t('Recovery phrase isn’t backed up')}
+            description={t(
+              'Back up your recovery phrase so you can get your funds back if you lose this phone.',
+            )}
+            link={{text: t('Back Up Now'), onPress: onBackupPress}}
+          />
+        ) : null}
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -472,6 +735,8 @@ const KeySettings = () => {
     keyName,
     memorizedAccountList,
     navigation,
+    needsBackup,
+    onBackupPress,
     searchResults,
     searchVal,
     t,
@@ -496,35 +761,40 @@ const KeySettings = () => {
         {_key && !_key.isReadOnly ? (
           <VerticalPadding>
             <Title>{t('Security')}</Title>
-            <Setting
-              onPress={async () => {
-                const fullWalletObj = _key.wallets?.[0];
-                if (fullWalletObj?.pendingTssSession && _key.tssSession) {
-                  dispatch(
-                    showBottomNotificationModal(
-                      CustomErrorMessage({
-                        errMsg: t(
-                          'Pending TSS session. Retry after session completion.',
-                        ),
-                      }),
-                    ),
-                  );
-                  return;
-                } else if (isTSSKey(_key)) {
-                  navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
-                    context: 'backupExistingTSSKey',
-                    key: _key,
-                  });
-                  return;
-                }
-                navigation.navigate('BackupOnboarding', {
-                  keyId: _key.id,
-                });
-              }}>
+            <Setting onPress={onBackupPress}>
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
+              {!_key.backupComplete ? (
+                <StatusTag>{t('Backup Required')}</StatusTag>
+              ) : _key.cloudBackupTimestamp ? (
+                <SettingDescription>
+                  {t('{{cloudName}} · {{date}}', {
+                    cloudName,
+                    date: moment(_key.cloudBackupTimestamp).isSame(
+                      Date.now(),
+                      'day',
+                    )
+                      ? t('Today')
+                      : moment(_key.cloudBackupTimestamp).format('MMM D, YYYY'),
+                  })}
+                </SettingDescription>
+              ) : hasRecoveryPhrase ? (
+                <SettingDescription>{t('Manual')}</SettingDescription>
+              ) : null}
             </Setting>
 
             <Hr />
+
+            {_key.backupComplete && hasRecoveryPhrase ? (
+              <>
+                <Setting onPress={onViewRecoveryPhrasePress}>
+                  <WalletSettingsTitle>
+                    {t('View Recovery Phrase')}
+                  </WalletSettingsTitle>
+                </Setting>
+
+                <Hr />
+              </>
+            ) : null}
 
             <Setting
               onPress={() => {
@@ -692,12 +962,11 @@ const KeySettings = () => {
 
           <Setting
             activeOpacity={ActiveOpacity}
-            style={{marginBottom: 50}}
-            onPress={() => {
-              haptic('impactLight');
-              navigation.navigate('DeleteKey', {keyId});
-            }}>
-            <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
+            style={styles.deleteKeySetting}
+            onPress={onDeleteKeyPress}>
+            <WalletSettingsTitle style={{color: Caution}}>
+              {t('Delete Key')}
+            </WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
       </>
@@ -705,9 +974,14 @@ const KeySettings = () => {
   }, [
     _key,
     buildEncryptModalConfig,
+    cloudName,
     dispatch,
+    hasRecoveryPhrase,
     keyId,
     navigation,
+    onBackupPress,
+    onDeleteKeyPress,
+    onViewRecoveryPhrasePress,
     startSyncWallets,
     t,
     theme.dark,

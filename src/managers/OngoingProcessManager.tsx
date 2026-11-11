@@ -28,6 +28,7 @@ export type BaseOnGoingProcessMessages =
   | 'REJECTING_CALL_REQUEST'
   | 'SAVING_LAYOUT'
   | 'SAVING_ADDRESSES'
+  | 'SAVING_BACKUP'
   | 'EXCHANGE_GETTING_DATA'
   | 'CALCULATING_FEE'
   | 'UPDATING_TXP'
@@ -141,6 +142,7 @@ const translations: Record<
   REJECTING_CALL_REQUEST: () => i18n.t('Rejecting Call Request'),
   SAVING_LAYOUT: () => i18n.t('Saving Layout'),
   SAVING_ADDRESSES: () => i18n.t('Saving Addresses'),
+  SAVING_BACKUP: () => i18n.t('Encrypting and saving your backup...'),
   EXCHANGE_GETTING_DATA: () => i18n.t('Getting data from the exchange...'),
   CALCULATING_FEE: () => i18n.t('Calculating Fee'),
   UPDATING_TXP: () => i18n.t('Updating Transaction'),

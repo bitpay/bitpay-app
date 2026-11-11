@@ -13,6 +13,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
   InAppNotificationContextType,
+  OnboardingKeyStatus,
 } from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
@@ -435,6 +436,31 @@ export const showArchaxBanner = (payload: boolean): AppActionType => ({
 export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
   type: AppActionTypes.DISMISS_MARKETING_CONTENT_CARD,
   payload: cardId,
+});
+
+export const setOnboardingKeyStatus = (
+  payload: OnboardingKeyStatus,
+): AppActionType => ({
+  type: AppActionTypes.SET_ONBOARDING_KEY_STATUS,
+  payload,
+});
+
+export const setBackupNudgeShown = (): AppActionType => ({
+  type: AppActionTypes.SET_BACKUP_NUDGE_SHOWN,
+});
+
+export const backupPasswordBannedUntil = (
+  bannedUntil: number | undefined,
+): AppActionType => ({
+  type: AppActionTypes.BACKUP_PASSWORD_BANNED_UNTIL,
+  payload: bannedUntil,
+});
+
+export const backupPasswordFailedAttempts = (
+  attempts: number,
+): AppActionType => ({
+  type: AppActionTypes.BACKUP_PASSWORD_FAILED_ATTEMPTS,
+  payload: attempts,
 });
 
 export const setShowKycGetVerifiedModal = (

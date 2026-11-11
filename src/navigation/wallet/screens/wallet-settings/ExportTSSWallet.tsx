@@ -50,6 +50,14 @@ import {Wallet} from '../../../../store/wallet/wallet.models';
 import {checkPrivateKeyEncrypted} from '../../../../store/wallet/utils/wallet';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {WalletActions} from '../../../../store/wallet';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {
+  CloudBackupError,
+  connectToCloud,
+  saveCloudKeyshare,
+} from '../../../../utils/cloud-backup/storage';
+import {KEYSHARE_PBKDF2_ITERATIONS} from '../../../../utils/cloud-backup/password';
+import {getPasswordStrength} from '../../../../components/backup/PasswordStrength';
 
 const BWC = BwcProvider.getInstance();
 const TssKey = BWC.getTssKey();
@@ -72,6 +80,9 @@ const styles = StyleSheet.create({
   },
   passwordActionContainer: {
     marginTop: 20,
+  },
+  cloudButton: {
+    marginTop: 10,
   },
   rowContainer: {
     flexDirection: 'row',
@@ -308,6 +319,9 @@ const ExportTSSWallet = () => {
   const key = useAppSelector(({WALLET}) => (keyId ? WALLET.keys[keyId] : null));
 
   const [shareButtonState, setShareButtonState] = useState<ButtonState>();
+  const [cloudButtonState, setCloudButtonState] = useState<ButtonState>();
+  const isIOS = Platform.OS === 'ios';
+  const cloudName = isIOS ? 'iCloud' : 'Google Drive';
   const [backupCompleted, setBackupCompleted] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -333,6 +347,7 @@ const ExportTSSWallet = () => {
   const {
     control,
     handleSubmit,
+    setError,
     formState: {errors},
   } = useForm<ExportPasswordFieldValues>({
     resolver: yupResolver(schema),
@@ -376,7 +391,7 @@ const ExportTSSWallet = () => {
     const encrypted = BWC.getEncryption().encryptWithPassword(
       JSON.stringify(backup),
       password,
-      {iter: 600_000},
+      {iter: KEYSHARE_PBKDF2_ITERATIONS},
     );
 
     return JSON.stringify(encrypted);
@@ -457,6 +472,87 @@ const ExportTSSWallet = () => {
         await sleep(500);
         setShareButtonState(undefined);
       }
+    }
+  };
+
+  const cloudFailureMessage = (reason: string) => {
+    switch (reason) {
+      case 'network':
+        return t(
+          'Connect to the internet and try again. Your key is still safe on this phone.',
+        );
+      case 'storage_full':
+        return isIOS
+          ? t(
+              'Free up space in iCloud, then try again. The backup is very small.',
+            )
+          : t(
+              'Free up space in your Google account, then try again. The backup is very small.',
+            );
+      case 'unavailable':
+        return isIOS
+          ? t(
+              'Open the Settings app, tap your name, then iCloud, and turn on iCloud Drive. Make sure BitPay is allowed to use it, then come back and try again.',
+            )
+          : t(
+              'Sign in to {{cloudName}} on this device and allow BitPay to use it, then try again.',
+              {cloudName},
+            );
+      default:
+        return t(
+          "We couldn't confirm your backup in {{cloudName}}. Check your internet connection and try again.",
+          {cloudName},
+        );
+    }
+  };
+
+  const saveKeyshareToCloud = async ({password}: {password: string}) => {
+    if (!key) {
+      return;
+    }
+    const {level, tooEasy} = getPasswordStrength(password);
+    if (level !== 3) {
+      setError('password', {
+        message: tooEasy
+          ? t('Too easy to guess.')
+          : t(
+              'Must contain at least 8 characters, one uppercase, one lowercase, one number and one special character',
+            ),
+      });
+      return;
+    }
+    try {
+      setCloudButtonState('loading');
+      const encryptedKeyshare = keyshareExport(password);
+      if (!encryptedKeyshare) {
+        throw new Error('Failed to export keyshare');
+      }
+      await connectToCloud();
+      await saveCloudKeyshare(
+        key.properties?.fingerPrint || key.id,
+        encryptedKeyshare,
+      );
+      setCloudButtonState('success');
+      await sleep(500);
+      setCloudButtonState(undefined);
+      setBackupCompleted(true);
+      dispatch(WalletActions.setBackupComplete(keyId));
+    } catch (err) {
+      setCloudButtonState(undefined);
+      const reason = err instanceof CloudBackupError ? err.reason : 'unknown';
+      if (reason === 'cancelled') {
+        return;
+      }
+      logManager.error(`[ExportTSSWallet] cloud backup failed: ${reason}`);
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t('Backup failed'),
+          message: cloudFailureMessage(reason),
+          enableBackdropDismiss: true,
+          actions: [{text: t('OK'), action: () => {}, primary: true}],
+        }),
+      );
     }
   };
 
@@ -607,6 +703,17 @@ const ExportTSSWallet = () => {
               buttonStyle={'primary'}>
               {t('Save Backup File')}
             </Button>
+            {dontIncludePrivateKey ? null : (
+              <View style={styles.cloudButton}>
+                <Button
+                  testID="save-keyshare-to-cloud-button"
+                  onPress={handleSubmit(saveKeyshareToCloud)}
+                  state={cloudButtonState}
+                  buttonStyle={'secondary'}>
+                  {t('Save to {{cloudName}}', {cloudName})}
+                </Button>
+              </View>
+            )}
           </PasswordActionContainer>
         </PasswordFormContainer>
       </ScrollView>

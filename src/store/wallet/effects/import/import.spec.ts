@@ -18,6 +18,7 @@ import {
   startMigrationMMKVStorage,
   startMigration,
   serverAssistedImport,
+  startImportMnemonic,
   startImportWithDerivationPath,
 } from './import';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -438,6 +439,36 @@ describe('serverAssistedImport – progress queue', () => {
     emitter.emit('done', {key: {id: 'k'}, clients: []});
 
     await expect(result).rejects.toThrow('WALLET_DOES_NOT_EXIST');
+  });
+});
+
+describe('startImportMnemonic – key already on the phone', () => {
+  const bwcImport = BwcProvider.API.serverAssistedImport as jest.Mock;
+
+  afterEach(() => {
+    bwcImport.mockReset();
+  });
+
+  it('keeps the cloud backup date of the key it updates', async () => {
+    bwcImport.mockImplementation((_opts, _clientOpts, events) =>
+      events.emit('done', {
+        key: {id: 'k1'},
+        clients: [{credentials: {walletId: 'a'}}],
+      }),
+    );
+    const initialState = configureTestStore({}).getState();
+    const store = configureTestStore({
+      WALLET: {
+        ...initialState.WALLET,
+        keys: {k1: {id: 'k1', wallets: [], cloudBackupTimestamp: 123}},
+      },
+    } as any);
+
+    await store.dispatch(startImportMnemonic({words: 'w'}, {}));
+
+    expect(
+      (store.getState() as any).WALLET.keys['test-key-id'].cloudBackupTimestamp,
+    ).toBe(123);
   });
 });
 

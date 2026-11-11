@@ -80,6 +80,18 @@
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.com.bitpay.wallet</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>BitPay</string>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+		</dict>
+	</dict>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

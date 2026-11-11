@@ -808,6 +808,33 @@ export const migrateKeyAndWallets =
     });
   };
 
+export const findExistingRecoveryKey =
+  (words: string, passphrase?: string): Effect<Key | undefined> =>
+  (_dispatch, getState) => {
+    const keys = Object.values(getState().WALLET.keys).filter(
+      key =>
+        !!key.properties?.fingerPrint &&
+        !key.isReadOnly &&
+        !key.tssSession &&
+        !key.wallets.some(
+          wallet => wallet.tssKeyId || wallet.pendingTssSession,
+        ),
+    );
+    if (!keys.length) {
+      return;
+    }
+    try {
+      const key = BWC.createKey({
+        seedType: 'mnemonic',
+        seedData: normalizeMnemonic(words),
+        passphrase,
+      });
+      return getMatchedKey(key, keys);
+    } catch {
+      return;
+    }
+  };
+
 export const startImportMnemonic =
   (
     importData: {words?: string; xPrivKey?: string},
@@ -901,12 +928,15 @@ export const startImportMnemonic =
             ),
           );
         });
-        const key = buildKeyObj({
-          key: _key,
-          keyName,
-          wallets: resultWallets,
-          backupComplete: true,
-        });
+        const key = {
+          ...buildKeyObj({
+            key: _key,
+            keyName,
+            wallets: resultWallets,
+            backupComplete: true,
+          }),
+          cloudBackupTimestamp: WALLET.keys[_key.id]?.cloudBackupTimestamp,
+        };
 
         dispatch(
           successImport({

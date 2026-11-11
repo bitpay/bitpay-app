@@ -335,17 +335,19 @@ jest.mock('@solana-program/token-2022', () => ({findAssociatedTokenPda: jest.fn(
 
 // Ethers — large lib, mock for unit tests. Unit conversion is kept real: it is money arithmetic.
 jest.mock('ethers', () => {
-  const {utils: actual} = jest.requireActual('ethers');
+  const {utils: actual, wordlists} = jest.requireActual('ethers');
   const utils = {
     isAddress: jest.fn(() => true),
     getAddress: jest.fn(a => a),
     parseUnits: actual.parseUnits,
     formatUnits: actual.formatUnits,
     commify: actual.commify,
+    isValidMnemonic: actual.isValidMnemonic,
   };
   return {
     ethers: {utils, BigNumber: {from: jest.fn()}},
     utils,
+    wordlists,
     BigNumber: {from: jest.fn()},
   };
 });
@@ -387,6 +389,58 @@ jest.mock('react-native-vision-camera', () => ({
   useCodeScanner: jest.fn(() => ({})),
   getCameraDevice: jest.fn(() => null),
 }));
+
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  __esModule: true,
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn(() => Promise.resolve(true)),
+    hasPreviousSignIn: jest.fn(() => false),
+    signIn: jest.fn(() => Promise.resolve({type: 'cancelled', data: null})),
+    signInSilently: jest.fn(() =>
+      Promise.resolve({type: 'noSavedCredentialFound', data: null}),
+    ),
+    getTokens: jest.fn(() => Promise.resolve({accessToken: '', idToken: ''})),
+  },
+  isErrorWithCode: jest.fn(() => false),
+  isSuccessResponse: jest.fn(response => response?.type === 'success'),
+  statusCodes: {SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED'},
+}));
+
+const nodeCrypto = require('crypto');
+if (!nodeCrypto.argon2) {
+  // CI runs Node 22, which has no crypto.argon2; the app gets it from react-native-quick-crypto.
+  nodeCrypto.argon2 = (_algorithm, {message, nonce, tagLength}, callback) =>
+    nodeCrypto.pbkdf2(message, nonce, 1, tagLength, 'sha256', callback);
+}
+
+jest.mock('@react-native-community/netinfo', () =>
+  require('@react-native-community/netinfo/jest/netinfo-mock.js'),
+);
+
+jest.mock('react-native-cloud-storage', () => {
+  class CloudStorageError extends Error {
+    constructor(message, code) {
+      super(message);
+      this.code = code;
+    }
+  }
+  return {
+    __esModule: true,
+    CloudStorage: jest.fn(),
+    CloudStorageError,
+    CloudStorageErrorCode: {
+      QUOTA_EXCEEDED: 'ERR_QUOTA_EXCEEDED',
+      NETWORK_ERROR: 'ERR_NETWORK_ERROR',
+      RATE_LIMITED: 'ERR_RATE_LIMITED',
+      AUTHENTICATION_FAILED: 'ERR_AUTHENTICATION_FAILED',
+      ACCESS_TOKEN_MISSING: 'ERR_ACCESS_TOKEN_MISSING',
+      DIRECTORY_NOT_FOUND: 'ERR_DIRECTORY_NOT_FOUND',
+    },
+    CloudStorageProvider: {ICloud: 'icloud', GoogleDrive: 'googledrive'},
+    CloudStorageScope: {Documents: 'documents', AppData: 'app_data'},
+  };
+});
 
 // react-native-document-picker — TurboModule; mock to avoid native errors
 jest.mock('react-native-document-picker', () => ({

@@ -20,6 +20,9 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import ArrowRightSvg from '../../navigation/tabs/home/components/ArrowRightSvg';
 import ThresholdBadge from '../threshold-badge/ThresholdBadge';
 import MultisigBadge from '../multisig-badge/MultisigBadge';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import {StatusTag} from '../backup/BackupCards';
+import {useBackupColors} from '../backup/colors';
 
 interface BodyProps {
   title?: string;
@@ -81,6 +84,14 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     left: 12,
+  },
+  skeletonCard: {
+    width: 170,
+    height: 143,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 15,
+    justifyContent: 'space-between',
   },
   needBackupText: {
     fontSize: 12,
@@ -161,9 +172,7 @@ const HomeCard: React.FC<HomeCardProps> = ({
         </BaseText>
       )}
       {needsBackup && !pendingTssSession ? (
-        <View>
-          <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-        </View>
+        <StatusTag>{t('Backup Required')}</StatusTag>
       ) : !hideKeyBalance ? (
         <>
           {value && (
@@ -237,6 +246,59 @@ const HomeCard: React.FC<HomeCardProps> = ({
         }}
       />
     </TouchableOpacity>
+  );
+};
+
+export const HomeCardSkeleton = () => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  const colors = useBackupColors();
+  const skeletonColors = {
+    backgroundColor: theme.dark ? '#363636' : '#FAFAFB',
+    highlightColor: theme.dark ? '#575757' : Slate30,
+  };
+  return (
+    <View
+      style={styles.cardContainer}
+      accessible={true}
+      accessibilityLabel={t('Loading your key')}>
+      <View
+        style={[
+          styles.skeletonCard,
+          {
+            backgroundColor: colors.keyCardBg,
+            borderColor: colors.borderCard,
+          },
+        ]}>
+        <SkeletonPlaceholder {...skeletonColors}>
+          <SkeletonPlaceholder.Item>
+            <SkeletonPlaceholder.Item width={70} height={12} borderRadius={4} />
+            <SkeletonPlaceholder.Item
+              width={110}
+              height={18}
+              borderRadius={4}
+              marginTop={10}
+            />
+          </SkeletonPlaceholder.Item>
+        </SkeletonPlaceholder>
+        <SkeletonPlaceholder {...skeletonColors}>
+          <SkeletonPlaceholder.Item
+            flexDirection="row"
+            justifyContent="space-between">
+            <SkeletonPlaceholder.Item
+              width={64}
+              height={30}
+              borderRadius={15}
+            />
+            <SkeletonPlaceholder.Item
+              width={30}
+              height={30}
+              borderRadius={15}
+            />
+          </SkeletonPlaceholder.Item>
+        </SkeletonPlaceholder>
+      </View>
+    </View>
   );
 };
 
