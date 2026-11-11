@@ -38,6 +38,7 @@ import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import useFloatingTabBarInset from '../useFloatingTabBarInset';
 import {isEuCountry} from '../../../store/location/location.effects';
 
 export enum ShopTabs {
@@ -190,6 +191,7 @@ const ShopHome: React.FC<
   const scrollViewRef = useRef<ScrollView>(null);
   // Lists inside the tab navigator read the offset to mount rows on demand.
   const scrollSignal = useMemo(createScrollSignal, []);
+  const tabBarInset = useFloatingTabBarInset();
   useScrollToTop(scrollViewRef);
 
   const availableGiftCards = useMemo(
@@ -338,6 +340,8 @@ const ShopHome: React.FC<
         ref={scrollViewRef}
         onScroll={e => scrollSignal.set(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={100}
+        contentContainerStyle={{paddingBottom: tabBarInset}}
+        scrollIndicatorInsets={{bottom: tabBarInset}}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={Keyboard.dismiss}
