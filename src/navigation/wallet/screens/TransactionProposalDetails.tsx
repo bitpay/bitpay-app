@@ -7,14 +7,8 @@ import {
   H4,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextProps,
-  View,
-  ViewProps,
-} from 'react-native';
+import {StyleSheet, Text, TextProps, View, ViewProps} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';

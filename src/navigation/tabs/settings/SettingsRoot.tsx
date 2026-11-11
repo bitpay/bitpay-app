@@ -1,7 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../contexts';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';

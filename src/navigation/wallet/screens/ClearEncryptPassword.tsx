@@ -1,5 +1,6 @@
 import React from 'react';
-import {Pressable, SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import {Pressable, ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../contexts';
 import {
   ActionContainer,

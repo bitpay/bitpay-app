@@ -1,13 +1,8 @@
 import {type NavigationProp, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {Path, Svg} from 'react-native-svg';
 import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';

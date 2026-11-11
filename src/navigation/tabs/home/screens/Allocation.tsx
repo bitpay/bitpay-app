@@ -1,5 +1,6 @@
 import React, {useCallback, useLayoutEffect, useMemo} from 'react';
-import {ImageRequireSource, SafeAreaView, StyleSheet, View} from 'react-native';
+import {ImageRequireSource, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {FlashList, ListRenderItemInfo} from '@shopify/flash-list';
 import {useTheme} from '../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';

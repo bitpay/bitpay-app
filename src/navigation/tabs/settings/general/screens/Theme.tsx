@@ -1,6 +1,7 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Pressable, ScrollView, SafeAreaView} from 'react-native';
+import {Pressable, ScrollView} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import type {AppColorScheme} from '../../../../../store/app/app.models';
 import {TEST_MODE_NETWORK} from '@env';
 import Checkbox from '../../../../../components/checkbox/Checkbox';

@@ -3,7 +3,6 @@ import {
   Dimensions,
   Text,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity as RNTouchableOpacity,
   ViewStyle,
 } from 'react-native';
+import {SafeAreaView} from '../safe-area/SafeAreaView';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../contexts';
 import {

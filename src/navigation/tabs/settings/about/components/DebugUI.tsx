@@ -1,5 +1,6 @@
 import React from 'react';
-import {Pressable, SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../../contexts';
 import type {
   SnapshotIndexV2,

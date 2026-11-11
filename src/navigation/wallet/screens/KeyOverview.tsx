@@ -22,12 +22,12 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
   useWindowDimensions,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   walletListFooterContainer: {
     paddingTop: 10,
     paddingRight: 10,
-    paddingBottom: 100,
+    paddingBottom: 20,
     paddingLeft: 10,
     marginTop: 15,
     gap: 12,

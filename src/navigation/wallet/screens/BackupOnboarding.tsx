@@ -1,6 +1,7 @@
 import React, {useCallback} from 'react';
 import RNFS from 'react-native-fs';
-import {Platform, SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import {Platform, ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {

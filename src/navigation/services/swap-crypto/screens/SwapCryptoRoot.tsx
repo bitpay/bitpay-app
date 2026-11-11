@@ -3,10 +3,10 @@ import {
   ActivityIndicator,
   ScrollView,
   View,
-  SafeAreaView,
   StyleSheet,
   ViewProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {findTokenByCoinAndChain} from '../../utils/token-lookup';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme as useStyledTheme} from '../../../../contexts';

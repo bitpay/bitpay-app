@@ -16,13 +16,8 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactNode, useCallback, useEffect, useState} from 'react';
 import {useTheme} from '../../../../../contexts';
-import {
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';

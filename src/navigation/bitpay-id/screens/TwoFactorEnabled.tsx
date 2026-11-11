@@ -1,5 +1,6 @@
 import React, {useRef} from 'react';
-import {SafeAreaView, View, ViewProps, StyleSheet} from 'react-native';
+import {View, ViewProps, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import SuccessSvg from '../../../../assets/img/success.svg';

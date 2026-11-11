@@ -239,12 +239,12 @@ import {useTheme} from '../../../contexts';
 import Modal from 'react-native-modal';
 import {
   ActivityIndicator,
-  SafeAreaView,
   StyleSheet,
   TextProps,
   View,
   ViewProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import WebView, {
   WebViewMessageEvent,

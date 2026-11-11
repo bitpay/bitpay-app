@@ -141,7 +141,7 @@ const About = () => {
     },
   ];
   return (
-    <SettingsComponent style={{marginBottom: 10}}>
+    <SettingsComponent>
       <Setting onPress={onVersionPress}>
         <SettingTitle>{t('Version')}</SettingTitle>
 
@@ -224,11 +224,15 @@ const About = () => {
           <View style={{paddingHorizontal: 15, paddingBottom: 15}}>
             <Button
               buttonStyle="danger"
+              buttonType="link"
               style={{marginBottom: 10}}
               onPress={() => triggerNativeCrash()}>
               {t('Trigger Native Crash')}
             </Button>
-            <Button buttonStyle="danger" onPress={() => triggerJsCrash()}>
+            <Button
+              buttonStyle="danger"
+              buttonType="link"
+              onPress={() => triggerJsCrash()}>
               {t('Trigger JS Crash')}
             </Button>
           </View>

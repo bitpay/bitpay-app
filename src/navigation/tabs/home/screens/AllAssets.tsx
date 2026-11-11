@@ -5,7 +5,8 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {SafeAreaView, StyleSheet, TextInput, View} from 'react-native';
+import {StyleSheet, TextInput, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {FlashList, ListRenderItemInfo} from '@shopify/flash-list';
 import {useTheme} from '../../../../contexts';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';

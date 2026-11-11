@@ -36,7 +36,8 @@ import {
   FormatAmountStr,
   GetLowUtxos,
 } from '../../../../store/wallet/effects/amount/amount';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {GetAmFormatDate} from '../../../../store/wallet/utils/time';
 import Clipboard from '@react-native-clipboard/clipboard';
 import AddressesSkeleton from './AddressesSkeleton';

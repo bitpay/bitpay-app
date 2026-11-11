@@ -17,12 +17,12 @@ import {
 import {
   Image,
   ScrollView,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
   ViewProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';

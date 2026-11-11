@@ -10,13 +10,13 @@ import {
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   DeviceEventEmitter,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextProps,
   View,
   ViewProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';

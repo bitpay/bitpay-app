@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
-import {Keyboard, SafeAreaView} from 'react-native';
+import {Keyboard} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,

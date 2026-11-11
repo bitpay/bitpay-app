@@ -48,7 +48,8 @@ import {
   SupportedSvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList, Keyboard, SafeAreaView, StyleSheet, View} from 'react-native';
+import {FlatList, Keyboard, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {
   formatCryptoAddress,
   getAccount,

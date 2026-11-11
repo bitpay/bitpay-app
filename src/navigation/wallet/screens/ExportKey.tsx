@@ -1,5 +1,6 @@
 import React, {useLayoutEffect} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {Paragraph, HeaderTitle, H6, H5} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useTheme} from '../../../contexts';

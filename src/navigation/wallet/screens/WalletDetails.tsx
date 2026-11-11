@@ -20,12 +20,12 @@ import {useTranslation} from 'react-i18next';
 import {
   DeviceEventEmitter,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useTheme as useStyledTheme} from '../../../contexts';
 import {shareNative} from '../../../utils/share';
 import {useStore} from 'react-redux';

@@ -1,5 +1,6 @@
 import React, {useLayoutEffect} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {
   CtaContainer,

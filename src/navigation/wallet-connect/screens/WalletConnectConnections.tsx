@@ -21,7 +21,8 @@ import {
   ItemNoteContainer,
   ItemTitleContainer,
 } from '../styled/WalletConnectContainers';
-import {ScrollView, View, SafeAreaView, StyleSheet} from 'react-native';
+import {ScrollView, View, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useTranslation} from 'react-i18next';
 import FastImage from 'react-native-fast-image';
 import haptic from '../../../components/haptic-feedback/haptic';

@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '../../../contexts';
 import {

@@ -19,10 +19,10 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  SafeAreaView,
   StyleSheet,
   View,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {BaseText, Link} from '../../../components/styled/Text';
 
 const styles = StyleSheet.create({

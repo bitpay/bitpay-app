@@ -6,8 +6,8 @@ import {
   ViewProps,
   TextProps,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useNavigation} from '@react-navigation/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {BaseText} from '../../../components/styled/Text';

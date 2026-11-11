@@ -33,7 +33,8 @@ import {Controller, useForm, useWatch} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {
   TouchableOpacity,
   TouchableOpacityProps,
