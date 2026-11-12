@@ -246,7 +246,7 @@ const SendToOptions = () => {
     try {
       showOngoingProcess('LOADING');
       const amount = recipientList.reduce(
-        (sum, recipient) => sum + (recipient.amount ?? 0),
+        (sum, recipient) => sum + Number(recipient.amount ?? 0),
         0,
       );
       const tx = {

@@ -76,7 +76,6 @@ import {
   toggleTSSModal,
   sleep,
   suffixChainMap,
-  transformAmount,
   getRateByCurrencyName,
   getBadgeImg,
   getChainFromTokenByAddressKey,
@@ -1057,71 +1056,6 @@ describe('changeOpacity (additional branches)', () => {
 
   it('clamps opacity exactly at 0', () => {
     expect(changeOpacity('#ffffff', 0)).toBe('rgba(255, 255, 255, 0)');
-  });
-});
-
-describe('transformAmount', () => {
-  const defaultOpts = {
-    fullPrecision: 'full',
-    decimals: {
-      full: {maxDecimals: 8, minDecimals: 0},
-      short: {maxDecimals: 2, minDecimals: 0},
-    },
-    toSatoshis: 100000000,
-  };
-
-  it('converts satoshis to BTC-like string with full precision', () => {
-    const result = transformAmount(100000000, defaultOpts);
-    // trailing decimal point may appear when minDecimals=0 and frac is empty
-    expect(result).toMatch(/^1\.?$/);
-  });
-
-  it('converts fractional satoshi amounts', () => {
-    const result = transformAmount(50000000, defaultOpts);
-    expect(result).toBe('0.5');
-  });
-
-  it('uses short precision when fullPrecision is falsy', () => {
-    const opts = {...defaultOpts, fullPrecision: ''};
-    const result = transformAmount(100000000, opts);
-    // short decimals: max 2, minDecimals 0
-    expect(result).toMatch(/^1\.?$/);
-  });
-
-  it('uses custom thousands separator', () => {
-    const result = transformAmount(100000000000, {
-      ...defaultOpts,
-      thousandsSeparator: '.',
-      decimalSeparator: ',',
-    });
-    // 1000 BTC with thousands separator '.' → "1.000" possibly with trailing ","
-    expect(result).toMatch(/^1\.000,?$/);
-  });
-
-  it('handles zero satoshis', () => {
-    const result = transformAmount(0, defaultOpts);
-    // May produce "0." due to decimal separator being appended
-    expect(result).toMatch(/^0\.?$/);
-  });
-
-  it('trims trailing zeros in fractional output', () => {
-    // 150000000 satoshis = 1.5 BTC → should not show trailing zeros beyond 1.5
-    const result = transformAmount(150000000, defaultOpts);
-    expect(result).toBe('1.5');
-  });
-
-  it('applies minDecimals to keep minimum decimal places', () => {
-    const opts = {
-      fullPrecision: 'full',
-      decimals: {
-        full: {maxDecimals: 8, minDecimals: 2},
-        short: {maxDecimals: 2, minDecimals: 2},
-      },
-      toSatoshis: 100000000,
-    };
-    const result = transformAmount(100000000, opts);
-    // minDecimals=2 → at least "1.00"
-    expect(result).toBe('1.00');
   });
 });
 

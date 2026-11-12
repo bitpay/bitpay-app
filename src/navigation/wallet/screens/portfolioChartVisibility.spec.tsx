@@ -727,6 +727,7 @@ jest.mock('../../../store/wallet/effects/tss-send/tss-send', () => ({
 }));
 
 jest.mock('../../../store/wallet/utils/currency', () => ({
+  GetPrecision: jest.fn(() => () => ({unitDecimals: 8, unitToSatoshi: 1e8})),
   IsERCToken: jest.fn(() => false),
   IsEVMChain: jest.fn(() => false),
   IsSVMChain: jest.fn(() => false),

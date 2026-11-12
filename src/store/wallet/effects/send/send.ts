@@ -14,8 +14,8 @@ import {
   KeyMethods,
 } from '../../wallet.models';
 import {
-  FormatAmount,
   FormatAmountStr,
+  FromBaseUnits,
   ParseAmount,
   SatToUnit,
   parseAmountToStringIfBN,
@@ -631,6 +631,7 @@ export const buildTxDetails =
         throw new Error('Invalid coin or chain');
       }
 
+      const amountSat = amount!;
       amount = Number(amount); // Support BN (use number instead string only for view)
       let effectiveRate;
       if (invoice && defaultAltCurrencyIsoCode === invoice.currency) {
@@ -706,6 +707,7 @@ export const buildTxDetails =
                 chain,
                 undefined,
                 fee,
+                true,
               ),
             ),
             fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
@@ -724,6 +726,7 @@ export const buildTxDetails =
                 chain,
                 undefined,
                 networkCost,
+                true,
               ),
             ),
             fiatAmount: formatFiatAmount(
@@ -750,14 +753,14 @@ export const buildTxDetails =
         subTotal: {
           cryptoAmount: dispatch(
             // @ts-ignore
-            FormatAmountStr(coin, chain, tokenAddress, amount),
+            FormatAmountStr(coin, chain, tokenAddress, amountSat, true),
           ),
           fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
         },
         total: {
           cryptoAmount: isERC20
             ? `${dispatch(
-                FormatAmountStr(coin, chain, tokenAddress, amount),
+                FormatAmountStr(coin, chain, tokenAddress, amountSat, true),
                 // @ts-ignore
               )}\n + ${dispatch(
                 FormatAmountStr(
@@ -765,10 +768,20 @@ export const buildTxDetails =
                   chain,
                   undefined,
                   fee,
+                  true,
                 ),
               )}`
             : dispatch(
-                FormatAmountStr(coin, chain, tokenAddress, amount + fee),
+                FormatAmountStr(
+                  coin,
+                  chain,
+                  tokenAddress,
+                  (
+                    BigInt(parseAmountToStringIfBN(amountSat)) +
+                    BigInt(parseAmountToStringIfBN(fee))
+                  ).toString(),
+                  true,
+                ),
               ),
           fiatAmount: formatFiatAmount(
             amountToFiat + feeToFiat,
@@ -1546,10 +1559,11 @@ export const publishAndSign =
           logManager.debug('success broadcast [publishAndSign]');
 
           const {fee, amount} = broadcastedTx as {
-            fee: number;
-            amount: number;
+            fee: number | string;
+            amount: number | string;
           };
-          const targetAmount = wallet.balance.sat - (fee + amount);
+          const targetAmount =
+            wallet.balance.sat - (Number(fee) + Number(amount));
 
           setTimeout(() => {
             // show refresing in wallet details view
@@ -2029,14 +2043,16 @@ const processInsufficientFunds = async (
   });
 
   const useConfirmedFunds = !getState().WALLET.useUnconfirmedFunds;
-  const amountSat = dispatch(
-    ParseAmount(
-      amount,
-      wallet.currencyAbbreviation,
-      wallet.chain,
-      wallet.tokenAddress,
-    ),
-  ).amountSat;
+  const amountSat = Number(
+    dispatch(
+      ParseAmount(
+        amount,
+        wallet.currencyAbbreviation,
+        wallet.chain,
+        wallet.tokenAddress,
+      ),
+    ).amountSat,
+  );
   if (useConfirmedFunds && wallet.balance.sat >= amountSat + feeRatePerKb) {
     return generateInsufficientConfirmedFundsError(onDismiss);
   } else {
@@ -2077,7 +2093,7 @@ const processInsufficientFundsForFee = (
   const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
     dispatch,
     linkedWallet ? linkedWallet : wallet,
-    toShowAmount,
+    Number(toShowAmount),
   );
 
   const title =
@@ -2304,14 +2320,12 @@ export const buildEthERCTokenSpeedupTx =
         } = wallet;
 
         const {customData, addressTo, nonce, data, gasLimit} = transaction;
-        const amount = Number(
-          dispatch(
-            FormatAmount(
-              currencyAbbreviation,
-              chain,
-              tokenAddress,
-              transaction.amount,
-            ),
+        const amount = dispatch(
+          FromBaseUnits(
+            transaction.amount,
+            currencyAbbreviation,
+            chain,
+            tokenAddress,
           ),
         );
         const recipient = {

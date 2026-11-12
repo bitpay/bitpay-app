@@ -232,7 +232,7 @@ describe('GlobalSelect recipient flow', () => {
     });
     expect(mockNavigate).toHaveBeenCalledWith(
       'Confirm',
-      expect.objectContaining({amount: 0.1}),
+      expect.objectContaining({amount: '0.1'}),
     );
     expect(setButtonState.mock.calls.map(([state]) => state)).toEqual([
       'loading',
