@@ -77,32 +77,21 @@ class Test593SendBTC : BaseTest() {
             homePage.clickSend()
         }
 
-        allureStep("Verify Select Currency page is displayed") {
+        allureStep("Enter Send To address") {
+            selectCurrencyPage.enterSendToAddress("bc1q0effzahtsn685tyjppgukpvfhv37hrlm4g67ws")
+        }
+
+        allureStep("Verify Send From page is displayed") {
             assertTrue(
-                "Select Currency page not displayed",
-                selectCurrencyPage.verifySelectCurrencyDisplayed()
+                "Send To page not displayed",
+                selectCurrencyPage.verifySendFromDisplayed()
             )
-            assertTrue(
-                "Select Currency page not displayed",
-                selectCurrencyPage.verifySelectCurrencyDisplayed()
-            )
-            allureScreenshot("Select Currency page displayed")
         }
 
         allureStep("Click Bitcoin currency option") {
             selectCurrencyPage.clickBitcoin()
         }
 
-        allureStep("Verify Send To page is displayed") {
-            assertTrue(
-                "Send To page not displayed",
-                selectCurrencyPage.verifySendToDisplayed()
-            )
-        }
-
-        allureStep("Enter Send To address") {
-            selectCurrencyPage.enterSendToAddress("bc1q0effzahtsn685tyjppgukpvfhv37hrlm4g67ws")
-        }
 
         allureStep("Enter amount and click Continue") {
             keyboardPage.enterAmount("0.00005")

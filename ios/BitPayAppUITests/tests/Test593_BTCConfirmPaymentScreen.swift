@@ -38,12 +38,21 @@ final class Test593_BTCConfirmPaymentScreen: XCTestCase {
     let confirmPaymentPage = ConfirmPaymentPage(app: app)
                 
     AllureXCTestSupport.step("(1 to 4) On the Home screen, tap Send in the top menu.") {
+      XCTAssertTrue(
+        portfolioBalancePage.isPortfolioGraphChartDisplayed(),
+        "Portfolio balance page not displayed"
+      )
       portfolioBalancePage.tapSendButton()
+    }
+    
+    
+    AllureXCTestSupport.step("(8 & 9) Tap the Search contact or enter address field & Paste the receiver address.") {
+      selectCurrencyPage.enterRecipientAddress(address: "bc1q0effzahtsn685tyjppgukpvfhv37hrlm4g67ws")
     }
     
     AllureXCTestSupport.step("(5) Wait until the Select a Currency screen is displayed. ") {
       XCTAssertTrue(
-        selectCurrencyPage.isSelectCurrencyTitleDisplayed(),
+        selectCurrencyPage.isSendingFromTitleDisplayed(),
         "Select Currency page not displayed"
       )
     }
@@ -51,17 +60,7 @@ final class Test593_BTCConfirmPaymentScreen: XCTestCase {
     AllureXCTestSupport.step("(6) Tap Bitcoin.") {
       selectCurrencyPage.tapBitcoinCurrency()
     }
-    
-    AllureXCTestSupport.step("(7) Wait until the Send To screen is displayed.") {
-      XCTAssertTrue(
-        selectCurrencyPage.isSendToTitleDisplayed(),
-        "Send To page not displayed"
-      )
-    }
-    
-    AllureXCTestSupport.step("(8 & 9) Tap the Search contact or enter address field & Paste the receiver address.") {
-      selectCurrencyPage.enterRecipientAddress(address: "bc1q0effzahtsn685tyjppgukpvfhv37hrlm4g67ws")
-    }
+
     
     AllureXCTestSupport.step("(10 & 11) Wait until the Amount screen is displayed & Enter 0.00005 BTC.") {
       enterAmountPage.enterAmount(amount: "0.00005")

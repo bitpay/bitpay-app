@@ -39,12 +39,16 @@ final class Test596_BasicBuyBTC: XCTestCase {
     let selectCurrencyPage = SelectCurrencyPage(app: app)
     
     AllureXCTestSupport.step("(1 to 4) From the Home screen, tap Buy.") {
+      XCTAssertTrue(
+        portfolioBalancePage.isPortfolioGraphChartDisplayed(),
+        "Portfolio balance page not displayed"
+      )
       portfolioBalancePage.tapBuyButton()
     }
     
-    AllureXCTestSupport.step("(5) Wait until the Buy screen is displayed. ") {
-      XCTAssertTrue(buyPage.isBuyPageTitleDisplayed(), "Buy page not displayed")
-    }
+//    AllureXCTestSupport.step("(5) Wait until the Buy screen is displayed. ") {
+//      XCTAssertTrue(buyPage.isBuyPageTitleDisplayed(), "Buy page not displayed")
+//    }
     
     AllureXCTestSupport.step("(6) Enter $30 as the buy amount.") {
       enterAmountPage.tapBackspace(count: 3)

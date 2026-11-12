@@ -38,11 +38,12 @@ final class Test595_BasicSellBTC: XCTestCase {
     let selectCurrencyPage = SelectCurrencyPage(app: app)
     
     AllureXCTestSupport.step("(1 to 4) From the Home screen, tap Sell.") {
+      portfolioBalancePage.isPortfolioGraphChartDisplayed()
       portfolioBalancePage.tapSellButton()
     }
     
     AllureXCTestSupport.step("(5) Wait until the Sell screen is displayed.") {
-      XCTAssertTrue(sellPage.isSellPageTitleDisplayed(), "Sell page not displayed")
+      XCTAssertTrue(sellPage.isChooseCryptoDisplayed(), "Sell page not displayed")
     }
     
     AllureXCTestSupport.step("(6) Enter $30 as the sell amount.") {

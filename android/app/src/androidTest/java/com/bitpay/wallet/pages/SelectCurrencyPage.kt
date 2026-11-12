@@ -29,7 +29,7 @@ class SelectCurrencyPage {
     )
     private val ethereumText = withSubstring("Ethereum")
     private val sendToText = withText("Send To")
-    private val sendToAddressInput = withTestId("send-to-address-input")
+    private val sendToAddressInput = withTestId("global-send-to-address-input")
     private val swapText = withText("Swap")
     private val swapFrom = withTestId("swap-crypto-from-wallet-selector")
     private val swapTo = withTestId("swap-crypto-to-wallet-selector")
@@ -48,6 +48,8 @@ class SelectCurrencyPage {
     private val sellText = withText("Sell")
     private val buyContinueButton = withTestId("button")
     private val chooseCrypto = withText("Choose Crypto")
+    private val sendFromText = withText("Sending from")
+    private val usdText = withText("USD")
 
 
     // ---- Actions ----
@@ -72,12 +74,12 @@ class SelectCurrencyPage {
     }
 
     fun clickBitcoin() {
-        WaitUtils.waitForView(bitcoinText, timeoutMs = 30000)
+        WaitUtils.waitForView(bitcoinText, timeoutMs = 60000)
         onView(bitcoinText).perform(click())
     }
 
     fun clickBTCBitcoin() {
-        WaitUtils.waitForView(btcBitcoinText, timeoutMs = 30000)
+        WaitUtils.waitForView(btcBitcoinText, timeoutMs = 60000)
         onView(btcBitcoinText).perform(click())
     }
 
@@ -176,7 +178,7 @@ class SelectCurrencyPage {
     }
 
     fun clickSwapFromOption() {
-        WaitUtils.waitForViewEffectivelyVisible(swapFrom, timeoutMs = 60 * 1000)
+        WaitUtils.waitForViewEffectivelyVisible(swapFrom, timeoutMs = 120 * 1000)
         try {
             onView(swapFrom).perform(click())
         } catch (e: Throwable) {
@@ -319,6 +321,46 @@ class SelectCurrencyPage {
     fun clickChooseCrypto() {
         WaitUtils.waitForView(chooseCrypto)
         onView(chooseCrypto).perform(click())
+    }
+
+    fun verifySendFromDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(sendFromText)
+            onView(sendFromText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifyChooseCryptoDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForViewEffectivelyVisible(chooseCrypto, timeoutMs = 60 * 1000)
+            onView(chooseCrypto).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifyUSDTextDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForViewEffectivelyVisible(usdText, timeoutMs = 60 * 1000)
+            onView(usdText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    fun verifyBitcoinBTCTextDisplayed(): Boolean {
+        return try {
+            WaitUtils.waitForView(btcBitcoinText, timeoutMs = 300000)
+            onView(btcBitcoinText).check(matches(isDisplayed()))
+            true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
 }

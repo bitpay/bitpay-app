@@ -41,7 +41,9 @@ class SelectCurrencyPage {
       matching: NSPredicate(format: "label == 'Recipient address'")
     ).firstMatch
   }
-  
+  var sendingFromTitle: XCUIElement {
+    app.staticTexts["Sending from"]
+  }
   
   // MARK: - Actions
   
@@ -63,6 +65,10 @@ class SelectCurrencyPage {
            recipientAddress.typeText(String(character))
            // usleep(100000)
        }
+  }
+  
+  func isSendingFromTitleDisplayed(timeout: TimeInterval = 10) -> Bool {
+    return sendingFromTitle.waitForExistence(timeout: timeout)
   }
 
 }

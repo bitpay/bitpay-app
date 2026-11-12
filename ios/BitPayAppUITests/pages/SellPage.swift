@@ -31,5 +31,8 @@ class SellPage {
     chooseCrypto.tap()
   }
   
+  func isChooseCryptoDisplayed(timeout: TimeInterval = 180) -> Bool {
+    return chooseCrypto.waitForExistence(timeout: timeout)
+  }
 
 }

@@ -51,6 +51,12 @@ class PortfolioBalancePage {
       .matching(identifier: "swap-button")
       .firstMatch
   }
+  
+  var graphChart: XCUIElement {
+    app.descendants(matching: .any)
+      .matching(identifier: "interactive-line-chart-graph")
+      .firstMatch
+  }
 
   // MARK: - Actions
 
@@ -70,7 +76,9 @@ class PortfolioBalancePage {
 
     // Buy can briefly route to a key/backup-required sheet while WALLET.keys
     // rehydrates after relaunch; retry (dismissing the sheet) until the keypad shows.
-    let keypadKey = app.staticTexts["5"].firstMatch
+    let keypadKey = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "label == '5' OR identifier == '5'"))
+      .firstMatch
     let maybeLater = app.descendants(matching: .any).element(
       matching: NSPredicate(format: "identifier == 'bottom-notification-secondary-action-button'")
     ).firstMatch
@@ -178,6 +186,10 @@ class PortfolioBalancePage {
         "Swap button did not appear within \(timeout) seconds"
       )
     swapButton.tap()
+  }
+  
+  func isPortfolioGraphChartDisplayed(timeout: TimeInterval = 120000) -> Bool {
+    return graphChart.waitForExistence(timeout: timeout)
   }
 
 }

@@ -99,7 +99,7 @@ class Test594SwapBTC : BaseTest() {
             )
             assertTrue(
                 "Swap page - Bitcoin text not displayed",
-                selectCurrencyPage.verifyBitcoinTextDisplayed()
+                selectCurrencyPage.verifyBitcoinBTCTextDisplayed()
             )
 
             allureScreenshot("Swap from Option - Before Bitcoin click")

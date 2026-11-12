@@ -39,11 +39,15 @@ final class Test594_BasicSwapBTC: XCTestCase {
     let selectCurrencyPage = SelectCurrencyPage(app: app)
     
     AllureXCTestSupport.step("(1 to 4) From the Home screen, tap Swap in the top menu. ") {
+      XCTAssertTrue(
+        portfolioBalancePage.isPortfolioGraphChartDisplayed(),
+        "Portfolio balance page not displayed"
+      )
       portfolioBalancePage.tapSwapButton()
     }
     
     AllureXCTestSupport.step("(5) Wait until the Swap Crypto screen is displayed.") {
-      XCTAssertTrue(swapPage.isSwapPageTitleDisplayed(), "Swap page not displayed")
+      XCTAssertTrue(swapPage.isSlideToSwapButtonDisplayed(), "Swap page not displayed")
     }
     
     AllureXCTestSupport.step("(6) In the Swap From section, tap Select Wallet") {

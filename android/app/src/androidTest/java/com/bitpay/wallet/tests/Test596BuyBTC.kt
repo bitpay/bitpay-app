@@ -77,7 +77,7 @@ class Test596BuyBTC : BaseTest() {
         allureStep("Verify Buy page is displayed") {
             assertTrue(
                 "Buy page not displayed",
-                selectCurrencyPage.verifyBuyTitleDisplayed()
+                selectCurrencyPage.verifyUSDTextDisplayed()
             )
             allureScreenshot("Buy page displayed")
         }
@@ -93,7 +93,7 @@ class Test596BuyBTC : BaseTest() {
                 "Select Crypto page not displayed",
                 selectCurrencyPage.verifySelectCryptoTitleDisplayed()
             )
-            selectCurrencyPage.clickBitcoin() // Select Crypto page
+            selectCurrencyPage.clickBTCBitcoin() // Select Crypto page
             allureScreenshot("Bitcoin selected for buy")
         }
 

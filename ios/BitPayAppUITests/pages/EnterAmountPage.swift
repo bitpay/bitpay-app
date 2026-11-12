@@ -30,7 +30,11 @@ class EnterAmountPage {
   // MARK: - Actions
   func enterAmount(amount: String = "0") {
     for char in amount {
-      let key = app.staticTexts[String(char)].firstMatch
+      let value = String(char)
+      let predicate = NSPredicate(format: "label == %@ OR identifier == %@", value, value)
+      let key = app.descendants(matching: .any)
+          .matching(predicate)
+          .firstMatch
       XCTAssertTrue(
         key.waitForExistence(timeout: 15),
         "'\(char)' key not found on the amount keypad"
@@ -50,8 +54,12 @@ class EnterAmountPage {
    */
   func tapBackspace(count: Int = 1) {
     
-    let sixKey = app.staticTexts["6"].firstMatch
-    let nineKey = app.staticTexts["9"].firstMatch
+    let sixKey = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "label == '6' OR identifier == '6'"))
+      .firstMatch
+    let nineKey = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "label == '9' OR identifier == '9'"))
+      .firstMatch
     
     XCTAssertTrue(
       sixKey.waitForExistence(timeout: 15),

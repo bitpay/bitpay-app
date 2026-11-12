@@ -78,7 +78,7 @@ class Test595SellBTC : BaseTest() {
         allureStep("Verify Sell page is displayed") {
             assertTrue(
                 "Sell page not displayed",
-                selectCurrencyPage.verifySellTitleDisplayed()
+                selectCurrencyPage.verifyChooseCryptoDisplayed()
             )
             allureScreenshot("Sell page displayed")
         }
