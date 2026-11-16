@@ -2,7 +2,7 @@ import {mark as perfMark} from '../../perf/PerfMonitor';
 import {whenStartupSettled} from '../../utils/startupSignals';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
-import {debounce} from '../../utils/debounce';
+import {debounce, throttle} from '../../utils/debounce';
 import {
   DeviceEventEmitter,
   EmitterSubscription,
@@ -1081,15 +1081,25 @@ const _createWalletAddress = debounce(
   {leading: true, trailing: false},
 );
 
-const _startUpdateWalletStatus = debounce(
-  async (dispatch, keyObj, wallet) => {
+const createWalletStatusUpdate = () =>
+  throttle(async (dispatch, keyObj, wallet) => {
     await dispatch(startUpdateWalletStatus({key: keyObj, wallet, force: true}));
     dispatch(updatePortfolioBalance());
     DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
-  },
-  5000,
-  {leading: true, trailing: false},
-);
+  }, 5000);
+
+const walletStatusUpdates: {
+  [walletId: string]: ReturnType<typeof createWalletStatusUpdate>;
+} = {};
+
+const _startUpdateWalletStatus = (
+  dispatch: AppDispatch,
+  keyObj: Key,
+  wallet: Wallet,
+) => {
+  walletStatusUpdates[wallet.id] ??= createWalletStatusUpdate();
+  walletStatusUpdates[wallet.id](dispatch, keyObj, wallet);
+};
 
 const _setScanFinishedForWallet = async (
   dispatch: AppDispatch,
@@ -1146,6 +1156,7 @@ export const handleBwsEvent =
         case 'NewOutgoingTx':
         case 'NewTxProposal':
         case 'TxConfirmation':
+        case 'IncomingTxConfirmed':
           _startUpdateWalletStatus(dispatch, keyObj, wallet);
           break;
         case 'NewIncomingTx':
