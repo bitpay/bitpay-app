@@ -498,6 +498,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         component={TransactionProposalDetails}
       />
       <Wallet.Screen
+        options={{gestureEnabled: false}}
         name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
         component={TransactionProposalNotifications}
       />
