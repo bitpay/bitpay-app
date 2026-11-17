@@ -52,9 +52,9 @@ export const Warning = '#AC6304';
 export const Warning75 = '#FDC67F';
 export const Warning25 = '#FEECD4';
 /**
- * Readable warning text on Warning25 fills (5.03:1).
+ * Readable warning text on Warning25 fills (4.70:1). Same value Bill status already used.
  */
-export const WarningDark = '#955603';
+export const WarningDark = '#A05708';
 
 export const Disabled = '#edeef0';
 export const DisabledDark = '#3c3c3c';

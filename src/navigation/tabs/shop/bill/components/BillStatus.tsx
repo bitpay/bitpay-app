@@ -11,6 +11,7 @@ import {
   LightBlack,
   LinkBlue,
   LightBlue,
+  WarningDark,
 } from '../../../../../styles/colors';
 import {
   BillPayAccount,
@@ -39,7 +40,7 @@ const statusFields = {
   },
   dueSoon: {
     backgroundColor: '#FEECD4',
-    color: '#A05708',
+    color: WarningDark,
     text: () => t('Due in 1 day'),
   },
   dueLater: {
