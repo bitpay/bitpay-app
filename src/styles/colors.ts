@@ -39,6 +39,10 @@ export const Caution60 = '#ad1313';
  * Readable danger text on Caution50 fills (4.73:1).
  */
 export const Caution70 = '#9E1111';
+/**
+ * Readable danger text in dark mode (7.4:1 on Black, 5.4:1 on LightBlack).
+ */
+export const CautionBright = '#FF647C';
 
 export const Success = '#2fcfa4';
 export const Success50 = '#97E7D1';

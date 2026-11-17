@@ -26,6 +26,7 @@ import {
   Success25,
   LightBlue,
   Caution,
+  CautionBright,
 } from '../../../styles/colors';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {BuyCryptoExchangeKey} from '../buy-crypto/utils/buy-crypto-utils';
@@ -227,7 +228,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   offerDataWarningMsg: {
-    color: Caution,
     marginRight: 10,
     fontSize: 12,
   },
@@ -549,9 +549,20 @@ const OfferDataWarningContainer: React.FC<ViewProps> = ({style, ...rest}) => (
 const OfferDataWarningMsg = React.forwardRef<
   Text,
   React.ComponentProps<typeof BaseText>
->(({style, ...rest}, ref) => (
-  <BaseText ref={ref} style={[styles.offerDataWarningMsg, style]} {...rest} />
-));
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.offerDataWarningMsg,
+        {color: theme.dark ? CautionBright : Caution},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 OfferDataWarningMsg.displayName = 'OfferDataWarningMsg';
 
 const OfferDataInfoText = React.forwardRef<
