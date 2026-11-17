@@ -370,6 +370,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 8,
+    // Room for the address badge's 19pt hitSlop (taken from the 22pt gap
+    // above via contentTopMargin), so touches there reach the badge.
+    paddingTop: 19,
   },
 });
 
@@ -517,6 +520,7 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 
   return (
     <BadgeContainerTouchable
+      hitSlop={{top: 19, bottom: 0}}
       onPress={copyToClipboard}
       activeOpacity={ActiveOpacity}
       style={{alignSelf: 'center', width: 'auto', minHeight: 25}}>
@@ -1989,6 +1993,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <BalanceHeaderSupplement
                   changeRowData={accountHeaderChangeRowData}
                   content={accountChartPreContent}
+                  contentTopMargin={3}
                   reserveChangeRowSpace={
                     shouldRenderAccountBalanceChart ||
                     shouldShowAccountChartPlaceholder

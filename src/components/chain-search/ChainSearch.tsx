@@ -513,6 +513,7 @@ const SearchComponent = <T extends SearchableItem>({
     return (
       <SearchFilterContainer
         accessibilityRole="button"
+        hitSlop={{top: 6, bottom: 6}}
         onPress={() => {
           dispatch(AppActions.showChainSelectorModal({context, chainsOptions}));
         }}>
