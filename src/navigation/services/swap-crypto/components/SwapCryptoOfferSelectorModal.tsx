@@ -310,7 +310,7 @@ const SwapCryptoExpandibleCard: React.FC<
               : SlateDark
             : selected
             ? Action
-            : '#e6e8ec',
+            : Slate30,
           backgroundColor: theme.dark
             ? selected
               ? '#2240C440'

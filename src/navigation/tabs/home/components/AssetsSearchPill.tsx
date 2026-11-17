@@ -3,7 +3,12 @@ import {useTranslation} from 'react-i18next';
 import {StyleSheet, TextInput, View} from 'react-native';
 import {useTheme} from '../../../../contexts';
 import SearchSvg from '../../../../../assets/img/search.svg';
-import {Slate30, SlateDark, White} from '../../../../styles/colors';
+import {
+  Slate30,
+  SlateDark,
+  White,
+  Placeholder,
+} from '../../../../styles/colors';
 
 const styles = StyleSheet.create({
   container: {
@@ -85,7 +90,7 @@ const AssetsSearchPill: React.FC<Props> = ({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={'#6F7782'}
+        placeholderTextColor={Placeholder}
         testID="assets-search-input"
         accessibilityLabel={t('Search assets')}
       />

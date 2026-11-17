@@ -24,6 +24,7 @@ import {
   LightBlack,
   SlateDark,
   White,
+  Slate30,
 } from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
@@ -144,7 +145,7 @@ const PaymentMethodCard: React.FC<
       style={[
         styles.paymentMethodCard,
         {
-          borderColor: selected ? Action : theme.dark ? SlateDark : '#e6e8ec',
+          borderColor: selected ? Action : theme.dark ? SlateDark : Slate30,
           backgroundColor: selected ? '#2240C440' : 'transparent',
         },
         style,

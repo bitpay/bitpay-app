@@ -4,11 +4,11 @@ import {
   Caution,
   Caution25,
   NeutralSlate,
-  Slate,
-  Success,
+  SlateDark,
   Success25,
-  Warning,
+  SuccessDark,
   Warning25,
+  WarningDark,
 } from '../../styles/colors';
 import {ScreenGutter} from '../styled/Containers';
 
@@ -39,15 +39,15 @@ const palette: AlertPalette = {
   },
   success: {
     background: Success25,
-    text: Success,
+    text: SuccessDark,
   },
   warning: {
     background: Warning25,
-    text: Warning,
+    text: WarningDark,
   },
   default: {
     background: NeutralSlate,
-    text: Slate,
+    text: SlateDark,
   },
 };
 

@@ -114,7 +114,7 @@ function MoonpaySelectCardModal({
               style={[
                 styles.cardRow,
                 {
-                  borderColor: selected ? Action : dark ? SlateDark : '#e6e8ec',
+                  borderColor: selected ? Action : dark ? SlateDark : Slate30,
                   opacity: disabled ? 0.5 : 1,
                 },
               ]}
@@ -159,7 +159,7 @@ function MoonpaySelectCardModal({
       <TouchableOpacity
         style={[
           styles.addCardRow,
-          {borderTopColor: dark ? '#282f37' : '#e6e8ec'},
+          {borderTopColor: dark ? SlateDark : Slate30},
         ]}
         onPress={onAddCard}>
         <BaseText style={styles.addCardText}>{t('Add a new card')}</BaseText>

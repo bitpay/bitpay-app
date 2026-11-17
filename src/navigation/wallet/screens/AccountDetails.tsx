@@ -89,7 +89,7 @@ import {
 } from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White, Slate} from '../../../styles/colors';
 import {
   createMultipleWallets,
   getActiveWalletStoreInitPromise,
@@ -398,9 +398,14 @@ const WalletListHeader: React.FC<TouchableOpacityProps> = ({
 const WalletListHeaderLabel: React.FC<{
   isActive: boolean;
   children?: React.ReactNode;
-}> = ({isActive, children}) => (
-  <View style={{opacity: isActive ? 1 : 0.4}}>{children}</View>
-);
+}> = ({isActive, children}) => {
+  const theme = useTheme();
+  return (
+    <H5 style={isActive ? undefined : {color: theme.dark ? Slate : SlateDark}}>
+      {children}
+    </H5>
+  );
+};
 
 const CopyToClipboardContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
@@ -2144,7 +2149,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 setActiveTab('wallets');
               }}>
               <WalletListHeaderLabel isActive={isWalletsTab}>
-                <H5>{t('Wallets')}</H5>
+                {t('Wallets')}
               </WalletListHeaderLabel>
             </WalletListHeader>
             {showPortfolioValue ? (
@@ -2157,7 +2162,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   setActiveTab('allocation');
                 }}>
                 <WalletListHeaderLabel isActive={isAllocationTab}>
-                  <H5>{t('Allocation')}</H5>
+                  {t('Allocation')}
                 </WalletListHeaderLabel>
               </WalletListHeader>
             ) : null}
@@ -2172,7 +2177,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 loadInitialHistory();
               }}>
               <WalletListHeaderLabel isActive={isActivityTab}>
-                <H5>{t('Activity')}</H5>
+                {t('Activity')}
               </WalletListHeaderLabel>
             </WalletListHeader>
           </HeaderListContainer>

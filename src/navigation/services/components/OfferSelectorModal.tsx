@@ -25,6 +25,7 @@ import {
   Slate30,
   Success25,
   LightBlue,
+  Caution,
 } from '../../../styles/colors';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {BuyCryptoExchangeKey} from '../buy-crypto/utils/buy-crypto-utils';
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   offerDataWarningMsg: {
-    color: '#df5264',
+    color: Caution,
     marginRight: 10,
     fontSize: 12,
   },
@@ -432,7 +433,7 @@ const BuyCryptoExpandibleCard: React.FC<
               : SlateDark
             : selected
             ? Action
-            : '#e6e8ec',
+            : Slate30,
           backgroundColor: theme.dark
             ? selected
               ? '#2240C440'

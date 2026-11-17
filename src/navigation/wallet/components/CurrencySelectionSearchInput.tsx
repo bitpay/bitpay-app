@@ -5,7 +5,7 @@ import {useTheme} from '../../../contexts';
 import SearchIcon from '../../../../assets/img/search.svg';
 import BoxInput, {IconContainer} from '../../../components/form/BoxInput';
 import {ActiveOpacity} from '../../../components/styled/Containers';
-import {NeutralSlate} from '../../../styles/colors';
+import {NeutralSlate, Placeholder} from '../../../styles/colors';
 import WalletIcons from './WalletIcons';
 
 interface CurrencySelectionSearchInputProps {
@@ -29,7 +29,7 @@ const CurrencySelectionSearchInput: React.FC<
   // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   queryRef.current = query;
 
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
 
   const debouncedOnSearch = useMemo(() => {
     const fn = (text: string) => {

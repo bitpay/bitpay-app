@@ -6,7 +6,13 @@ import {
   SearchRoundInput,
 } from '../../components/styled/Containers';
 import {groupBy} from '../../utils/array';
-import {Action, LightBlue, Slate, White} from '../../styles/colors';
+import {
+  Action,
+  LightBlue,
+  Slate,
+  White,
+  Placeholder,
+} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
@@ -551,7 +557,7 @@ const SearchComponent = <T extends SearchableItem>({
             </SearchIconContainer>
             <View>
               <SearchRoundInput
-                placeholderTextColor={Slate}
+                placeholderTextColor={theme.dark ? Slate : Placeholder}
                 placeholder={t('Search')}
                 onChangeText={updateSearchResults}
               />

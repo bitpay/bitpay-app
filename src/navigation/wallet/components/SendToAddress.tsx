@@ -18,7 +18,7 @@ import {
 import Button from '../../../components/button/Button';
 import {useTheme} from '../../../contexts';
 import {BaseText, H5, SubText} from '../../../components/styled/Text';
-import {Caution, NeutralSlate} from '../../../styles/colors';
+import {Caution, NeutralSlate, Placeholder} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -105,7 +105,7 @@ const SendToAddress = () => {
   const theme = useTheme();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
   const [searchInput, setSearchInput] = useState('');
   const [walletSearchInput, setWalletSearchInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');

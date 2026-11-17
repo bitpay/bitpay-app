@@ -11,7 +11,7 @@ import {
   InfoTitle,
   TextAlign,
 } from '../../../components/styled/Text';
-import {NeutralSlate, SlateDark} from '../../../styles/colors';
+import {NeutralSlate, SlateDark, Placeholder} from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import AddConnection from '../../../components/add/Add';
 import {HeaderTitle} from '../styled/WalletConnectText';
@@ -141,7 +141,7 @@ const WalletConnectConnections = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const [searchVal, setSearchVal] = useState('');
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes('walletconnect')

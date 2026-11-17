@@ -30,7 +30,7 @@ import {
   SearchInput,
 } from '../../../components/styled/Containers';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
-import {NeutralSlate} from '../../../styles/colors';
+import {NeutralSlate, Placeholder} from '../../../styles/colors';
 import {useOngoingProcess} from '../../../contexts';
 
 export type WalletConnectIntroParamList = {
@@ -50,7 +50,7 @@ const WalletConnectIntro = () => {
   const navigation = useNavigation();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
 
   // version 2
   // value unused; selector kept so the screen still re-renders when the proposal changes
