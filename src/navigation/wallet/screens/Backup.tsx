@@ -86,13 +86,13 @@ export const backupRedirect = ({
   key?: Key;
 }) => {
   if (context === 'onboarding') {
-    navigation.navigate('TermsOfUse');
+    navigation.navigate('Pin');
   } else if (context === 'keySettings') {
-    navigation.navigate('KeySettings', {keyId: key?.id});
+    navigation.navigate('KeySettings', {keyId: key?.id}, {pop: true});
   } else if (context === 'settings') {
-    navigation.navigate('Tabs', {screen: 'Settings'});
-  } else if (!key?.backupComplete) {
-    navigation.navigate('Tabs', {screen: 'Home'});
+    navigation.navigate('Tabs', {screen: 'Settings'}, {pop: true});
+  } else if (context === 'home' || !key?.backupComplete) {
+    navigation.navigate('Tabs', {screen: 'Home'}, {pop: true});
   } else if (!walletTermsAccepted) {
     navigation.navigate('TermsOfUse', {key});
   } else if (context === 'createNewMultisigKey') {
@@ -101,7 +101,7 @@ export const backupRedirect = ({
       StackActions.push('KeyOverview', {id: key.id, context}),
     );
   } else if (context === 'swapCrypto' || context === 'swapTo') {
-    navigation.navigate('SwapCryptoRoot');
+    navigation.navigate('SwapCryptoRoot', undefined, {pop: true, merge: true});
   } else if (context === 'buyCrypto') {
     navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
       context: 'buyCrypto',
@@ -125,13 +125,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
   const {context, key} = route.params;
 
   const gotoBackup = () => {
-    const {id, mnemonic} = key.properties!;
-    navigation.navigate('RecoveryPhrase', {
-      keyId: id,
-      words: mnemonic.trim().split(' '),
-      walletTermsAccepted,
-      ...route.params,
-    });
+    navigation.navigate('BackupOnboarding', {keyId: key.id, context});
   };
 
   useLayoutEffect(() => {

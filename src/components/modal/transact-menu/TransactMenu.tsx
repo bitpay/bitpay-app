@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {ReactElement, useCallback, useRef, useState} from 'react';
+import React, {ReactElement, useCallback, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
 import {FlashList} from '@shopify/flash-list';
@@ -352,22 +352,25 @@ const TransactMenuContent = React.memo(
   },
 );
 
+let transactMenuOpen = false;
+
+export const isTransactMenuOpen = () => transactMenuOpen;
+
 const TransactModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
-  const modalVisibleRef = useRef(false);
 
   const hideModal = useCallback(() => {
-    modalVisibleRef.current = false;
+    transactMenuOpen = false;
     setModalVisible(false);
   }, []);
   const showModal = useCallback(() => {
-    modalVisibleRef.current = true;
+    transactMenuOpen = true;
     setHasOpened(true);
     setModalVisible(true);
   }, []);
   const handleModalHide = useCallback(() => {
-    if (!modalVisibleRef.current) {
+    if (!transactMenuOpen) {
       setHasOpened(false);
     }
   }, []);

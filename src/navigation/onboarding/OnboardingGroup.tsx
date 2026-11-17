@@ -3,7 +3,6 @@ import {Theme} from '@react-navigation/native';
 import OnboardingStartScreen from './screens/OnboardingStart';
 import NotificationsScreen from './screens/Notifications';
 import PinScreen from './screens/Pin';
-import CreateOrImportKey from './screens/CreateKey';
 import {TermsOfUseParamList} from './screens/TermsOfUse';
 import {CurrencySelectionParamList} from '../wallet/screens/CurrencySelection';
 import {BackupParamList} from '../wallet/screens/Backup';
@@ -22,7 +21,6 @@ export type OnboardingGroupParamList = {
   OnboardingStart: undefined;
   Notifications: undefined;
   Pin: undefined;
-  CreateKey: undefined;
   TermsOfUse: TermsOfUseParamList | undefined;
   CurrencySelection: CurrencySelectionParamList;
   BackupKey: BackupParamList;
@@ -35,7 +33,6 @@ export enum OnboardingScreens {
   ONBOARDING_START = 'OnboardingStart',
   NOTIFICATIONS = 'Notifications',
   PIN = 'Pin',
-  CREATE_KEY = 'CreateKey',
   TERMS_OF_USE = 'TermsOfUse',
   CURRENCY_SELECTION = 'CurrencySelection',
   BACKUP_KEY = 'BackupKey',
@@ -51,17 +48,13 @@ const OnboardingStack = ({Onboarding, theme}: OnboardingProps) => {
       <Onboarding.Screen
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
-        options={{gestureEnabled: false, animation: 'none'}}
+        options={{gestureEnabled: false, animation: 'none', headerShown: false}}
       />
       <Onboarding.Screen
         name={OnboardingScreens.NOTIFICATIONS}
         component={NotificationsScreen}
       />
       <Onboarding.Screen name={OnboardingScreens.PIN} component={PinScreen} />
-      <Onboarding.Screen
-        name={OnboardingScreens.CREATE_KEY}
-        component={CreateOrImportKey}
-      />
     </Onboarding.Group>
   );
 };

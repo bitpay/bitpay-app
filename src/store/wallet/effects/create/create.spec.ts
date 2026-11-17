@@ -296,6 +296,52 @@ describe('startCreateKey', () => {
     expect(Analytics.track).not.toHaveBeenCalled();
   });
 
+  it('does not store or subscribe an onboarding key if its request is cancelled', async () => {
+    jest.useFakeTimers();
+    try {
+      const {subscribePushNotifications} = require('../../../app/app.effects');
+      const store = configureTestStore({
+        ...baseState,
+        APP: {...baseState.APP, notificationsAccepted: true, brazeEid: 'eid'},
+      });
+
+      await expect(
+        store.dispatch(
+          startCreateKey(
+            [{chain: 'btc', currencyAbbreviation: 'btc', isToken: false}],
+            'onboarding',
+            () => false,
+          ),
+        ),
+      ).rejects.toThrow('Key creation cancelled');
+
+      jest.runOnlyPendingTimers();
+      expect(store.getState().WALLET.keys).toEqual({});
+      expect(subscribePushNotifications).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not store an onboarding key if no wallet was created', async () => {
+    mockBwcClient.createWallet.mockImplementationOnce(
+      (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) =>
+        cb(Object.assign(new Error('wallet fail'), {name: 'bwc.ErrorOTHER'})),
+    );
+    const store = configureTestStore(baseState);
+
+    await expect(
+      store.dispatch(
+        startCreateKey(
+          [{chain: 'btc', currencyAbbreviation: 'btc', isToken: false}],
+          'onboarding',
+        ),
+      ),
+    ).rejects.toThrow('No wallets were created');
+
+    expect(store.getState().WALLET.keys).toEqual({});
+  });
+
   it('dispatches Analytics.track when context is not "onboarding"', async () => {
     const {Analytics} = require('../../../analytics/analytics.effects');
     const store = configureTestStore(baseState);

@@ -36,6 +36,7 @@ export enum DeviceEmitterEvents {
   FIX_WALLET_ADDRESS = 'FIX_WALLET_ADDRESS',
   APP_TOKENS_DATA_LOADED = 'APP_TOKENS_DATA_LOADED',
   SHOULD_DELETE_BRAZE_USER = 'SHOULD_DELETE_BRAZE_USER',
+  TOP_TOAST = 'TOP_TOAST',
 }
 
 export type WalletLoadHistoryTarget = {

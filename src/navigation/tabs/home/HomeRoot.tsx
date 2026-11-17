@@ -72,6 +72,11 @@ import {
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../constants/wallet';
 import SecurePasskeyBannerGate from './components/SecurePasskeyBannerGate';
 import KycBannerGate from './components/KycBannerGate';
+import BackupBannerGate from './components/BackupBannerGate';
+import {
+  isOnboardingKeyPending,
+  showOnboardingKeyPendingToast,
+} from '../../../store/app/onboardingKey.effects';
 import DefaultMarketingCards from './components/DefaultMarketingCards';
 import AllocationSection from './components/AllocationSection';
 import AssetsSection from './components/AssetsSection';
@@ -478,6 +483,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
   const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
   const appLocked = showPinModal || showBiometricModal;
+  const onboardingKeyPending = useAppSelector(({APP}) =>
+    isOnboardingKeyPending(APP.onboardingKeyStatus),
+  );
   const kycModalShown = useAppSelector(({APP}) => APP.kycGetVerifiedModalShown);
   const quoteCurrency = getQuoteCurrency({
     portfolioQuoteCurrency,
@@ -741,6 +749,10 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const receiveLinkingButton = useMemo(
     () => ({
       cta: () => {
+        if (onboardingKeyPending) {
+          showOnboardingKeyPendingToast();
+          return;
+        }
         cancelHomeFlowPreloads();
         dispatch(
           Analytics.track('Clicked Receive Crypto', {
@@ -750,11 +762,15 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(receiveCrypto(navigation, 'HomeRoot'));
       },
     }),
-    [cancelHomeFlowPreloads, dispatch, navigation],
+    [cancelHomeFlowPreloads, dispatch, navigation, onboardingKeyPending],
   );
   const sendLinkingButton = useMemo(
     () => ({
       cta: () => {
+        if (onboardingKeyPending) {
+          showOnboardingKeyPendingToast();
+          return;
+        }
         cancelHomeFlowPreloads();
         dispatch(
           Analytics.track('Clicked Send Crypto', {
@@ -764,7 +780,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(sendCrypto('HomeRoot'));
       },
     }),
-    [cancelHomeFlowPreloads, dispatch],
+    [cancelHomeFlowPreloads, dispatch, onboardingKeyPending],
   );
 
   return (
@@ -806,8 +822,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                 </PerformanceProfiler>
               </HomeSection>
 
-              {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-              {hasKeys ? (
+              {hasKeys || onboardingKeyPending ? (
                 <HomeSection style={{marginBottom: 25}}>
                   <PerformanceProfiler
                     id="Home:linking-buttons"
@@ -819,6 +834,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                   </PerformanceProfiler>
                 </HomeSection>
               ) : null}
+
+              <BackupBannerGate active={isHomeFocused && !appLocked} />
 
               {/* ////////////////////////////// MARKETING */}
               <PerformanceProfiler

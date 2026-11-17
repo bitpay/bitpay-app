@@ -818,6 +818,7 @@ const makeWallet = () => ({
   currencyAbbreviation: 'btc',
   currencyName: 'Bitcoin',
   id: 'wallet-1',
+  isComplete: jest.fn(() => true),
   isScanning: false,
   keyId: 'key-1',
   network: 'livenet',

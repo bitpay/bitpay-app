@@ -438,6 +438,18 @@ const FileOrText = () => {
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
+      dispatch(
+        Analytics.track('Imported Key', {
+          context: route.params?.context || '',
+          source: 'TSSFile',
+        }),
+      );
+      if (route.params?.context === 'onboarding') {
+        hideOngoingProcess();
+        navigation.navigate('Pin');
+        return;
+      }
+
       const firstWallet = key.wallets[0];
       const baseRoutes = [
         {
@@ -465,13 +477,6 @@ const FileOrText = () => {
         CommonActions.reset({
           index: routes.length - 1,
           routes,
-        }),
-      );
-
-      dispatch(
-        Analytics.track('Imported Key', {
-          context: route.params?.context || '',
-          source: 'TSSFile',
         }),
       );
 
@@ -504,9 +509,6 @@ const FileOrText = () => {
           setValue('text', encryptedText);
           setUploadedFileName(result.name || 'file uploaded');
           setIsFromClipboard(false);
-          logManager.debug(
-            `[FileOrText] Successfully loaded file: ${result.name}`,
-          );
         } else {
           setValue('text', fileContent.trim());
           setUploadedFileName(result.name || 'file uploaded');
@@ -517,8 +519,7 @@ const FileOrText = () => {
       if (DocumentPicker.isCancel(err)) {
         logManager.debug('[FileOrText] User cancelled file picker');
       } else {
-        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-        logManager.error(`[FileOrText] Error picking file: ${errorMsg}`);
+        logManager.error('[FileOrText] Error picking file');
         showErrorModal(t('Failed to load file. Please try again.'));
       }
     }

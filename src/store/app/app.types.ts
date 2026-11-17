@@ -10,6 +10,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
   InAppNotificationContextType,
+  OnboardingKeyStatus,
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
@@ -104,6 +105,8 @@ export enum AppActionTypes {
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
   SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
   RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
+  SET_ONBOARDING_KEY_STATUS = 'APP/SET_ONBOARDING_KEY_STATUS',
+  SET_BACKUP_NUDGE_SHOWN = 'APP/SET_BACKUP_NUDGE_SHOWN',
 }
 
 interface NetworkChanged {
@@ -462,6 +465,15 @@ interface ShowArchaxBanner {
   payload: boolean;
 }
 
+interface SetOnboardingKeyStatus {
+  type: typeof AppActionTypes.SET_ONBOARDING_KEY_STATUS;
+  payload: OnboardingKeyStatus;
+}
+
+interface SetBackupNudgeShown {
+  type: typeof AppActionTypes.SET_BACKUP_NUDGE_SHOWN;
+}
+
 interface DismissMarketingContentCard {
   type: typeof AppActionTypes.DISMISS_MARKETING_CONTENT_CARD;
   payload: string;
@@ -557,4 +569,6 @@ export type AppActionType =
   | ShowArchaxBanner
   | DismissMarketingContentCard
   | SetShowKycGetVerifiedModal
-  | ResetKycGetVerifiedModal;
+  | ResetKycGetVerifiedModal
+  | SetOnboardingKeyStatus
+  | SetBackupNudgeShown;

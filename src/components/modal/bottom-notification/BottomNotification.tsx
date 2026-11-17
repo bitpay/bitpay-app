@@ -10,6 +10,7 @@ import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {
   Black,
+  Caution,
   LightBlack,
   LinkBlue,
   NotificationPrimary,
@@ -38,6 +39,7 @@ export interface BottomNotificationConfig {
   actions: Array<{
     text: string;
     primary?: boolean;
+    destructive?: boolean;
     action: (rootState: RootState) => any;
   }>;
   code?: string;
@@ -136,11 +138,15 @@ export const BottomNotificationHr: React.FC<
 };
 
 export const BottomNotificationCta: React.FC<
-  {primary?: boolean} & React.ComponentProps<typeof BaseText>
-> = ({primary, style, ...rest}) => {
+  {primary?: boolean; destructive?: boolean} & React.ComponentProps<
+    typeof BaseText
+  >
+> = ({primary, destructive, style, ...rest}) => {
   const theme = useTheme();
   const dark = theme.dark;
-  const color = dark
+  const color = destructive
+    ? Caution
+    : dark
     ? primary
       ? LinkBlue
       : Slate
@@ -220,7 +226,7 @@ const BottomNotificationContent = React.memo(() => {
 
   const actionButtons = useMemo(
     () =>
-      actions?.map(({primary, action, text}, index) => {
+      actions?.map(({primary, destructive, action, text}, index) => {
         const handlePress = async () => {
           haptic('impactLight');
           dispatch(AppActions.dismissBottomNotificationModal());
@@ -243,7 +249,8 @@ const BottomNotificationContent = React.memo(() => {
             onPress={handlePress}>
             <BottomNotificationCta
               suppressHighlighting={true}
-              primary={primary}>
+              primary={primary}
+              destructive={destructive}>
               {text?.toUpperCase()}
             </BottomNotificationCta>
           </TouchableOpacity>

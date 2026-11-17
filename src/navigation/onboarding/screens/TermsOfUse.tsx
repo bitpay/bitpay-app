@@ -68,29 +68,6 @@ const StatementText = ({children}: {children: React.ReactNode}) => {
   return <Paragraph style={{color: theme.colors.text}}>{children}</Paragraph>;
 };
 
-const StatementTextUnderline = ({children}: {children: React.ReactNode}) => {
-  const theme = useTheme();
-  return (
-    <Paragraph
-      style={{
-        color: theme.colors.text,
-        textDecorationLine: 'underline',
-        textDecorationColor: theme.colors.text,
-      }}>
-      {children}
-    </Paragraph>
-  );
-};
-
-const StatementTextBold = ({children}: {children: React.ReactNode}) => {
-  const theme = useTheme();
-  return (
-    <Paragraph style={{color: theme.colors.text, fontWeight: '500'}}>
-      {children}
-    </Paragraph>
-  );
-};
-
 const StatementLink = ({
   testID,
   accessibilityLabel,
@@ -116,17 +93,16 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   const dispatch = useAppDispatch();
   const {key, context} = route.params || {};
   const [agreed, setAgreed] = useState<number[]>([]);
+  const onboarding = !key && !context;
 
   const Terms: Array<TermsOfUseModel> = [
     {
       id: 1,
       statement: (
         <StatementText>
-          {t('My funds are held and controlled on this device.')}{' '}
-          <StatementTextUnderline>
-            {t('BitPay has no custody, access or control over my funds')}
-          </StatementTextUnderline>
-          .
+          {t(
+            'My funds are held and controlled on this device. BitPay has no custody, access or control over my funds.',
+          )}
         </StatementText>
       ),
       accessibilityLabel: 'first-term-checkbox',
@@ -135,21 +111,9 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
       id: 2,
       statement: (
         <StatementText>
-          <StatementTextBold>
-            {t('BitPay can never recover my funds for me.')}
-          </StatementTextBold>{' '}
-          <StatementTextUnderline>
-            {t(
-              'It is my responsibility to save and maintain the 12-word recovery phrase',
-            )}
-          </StatementTextUnderline>
           {t(
-            '. Using my 12-word phrase is the only way to recover my funds if this app is deleted or the device is lost.',
-          )}{' '}
-          <StatementTextUnderline>
-            {t('If I lose my recovery phrase, it can’t be recovered')}
-          </StatementTextUnderline>
-          .
+            'BitPay can never recover my funds for me. It’s my job to keep a backup of my recovery phrase.',
+          )}
         </StatementText>
       ),
       accessibilityLabel: 'second-term-checkbox',
@@ -182,14 +146,14 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      gestureEnabled: false,
+      gestureEnabled: onboarding,
       headerTitle: () => <HeaderTitle>{t('Important')}</HeaderTitle>,
-      headerLeft: () => null,
+      headerLeft: onboarding ? undefined : () => null,
       headerRight: () => null,
     });
-  }, [navigation, t]);
+  }, [navigation, onboarding, t]);
 
-  useAndroidBackHandler(() => true);
+  useAndroidBackHandler(() => !onboarding);
 
   const setChecked = (id: number) => {
     if (id > 0) {

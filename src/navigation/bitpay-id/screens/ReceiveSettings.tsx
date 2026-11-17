@@ -651,11 +651,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
             if (!key.backupComplete) {
               dispatch(
                 showBottomNotificationModal(
-                  keyBackupRequired(
-                    Object.values(keys)[0],
-                    navigator,
-                    dispatch,
-                  ),
+                  keyBackupRequired(key, navigator, dispatch),
                 ),
               );
               return;

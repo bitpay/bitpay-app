@@ -120,6 +120,29 @@ describe('initLogs', () => {
     );
   });
 
+  it('redacts the recovery phrase from bitcore-mnemonic errors', () => {
+    const Mnemonic = require('@bitpay-labs/bitcore-mnemonic');
+    const phrase =
+      'abandon abandon abandon\nabandon abandon abandon abandon abandon abandon abandon abandon about';
+    let errorMessage = '';
+    try {
+      Mnemonic(phrase);
+    } catch (err) {
+      errorMessage = (err as Error).message;
+    }
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(`Error creating key with opts: ${errorMessage}`).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(errorMessage).toContain(phrase);
+    expect(JSON.parse(written)[0].message).toBe(
+      'Error creating key with opts: Could not detect the used word list: [...]',
+    );
+  });
+
   it('keeps only the newest 500 entries', () => {
     const {add, drainAndDispatch} = getFreshModule();
     drainAndDispatch(jest.fn());

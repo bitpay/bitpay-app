@@ -19,6 +19,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {Key} from '../../../../store/wallet/wallet.models';
 import CreateWallet from './cards/CreateWallet';
+import ListKeySkeleton from './cards/ListKeySkeleton';
 import WalletCardComponent from './Wallet';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
@@ -31,7 +32,6 @@ import {selectHasCompletedFullPortfolioPopulate} from '../../../../store/portfol
 import {
   checkEncryptedKeysForEddsaMigration,
   getLastDayTimestampStartOfHourMs,
-  getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
 import {orderBy} from '../../../../utils/array';
@@ -59,7 +59,9 @@ import Button from '../../../../components/button/Button';
 import {
   HOME_CARD_HEIGHT,
   HOME_CARD_WIDTH,
+  HomeCardSkeleton,
 } from '../../../../components/home-card/HomeCard';
+import {isOnboardingKeyPending} from '../../../../store/app/onboardingKey.effects';
 import {
   buildLegacyLastDayRateRequestsForWallets,
   getLegacyLastDayPnlForWallets,
@@ -217,6 +219,38 @@ export const keyBackupRequired = (
   dispatch: AppDispatch,
   context?: string,
 ): BottomNotificationConfig => {
+  if (!isTSSKey(key)) {
+    return {
+      type: 'warning',
+      title: t('Back up your recovery phrase first'),
+      message: t(
+        'Back up the recovery phrase for {{keyName}} before you buy, send or receive with it. It only takes a few seconds.',
+        {keyName: key.keyName},
+      ),
+      enableBackdropDismiss: true,
+      actions: [
+        {
+          text: t('Back Up Now'),
+          action: () =>
+            navigation.navigate('BackupOnboarding', {keyId: key.id, context}),
+          primary: true,
+        },
+        {
+          text: t('Not Now'),
+          action: () => {},
+        },
+      ],
+    };
+  }
+  return backUpKeyPrompt(key, navigation, dispatch);
+};
+
+const backUpKeyPrompt = (
+  key: Key,
+  navigation: NavigationProp<any>,
+  dispatch: AppDispatch,
+  context?: string,
+): BottomNotificationConfig => {
   return {
     type: 'error',
     title: t('Key backup required'),
@@ -226,6 +260,10 @@ export const keyBackupRequired = (
       {
         text: t('Back up Key'),
         action: async () => {
+          if (!isTSSKey(key)) {
+            navigation.navigate('BackupOnboarding', {keyId: key.id, context});
+            return;
+          }
           if (key.properties!.mnemonicEncrypted) {
             await sleep(500);
             dispatch(
@@ -235,22 +273,13 @@ export const keyBackupRequired = (
                     dispatch(
                       checkEncryptedKeysForEddsaMigration(key, encryptPassword),
                     );
-                    const decryptedKey = key.methods!.get(encryptPassword);
+                    key.methods!.get(encryptPassword);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(300);
-                    if (isTSSKey(key)) {
-                      navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
-                        keyId: key.id,
-                        decryptPassword: encryptPassword,
-                        context: 'backupExistingTSSKey',
-                      });
-                      return;
-                    }
-                    navigation.navigate('RecoveryPhrase', {
+                    navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
                       keyId: key.id,
-                      words: decryptedKey.mnemonic.trim().split(' '),
-                      key,
-                      context,
+                      decryptPassword: encryptPassword,
+                      context: 'backupExistingTSSKey',
                     });
                   } catch (e) {
                     const eStr =
@@ -263,18 +292,10 @@ export const keyBackupRequired = (
                 },
               }),
             );
-          } else if (isTSSKey(key)) {
+          } else {
             navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
               keyId: key.id,
               context: 'backupExistingTSSKey',
-            });
-            return;
-          } else {
-            navigation.navigate('RecoveryPhrase', {
-              keyId: key.id,
-              words: getMnemonic(key),
-              key,
-              context,
             });
           }
         },
@@ -443,7 +464,7 @@ export const createHomeCardList = ({
                     } else {
                       dispatch(
                         showBottomNotificationModal(
-                          keyBackupRequired(key, navigation, dispatch),
+                          backUpKeyPrompt(key, navigation, dispatch, 'home'),
                         ),
                       );
                     }
@@ -504,6 +525,9 @@ const Crypto = ({active = true}: CryptoProps) => {
   const populateStatus = lastActivePopulateStatusRef.current;
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
+  );
+  const onboardingKeyPending = useAppSelector(({APP}) =>
+    isOnboardingKeyPending(APP.onboardingKeyStatus),
   );
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
@@ -809,16 +833,35 @@ const Crypto = ({active = true}: CryptoProps) => {
     [],
   );
 
+  const visibleCards = useMemo(
+    () =>
+      onboardingKeyPending
+        ? [
+            {
+              id: 'pendingKey',
+              component:
+                homeCarouselLayoutType === 'carousel' ? (
+                  <HomeCardSkeleton />
+                ) : (
+                  <ListKeySkeleton />
+                ),
+            },
+            ...cardsList.list,
+          ]
+        : cardsList.list,
+    [cardsList.list, homeCarouselLayoutType, onboardingKeyPending],
+  );
+
   const carouselHeight = useMemo(
     () =>
-      cardsList.list.reduce(
+      visibleCards.reduce(
         (tallest, {id}) => Math.max(tallest, cardHeights[id] ?? 0),
         HOME_CARD_HEIGHT,
       ) + 20,
-    [cardsList.list, cardHeights],
+    [visibleCards, cardHeights],
   );
 
-  if (!hasKeys) {
+  if (!hasKeys && !onboardingKeyPending) {
     return (
       <CryptoContainer>
         <NoKeysSectionHeaderContainer>
@@ -877,20 +920,19 @@ const Crypto = ({active = true}: CryptoProps) => {
           </CryptoHeaderActions>
         </CryptoHeaderRow>
       </CryptoSectionHeaderContainer>
-      {/* ////////////////////////////// CAROUSEL/LISTVIEW */}
       {homeCarouselLayoutType === 'carousel' ? (
         <CarouselContainer>
           <Carousel
             style={{width: WIDTH, height: carouselHeight}}
             itemSize={HOME_CARD_WIDTH + 16}
-            data={cardsList.list}
+            data={visibleCards}
             animation={{type: 'timing', duration: 0}}
             renderItem={renderCarouselItem}
           />
         </CarouselContainer>
       ) : (
         <ListViewContainer>
-          {cardsList.list.map(data => {
+          {visibleCards.map(data => {
             return <View key={data.id}>{data.component}</View>;
           })}
         </ListViewContainer>

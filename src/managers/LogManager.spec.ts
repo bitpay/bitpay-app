@@ -66,6 +66,21 @@ describe('LogManager', () => {
     );
   });
 
+  it('redacts private data from the Sentry breadcrumb and the session log', () => {
+    const {logManager} = require('./LogManager');
+
+    logManager.error('Mnemonic string is invalid: abandon\nability able');
+
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'log',
+      message: 'Mnemonic string is invalid: [...]',
+      level: 'error',
+    });
+    expect(logManager.getLogs()).toEqual([
+      expect.objectContaining({message: 'Mnemonic string is invalid: [...]'}),
+    ]);
+  });
+
   it('keeps custom Sentry breadcrumb messages unchanged when session logs are disabled', () => {
     (isSessionLogsEnabled as jest.Mock).mockReturnValue(false);
     const {logManager} = require('./LogManager');

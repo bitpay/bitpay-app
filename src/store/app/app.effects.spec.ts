@@ -56,7 +56,7 @@ jest.mock('react-native-permissions', () => ({
   PERMISSIONS: {},
   request: jest.fn(),
   requestNotifications: jest.fn(),
-  RESULTS: {},
+  RESULTS: {GRANTED: 'granted', DENIED: 'denied', BLOCKED: 'blocked'},
 }));
 jest.mock('react-native-quick-actions', () => ({
   clearShortcutItems: jest.fn(),
@@ -341,6 +341,7 @@ import {
   incomingLink,
   openExternalUrl,
   openUrlWithInAppBrowser,
+  requestNotificationsPermissions,
   startAppInit,
   TOKEN_WALLET_LOOKUP_INTERVAL,
   TOKEN_WALLET_LOOKUP_TIMEOUT,
@@ -348,6 +349,7 @@ import {
 import {logManager} from '../../managers/LogManager';
 import {sleep} from '../../utils/helper-methods';
 import {Linking} from 'react-native';
+import {requestNotifications, RESULTS} from 'react-native-permissions';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {navigationRef} from '../../Root';
 import {findWalletByIdHashed} from '../wallet/utils/wallet';
@@ -406,6 +408,42 @@ const makeState = () =>
       polygonMigrationComplete: true,
     },
   } as any);
+
+describe('requestNotificationsPermissions', () => {
+  beforeEach(() => {
+    (requestNotifications as jest.Mock).mockReset();
+  });
+
+  it.each([
+    [RESULTS.GRANTED, true],
+    [RESULTS.DENIED, false],
+    [RESULTS.BLOCKED, false],
+  ])('resolves %s notifications as %s', async (status, accepted) => {
+    (requestNotifications as jest.Mock).mockResolvedValueOnce({status});
+
+    await expect(requestNotificationsPermissions()).resolves.toBe(accepted);
+
+    expect(requestNotifications).toHaveBeenCalledWith([
+      'alert',
+      'badge',
+      'sound',
+    ]);
+  });
+
+  it('resolves false when the native notification request rejects', async () => {
+    (requestNotifications as jest.Mock).mockRejectedValueOnce(
+      new Error('Native notification request failed'),
+    );
+
+    await expect(requestNotificationsPermissions()).resolves.toBe(false);
+
+    expect(requestNotifications).toHaveBeenCalledWith([
+      'alert',
+      'badge',
+      'sound',
+    ]);
+  });
+});
 
 describe('startAppInit', () => {
   const originalDev = global.__DEV__;
