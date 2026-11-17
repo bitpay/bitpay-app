@@ -1,0 +1,34 @@
+appId: com.bitpay.wallet
+---
+# Scroll jank on the home surface.
+#
+# Frame statistics are read from `dumpsys gfxinfo` around this flow, so the
+# scrolling needs to be sustained and repeatable rather than a single flick.
+# Swipes are used instead of `scrollUntilVisible` so the amount of scrolling is
+# identical on every run — a content-dependent stop condition would make the
+# frame counts incomparable between versions.
+
+# Earlier scenarios can leave Home scrolled down; start from the top so
+# every iteration scrolls the same content.
+- scrollUntilVisible:
+    element:
+      id: 'portfolio-balance-toggle'
+    direction: UP
+    timeout: 10000
+- assertVisible:
+    id: 'portfolio-balance-toggle'
+- waitForAnimationToEnd
+
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          from:
+            id: 'home-scroll-view'
+          direction: UP
+          duration: 400
+      - swipe:
+          from:
+            id: 'home-scroll-view'
+          direction: DOWN
+          duration: 400

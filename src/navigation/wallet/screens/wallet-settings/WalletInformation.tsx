@@ -13,6 +13,7 @@ import {
   GetPrecision,
   IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
+import {FromBaseUnits} from '../../../../store/wallet/effects/amount/amount';
 import {
   ScrollView as RNScrollView,
   SafeAreaView,
@@ -51,7 +52,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    height: 58,
+    minHeight: 58,
   },
   settingsHeader: {
     marginTop: 15,
@@ -508,7 +509,14 @@ const WalletInformation = () => {
                       {precision?.unitToSatoshi ? (
                         <InfoLabel>
                           <H7>
-                            {(a.amount / precision.unitToSatoshi).toFixed(8)}{' '}
+                            {dispatch(
+                              FromBaseUnits(
+                                a.amount,
+                                currencyAbbreviation,
+                                chain,
+                                tokenAddress,
+                              ),
+                            )}{' '}
                             {formatCurrencyAbbreviation(currencyAbbreviation)}
                           </H7>
                         </InfoLabel>

@@ -2,7 +2,6 @@ import GraphQlApi from '../graphql';
 import UserQueries from './user.queries';
 import {
   FetchBasicInfoResponse,
-  FetchDoshTokenResponse,
   FetchInitialUserDataResponse,
 } from './user.types';
 
@@ -45,24 +44,8 @@ const fetchBasicInfo = async (
   return data.data.user.basicInfo;
 };
 
-const fetchDoshToken = async (token: string) => {
-  const query = UserQueries.FETCH_DOSH_TOKEN(token);
-  const response =
-    await GraphQlApi.getInstance().request<FetchDoshTokenResponse>(query);
-  const {errors, data} = response.data;
-
-  if (errors) {
-    const msg = errors.map(e => e.message).join(', ');
-
-    throw new Error(msg);
-  }
-
-  return data.user.doshToken;
-};
-
 const UserApi = {
   fetchBasicInfo,
-  fetchDoshToken,
   fetchInitialUserData,
 };
 

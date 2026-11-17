@@ -21,6 +21,7 @@ import {
 } from '../assetPnlSummaryCache';
 import {runPortfolioBalanceChartViewModelQuery} from '../common';
 import usePortfolioHistoricalRateDepsCache from './usePortfolioHistoricalRateDepsCache';
+import {compareCodeUnits} from '../../../utils/compareCodeUnits';
 
 export type AssetPnlSummarySpec = {
   key: string;
@@ -194,11 +195,11 @@ export function useAssetPnlSummaries(args: {
   ]);
   const subscribedCacheKeysSignature = Object.values(statesByKey)
     .map(state => state.cacheKey)
-    .sort((left, right) => left.localeCompare(right))
+    .sort(compareCodeUnits)
     .join('\u0000');
   const subscribedCompatibilityKeysSignature = Object.values(statesByKey)
     .map(state => buildAssetPnlSummaryCompatibilityKey(state.identity))
-    .sort((left, right) => left.localeCompare(right))
+    .sort(compareCodeUnits)
     .join('\u0000');
 
   useEffect(() => {

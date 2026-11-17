@@ -3,12 +3,12 @@ import {
   KeyMethods,
   KeyOptions,
   KeyProperties,
-  SupportedHardwareSource,
   Wallet,
 } from '../../wallet.models';
-import {Effect, storage} from '../../../index';
+import {Effect} from '../../../index';
+import {requireVaultActive} from '../../../vault-storage';
 import {BwcProvider} from '../../../../lib/bwc';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {
   buildKeyObj,
   buildMigrationKeyObj,
@@ -77,19 +77,8 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNRestart from 'react-native-restart';
-import uniqBy from 'lodash.uniqby';
-import {credentialsFromExtendedPublicKey} from '../../../../utils/wallet-hardware';
-import {
-  BitpaySupportedCoins,
-  getBaseVMAccountCreationCoinsAndTokens,
-} from '../../../../constants/currencies';
-import {
-  GetName,
-  IsSegwitCoin,
-  isSingleAddressChain,
-} from '../../utils/currency';
+import {uniqBy} from '../../../../utils/array';
+import {getBaseVMAccountCreationCoinsAndTokens} from '../../../../constants/currencies';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   createWalletsForAccounts,
@@ -126,7 +115,6 @@ const getMissingVmAccounts = (
 };
 
 const BWC = BwcProvider.getInstance();
-const BwcConstants = BWC.getConstants();
 
 const cordovaStoragePath =
   Platform.OS === 'ios'
@@ -148,39 +136,12 @@ export const normalizeMnemonic = (words?: string): string | undefined => {
   return wordList.join(isJA ? '\u3000' : ' ');
 };
 
+// Transfer is committed before Redux starts. This legacy UI gate cannot copy
+// rows, touch the old instance, or restart the application anymore.
 export const startMigrationMMKVStorage =
-  (): Effect<Promise<void>> =>
-  async (dispatch): Promise<void> => {
-    logManager.info('[startMigrationMMKVStorage] - starting...');
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      if (!keys.includes('persist:root')) {
-        dispatch(setMigrationMMKVStorageComplete());
-        logManager.info('[MMKVStorage] nothing to migrate');
-        if (storage.getString('persist:root')) {
-          dispatch(
-            LogActions.persistLog(
-              LogActions.info('success [setMigrationMMKVStorageComplete]'),
-            ),
-          );
-        }
-        return Promise.resolve();
-      }
-      const value = await AsyncStorage.getItem('persist:root');
-      if (value != null) {
-        storage.set('persist:root', value);
-      }
-      await AsyncStorage.multiRemove(keys);
-      RNRestart.restart();
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.persistLog(
-          LogActions.error('[migrationMMKVStorage] failed - ', errStr),
-        ),
-      );
-      Sentry.captureException(err, {level: 'error'});
-    }
+  (): Effect<Promise<void>> => async dispatch => {
+    requireVaultActive();
+    dispatch(setMigrationMMKVStorageComplete());
   };
 
 export const startMigration =
@@ -529,7 +490,7 @@ export const startMigration =
           .map(res => {
             try {
               return JSON.parse(res);
-            } catch (err) {}
+            } catch {}
             return {};
           })
           .map((giftCardMap: {[invoiceId: string]: LegacyGiftCard}) => {
@@ -579,7 +540,7 @@ export const startMigration =
                 'utf8',
               ),
             );
-          } catch (e) {}
+          } catch {}
         };
 
         const [phone, phoneCountryInfo] = await Promise.all([
@@ -779,7 +740,7 @@ export const migrateKeyAndWallets =
                 cordovaStoragePath + `hideWallet-${id}`,
                 'utf8',
               )) === 'true';
-          } catch (e) {
+          } catch {
             // not found. Continue anyway
           }
 
@@ -981,207 +942,6 @@ export const startImportMnemonic =
     });
   };
 
-export const startImportFromHardwareWallet =
-  ({
-    key,
-    hardwareSource,
-    xPubKey,
-    publicKey,
-    accountPath,
-    coin,
-    chain,
-    derivationStrategy,
-    accountNumber,
-    network,
-  }: {
-    key: Key;
-    hardwareSource: SupportedHardwareSource;
-    xPubKey?: string;
-    publicKey?: string;
-    accountPath: string;
-    coin: 'btc' | 'eth' | 'xrp' | 'bch' | 'ltc' | 'doge' | 'matic';
-    chain:
-      | 'btc'
-      | 'eth'
-      | 'xrp'
-      | 'bch'
-      | 'ltc'
-      | 'doge'
-      | 'matic'
-      | 'arb'
-      | 'op'
-      | 'base';
-    derivationStrategy: string;
-    accountNumber: number;
-    network: Network;
-  }): Effect<Promise<Wallet>> =>
-  async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
-      if (!hardwareSource) {
-        return reject(new Error('Invalid hardware wallet source'));
-      }
-
-      if (!BitpaySupportedCoins[coin.toLowerCase()]) {
-        return reject(new Error(`Unsupported currency: ${coin}`));
-      }
-
-      const useNativeSegwit =
-        IsSegwitCoin(coin) &&
-        (accountPath.includes('84') || accountPath.includes('49'));
-
-      const walletExists = key?.wallets.some(
-        w =>
-          w.credentials.rootPath === accountPath &&
-          w.currencyAbbreviation === coin &&
-          w.chain === chain &&
-          w.credentials.account === accountNumber &&
-          w.credentials.network === network,
-      );
-
-      if (walletExists) {
-        return reject(new Error('The wallet is already in the app.'));
-      }
-
-      const hwKeyId = key.id;
-      const name = dispatch(GetName(coin, chain));
-      const credentials = credentialsFromExtendedPublicKey(
-        coin,
-        chain,
-        accountNumber,
-        accountPath,
-        name,
-        derivationStrategy,
-        useNativeSegwit,
-        network,
-        hwKeyId,
-        xPubKey,
-        publicKey,
-      );
-      const bwcClient = BWC.getClient(credentials);
-      const walletName = BitpaySupportedCoins[coin.toLowerCase()].name;
-
-      // check if wallet exists in BWS
-      const status = await new Promise<any>((res, rej) => {
-        bwcClient.getStatus({network}, async (err: any, result: any) => {
-          err ? rej(err) : res(result);
-        });
-      }).catch(() => null);
-
-      const walletAlreadyExistedOnBws = status?.wallet?.id;
-      if (walletAlreadyExistedOnBws) {
-        // wallet exists, update the wallet ID
-        bwcClient.credentials.walletId = status.wallet.id;
-      } else {
-        try {
-          const copayerName = 'me';
-          const m = 1;
-          const n = 1;
-          const singleAddress = undefined;
-
-          const createWalletOpts = {
-            network,
-            useNativeSegwit,
-            coin,
-            chain,
-            walletPrivKey: credentials.walletPrivKey,
-            singleAddress,
-          };
-
-          await new Promise((resolve, reject) =>
-            bwcClient.createWallet(
-              walletName,
-              copayerName,
-              m,
-              n,
-              createWalletOpts,
-              (err: any, result: any) => {
-                err ? reject(err) : resolve(result);
-              },
-            ),
-          );
-        } catch (err) {
-          if (
-            err instanceof Error &&
-            err.name === 'bwc.ErrorCOPAYER_REGISTERED'
-          ) {
-            logManager.debug(
-              'Created wallet, but copayer already registered in BWS',
-            );
-          } else {
-            return reject(err);
-          }
-        }
-      }
-
-      await new Promise((resolve, reject) =>
-        bwcClient.openWallet({}, (err: any, result: any) => {
-          err ? reject(err) : resolve(result);
-        }),
-      );
-
-      const {currencyAbbreviation, currencyName} = dispatch(
-        mapAbbreviationAndName(
-          bwcClient.credentials.coin,
-          bwcClient.credentials.chain,
-          bwcClient.credentials.token?.address,
-        ),
-      );
-
-      const wallet = merge(
-        bwcClient,
-        buildWalletObj({
-          ...bwcClient.credentials,
-          currencyAbbreviation,
-          currencyName,
-          walletName,
-          keyId: key.id,
-          isHardwareWallet: true,
-          hardwareData: {
-            accountPath,
-          },
-        }),
-      ) as Wallet;
-
-      if (walletAlreadyExistedOnBws) {
-        return resolve(wallet);
-      } else {
-        // since we are importing a wallet that was created outside of BWS,
-        // we need to do an initial scan to find any used addresses
-        bwcClient.startScan(
-          {
-            includeCopayerBranches: false,
-            startingStep: 10,
-          },
-          async (err: any) => {
-            if (err) {
-              const errMsg =
-                err instanceof Error ? err.message : JSON.stringify(err);
-              logManager.error(
-                'An error occurred while starting an address scan:',
-                errMsg,
-              );
-            }
-            if (key?.id && !isSingleAddressChain(wallet.credentials.chain)) {
-              const status = await new Promise<any>((res, rej) => {
-                bwcClient.getStatus(
-                  {network: wallet.network},
-                  async (err: any, result: any) => {
-                    err ? rej(err) : res(result);
-                  },
-                );
-              }).catch(() => null);
-              if (!status?.wallet?.singleAddress) {
-                // set scanning (for UI scanning label on wallet details )
-                wallet.isScanning = true;
-              }
-            }
-            return resolve(wallet);
-          },
-        );
-      }
-    });
-  };
-
 export const startImportFile =
   (decryptBackupText: string, opts: Partial<KeyOptions>): Effect =>
   async (dispatch, getState): Promise<Key> => {
@@ -1233,17 +993,19 @@ export const startImportFile =
           let filteredKeys = matchedKey.wallets.filter(
             w => w.credentials.walletId !== wallets[0].credentials.walletId,
           );
-          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          filteredKeys.forEach(w => {
+            w.credentials.keyId = w.keyId = _key.id;
+          });
           wallets = wallets.concat(filteredKeys);
           dispatch(deleteKey({keyId: opts.keyId}));
         }
 
         const key = buildKeyObj({
           key: _key,
-          wallets: wallets.map(wallet => {
+          wallets: wallets.map(walletItem => {
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
-              dispatch(subscribePushNotifications(wallet, brazeEid!));
+              dispatch(subscribePushNotifications(walletItem, brazeEid!));
             }
             // subscribe new wallet to email notifications
             if (
@@ -1256,19 +1018,19 @@ export const startImportFile =
                 language: defaultLanguage,
                 unit: 'btc', // deprecated
               };
-              dispatch(subscribeEmailNotifications(wallet, prefs));
+              dispatch(subscribeEmailNotifications(walletItem, prefs));
             }
             const {currencyAbbreviation, currencyName} = dispatch(
               mapAbbreviationAndName(
-                wallet.credentials.coin,
-                wallet.credentials.chain,
-                wallet.credentials.token?.address,
+                walletItem.credentials.coin,
+                walletItem.credentials.chain,
+                walletItem.credentials.token?.address,
               ),
             );
             return merge(
-              wallet,
+              walletItem,
               buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
+                {...walletItem.credentials, currencyAbbreviation, currencyName},
                 tokenOptsByAddress,
               ),
             );
@@ -1486,12 +1248,11 @@ const createKeyAndCredentials = async (
 
 const createKeyAndCredentialsWithFile = async (
   decryptBackupText: string,
-  opts: Partial<KeyOptions>,
+  _opts: Partial<KeyOptions>,
 ): Promise<any> => {
   const bwcClient = BWC.getClient(undefined);
   let credentials;
   let key;
-  let addressBook;
 
   const data = JSON.parse(decryptBackupText);
   if (data.credentials) {
@@ -1505,7 +1266,7 @@ const createKeyAndCredentialsWithFile = async (
         if (!key.fingerPrintEDDSA) {
           try {
             key.addKeyByAlgorithm('EDDSA');
-          } catch (err) {
+          } catch {
             // If the chain is not Solana, the EDDSA key can be migrated later
             if (credentials.chain === 'sol') {
               throw new Error(t('Unable to add EDDSA key. Check input file.'));
@@ -1513,7 +1274,6 @@ const createKeyAndCredentialsWithFile = async (
           }
         }
       }
-      addressBook = data.addressBook;
     } catch (err: any) {
       if (err && err.message === 'Bad Key version') {
         // Workaround for bad generated files. Fixed: https://github.com/bitpay/wallet/pull/11872
@@ -1526,7 +1286,7 @@ const createKeyAndCredentialsWithFile = async (
         if (!key.fingerPrintEDDSA) {
           try {
             key.addKeyByAlgorithm('EDDSA');
-          } catch (err) {
+          } catch {
             // If the chain is not Solana, the EDDSA key can be migrated later
             if (credentials.chain === 'sol') {
               throw new Error(t('Unable to add EDDSA key. Check input file.'));
@@ -1553,8 +1313,7 @@ const createKeyAndCredentialsWithFile = async (
       let migrated = BWC.upgradeCredentialsV1(data);
       credentials = migrated.credentials;
       key = migrated.key;
-      addressBook = data.addressBook ? data.addressBook : {};
-    } catch (error) {
+    } catch {
       throw new Error(t('Old format. Could not import. Check input file.'));
     }
   }
@@ -1591,32 +1350,36 @@ export const serverAssistedImport = async (
     try {
       const events = new EventEmitter();
 
-      // Queue ensures every event is shown for at least MIN_DISPLAY_MS
+      // Paces progress messages so each stays readable for MIN_DISPLAY_MS while
+      // the import runs. The result never waits on it: on done/error the queue
+      // is dropped, and its pending timer cancelled so a stale message cannot
+      // re-show the modal after the caller has hidden it.
       const MIN_DISPLAY_MS = 1000;
       const eventQueue: Array<{evt: string; data?: any}> = [];
       let draining = false;
-      let onQueueEmpty: (() => void) | null = null;
+      let settled = false;
+      let drainTimer: ReturnType<typeof setTimeout> | null = null;
 
       const drainQueue = () => {
+        drainTimer = null;
         const item = eventQueue.shift();
         if (!item) {
           draining = false;
-          onQueueEmpty?.();
-          onQueueEmpty = null;
           return;
         }
         draining = true;
         ongoingProcessManager.show(item.evt as any, item.data);
-        setTimeout(drainQueue, MIN_DISPLAY_MS);
+        drainTimer = setTimeout(drainQueue, MIN_DISPLAY_MS);
       };
 
-      const waitForQueue = (): Promise<void> => {
-        if (!draining && eventQueue.length === 0) {
-          return Promise.resolve();
+      const stopQueue = () => {
+        settled = true;
+        eventQueue.length = 0;
+        draining = false;
+        if (drainTimer) {
+          clearTimeout(drainTimer);
+          drainTimer = null;
         }
-        return new Promise<void>(res => {
-          onQueueEmpty = res;
-        });
       };
 
       const VISIBLE_EVENTS = new Set([
@@ -1631,7 +1394,7 @@ export const serverAssistedImport = async (
 
       importProgressEvents.forEach(evt => {
         events.on(evt, (data?: any) => {
-          if (!VISIBLE_EVENTS.has(evt)) {
+          if (settled || !VISIBLE_EVENTS.has(evt)) {
             return;
           }
           eventIterations[evt] = (eventIterations[evt] ?? 0) + 1;
@@ -1648,9 +1411,8 @@ export const serverAssistedImport = async (
 
       events.on(
         'done',
-        async ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
-          // Wait for all queued messages to display before resolving
-          await waitForQueue();
+        ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
+          stopQueue();
 
           let wallets = clients;
           if (wallets.length === 0) {
@@ -1673,8 +1435,8 @@ export const serverAssistedImport = async (
         },
       );
 
-      events.on('error', async (err: Error) => {
-        await waitForQueue();
+      events.on('error', (err: Error) => {
+        stopQueue();
         reject(err);
       });
 
@@ -1808,33 +1570,34 @@ export const startImportTSSFile =
                 `[ImportTSS] Recreated wallet client - ${credObj.walletId}`,
               );
 
-              await new Promise((resolve, reject) =>
+              await new Promise((resolveOpen, rejectOpen) =>
                 walletClient.openWallet({}, (err: any, result: any) => {
                   if (err) {
                     logManager.warn(
                       `[ImportTSS] Could not open wallet ${credObj.walletId}:`,
                       err,
                     );
-                    return reject(err);
+                    return rejectOpen(err);
                   }
-                  resolve(result);
+                  resolveOpen(result);
                 }),
               );
 
-              const status: any = await new Promise((resolve, reject) =>
-                walletClient.getStatus(
-                  {includeExtendedInfo: true},
-                  (err: any, result: any) => {
-                    if (err) {
-                      logManager.warn(
-                        `[ImportTSS] Could not get status for ${credObj.walletId}:`,
-                        err,
-                      );
-                      return reject(err);
-                    }
-                    resolve(result);
-                  },
-                ),
+              const status: any = await new Promise(
+                (resolveStatus, rejectStatus) =>
+                  walletClient.getStatus(
+                    {includeExtendedInfo: true},
+                    (err: any, result: any) => {
+                      if (err) {
+                        logManager.warn(
+                          `[ImportTSS] Could not get status for ${credObj.walletId}:`,
+                          err,
+                        );
+                        return rejectStatus(err);
+                      }
+                      resolveStatus(result);
+                    },
+                  ),
               );
 
               const {currencyAbbreviation, currencyName} = dispatch(
@@ -1917,7 +1680,9 @@ export const startImportTSSFile =
           const filteredKeys = matchedKey.wallets.filter(
             w => !newWalletIds.has(w.credentials.walletId),
           );
-          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          filteredKeys.forEach(w => {
+            w.credentials.keyId = w.keyId = _key.id;
+          });
           processedWallets = [...processedWallets, ...filteredKeys];
           dispatch(deleteKey({keyId: opts.keyId}));
         }

@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useState} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useTheme} from '../../../../../contexts';
 import {
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   emojiAction: {
     width: 44,
-    height: 44,
+    minHeight: 44,
   },
   listItem: {
     marginBottom: 20,
@@ -235,10 +235,10 @@ const SendFeedback = ({
     },
   ];
 
-  const chooseRateApp = (rate: FeedbackRateType) => {
+  const chooseRateApp = (selectedRate: FeedbackRateType) => {
     setShowEmojis(false);
-    setRateApp(rate);
-    dispatch(saveUserFeedback(rate, APP_VERSION, true));
+    setRateApp(selectedRate);
+    dispatch(saveUserFeedback(selectedRate, APP_VERSION, true));
   };
 
   return (

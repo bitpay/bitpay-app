@@ -99,9 +99,29 @@ describe('encrypted persistence lifecycle', () => {
     const autoMergeLevel2 = jest.requireActual(
       'redux-persist/lib/stateReconciler/autoMergeLevel2',
     ).default;
-    const {encryptTransform} = jest.requireActual(
-      'redux-persist-transform-encrypt',
-    );
+    const {createTransform} = jest.requireActual('redux-persist');
+    const {encryptPersistValue, deserializeModernPersistValue} =
+      jest.requireActual('./transforms/encrypt');
+    const encryptTransform = ({secretKey, onError}: any) =>
+      createTransform(
+        (value: any, key: string) =>
+          key === 'WALLET'
+            ? JSON.stringify(value)
+            : encryptPersistValue(value, secretKey, `persist:${key}`),
+        (value: any, key: string) => {
+          try {
+            return deserializeModernPersistValue(
+              value,
+              secretKey,
+              key,
+              key === 'WALLET',
+            );
+          } catch (error) {
+            onError?.(error);
+            throw error;
+          }
+        },
+      );
     const {flushPersistor, pausePersistor, setActivePersistor} =
       getFreshPersistor();
     const initialSecrets = {

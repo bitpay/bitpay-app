@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   promoFooter: {
-    height: 48,
+    minHeight: 48,
     paddingLeft: 10,
     paddingRight: 20,
     flexDirection: 'row',

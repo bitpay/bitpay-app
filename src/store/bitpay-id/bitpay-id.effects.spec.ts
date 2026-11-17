@@ -10,7 +10,6 @@
  *   - startTwoFactorAuth (success, failure)
  *   - startDisconnectBitPayId (authenticated + unauthenticated paths)
  *   - startFetchBasicInfo (success, failure)
- *   - startFetchDoshToken (success, failure)
  */
 
 import configureTestStore from '@test/store';
@@ -22,12 +21,13 @@ import {
   startBitPayIdStoreInit,
   startBitPayIdAnalyticsInit,
   checkLoginWithPasskey,
+  startCreateAccount,
   startLogin,
   startSubmitForgotPasswordEmail,
   startTwoFactorAuth,
   startDisconnectBitPayId,
   startFetchBasicInfo,
-  startFetchDoshToken,
+  startFetchReceivingAddresses,
 } from './bitpay-id.effects';
 
 // ---------------------------------------------------------------------------
@@ -56,11 +56,6 @@ jest.mock('../../managers/CloudflareChallengeManager', () => ({
   },
 }));
 
-jest.mock('../../lib/dosh', () => ({
-  __esModule: true,
-  default: {clearUser: jest.fn()},
-}));
-
 jest.mock('../../lib/Mixpanel', () => ({
   MixpanelWrapper: {
     reset: jest.fn(() => Promise.resolve()),
@@ -70,7 +65,6 @@ jest.mock('../../lib/Mixpanel', () => ({
 
 jest.mock('../../lib/Braze', () => ({
   BrazeWrapper: {
-    merge: jest.fn(() => Promise.resolve()),
     identify: jest.fn(() => Promise.resolve()),
     setEmail: jest.fn(),
     setEmailNotificationSubscriptionType: jest.fn(),
@@ -105,15 +99,6 @@ jest.mock('../shop', () => ({
   },
 }));
 
-jest.mock('../card', () => ({
-  CardEffects: {
-    startCardStoreInit: jest.fn(() => ({type: 'CARD/INIT'})),
-  },
-  CardActions: {
-    isJoinedWaitlist: jest.fn(() => ({type: 'CARD/WAITLIST'})),
-  },
-}));
-
 jest.mock('../../utils/passkey', () => ({
   getPasskeyStatus: jest.fn(),
   signInWithPasskey: jest.fn(),
@@ -143,7 +128,6 @@ jest.mock('../../api/user', () => ({
   default: {
     fetchInitialUserData: jest.fn(),
     fetchBasicInfo: jest.fn(),
-    fetchDoshToken: jest.fn(),
   },
 }));
 
@@ -159,20 +143,23 @@ jest.mock('../../api/bitpay', () => ({
 
 import AuthApi from '../../api/auth';
 import UserApi from '../../api/user';
+import BitPayIdApi from '../../api/bitpay';
 import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
 import {CloudflareChallengeError} from '../../utils/cloudflare';
 import {cloudflareChallengeManager} from '../../managers/CloudflareChallengeManager';
 import * as helperMethods from '../../utils/helper-methods';
 import {isAnonymousBrazeEid} from '../app/app.effects';
-import {BrazeWrapper} from '../../lib/Braze';
+import {Analytics} from '../analytics/analytics.effects';
 
 const MockAuthApi = AuthApi as jest.Mocked<typeof AuthApi>;
 const MockUserApi = UserApi as jest.Mocked<typeof UserApi>;
+const MockBitPayIdApi = BitPayIdApi as jest.Mocked<typeof BitPayIdApi>;
 const MockGetPasskeyStatus = getPasskeyStatus as jest.Mock;
 const MockSignInWithPasskey = signInWithPasskey as jest.Mock;
 const MockCloudflarePresent = cloudflareChallengeManager.present as jest.Mock;
 const MockIsAnonymousBrazeEid = isAnonymousBrazeEid as jest.Mock;
-const MockBrazeWrapperMerge = BrazeWrapper.merge as jest.Mock;
+const MockBitPayIdApiCall = BitPayIdApi.apiCall as jest.Mock;
+const MockAnalyticsEndMergingUser = Analytics.endMergingUser as jest.Mock;
 const MockSleep = jest
   .spyOn(helperMethods, 'sleep')
   .mockResolvedValue(undefined);
@@ -202,7 +189,6 @@ const makeUser = (overrides = {}): any => ({
 
 const makeInitialData = (userOverrides = {}): any => ({
   basicInfo: makeUser(userOverrides),
-  doshToken: null,
 });
 
 const baseStore = () =>
@@ -363,16 +349,16 @@ describe('startBitPayIdAnalyticsInit', () => {
   it('does nothing when user is falsy', async () => {
     const store = baseStore();
     await store.dispatch(startBitPayIdAnalyticsInit(null as any));
-    expect(MockBrazeWrapperMerge).not.toHaveBeenCalled();
+    expect(MockBitPayIdApiCall).not.toHaveBeenCalled();
   });
 
-  it('calls BrazeWrapper.merge when brazeEid is anonymous and differs from user eid', async () => {
+  it('calls the mergeBrazeUser API when brazeEid is anonymous and differs from user eid', async () => {
     MockIsAnonymousBrazeEid.mockReturnValueOnce(true);
 
     const store = configureTestStore({
       BITPAY_ID: {
         session: makeSession(),
-        apiToken: {[Network.mainnet]: ''},
+        apiToken: {[Network.mainnet]: 'token1'},
       },
       APP: {
         network: Network.mainnet,
@@ -385,14 +371,17 @@ describe('startBitPayIdAnalyticsInit', () => {
     const user = makeUser({eid: 'new-eid-xyz'});
     await store.dispatch(startBitPayIdAnalyticsInit(user));
 
-    expect(MockBrazeWrapperMerge).toHaveBeenCalledWith(
-      'old-anon-eid',
-      'new-eid-xyz',
+    expect(MockBitPayIdApiCall).toHaveBeenCalledWith(
+      'token1',
+      'mergeBrazeUser',
+      {
+        userToMerge: 'old-anon-eid',
+      },
     );
     expect(MockSleep).toHaveBeenCalledWith(5000);
   });
 
-  it('does NOT call BrazeWrapper.merge when brazeEid is not anonymous', async () => {
+  it('does NOT call the mergeBrazeUser API when brazeEid is not anonymous', async () => {
     MockIsAnonymousBrazeEid.mockReturnValueOnce(false);
 
     const store = configureTestStore({
@@ -409,7 +398,33 @@ describe('startBitPayIdAnalyticsInit', () => {
     });
 
     await store.dispatch(startBitPayIdAnalyticsInit(makeUser()));
-    expect(MockBrazeWrapperMerge).not.toHaveBeenCalled();
+    expect(MockBitPayIdApiCall).not.toHaveBeenCalled();
+  });
+
+  it('still completes the merging lifecycle (sleep + endMergingUser) when mergeBrazeUser fails', async () => {
+    MockIsAnonymousBrazeEid.mockReturnValueOnce(true);
+    MockBitPayIdApiCall.mockRejectedValueOnce(new Error('merge failed'));
+
+    const store = configureTestStore({
+      BITPAY_ID: {
+        session: makeSession(),
+        apiToken: {[Network.mainnet]: 'token1'},
+      },
+      APP: {
+        network: Network.mainnet,
+        brazeEid: 'old-anon-eid',
+        emailNotifications: {accepted: false},
+        notificationsAccepted: false,
+      },
+    });
+
+    const user = makeUser({eid: 'new-eid-xyz'});
+    await expect(
+      store.dispatch(startBitPayIdAnalyticsInit(user)),
+    ).resolves.toBeUndefined();
+
+    expect(MockSleep).toHaveBeenCalledWith(5000);
+    expect(MockAnalyticsEndMergingUser).toHaveBeenCalled();
   });
 
   it('derives givenName/familyName from name when they are missing', async () => {
@@ -593,6 +608,55 @@ describe('startLogin (Cloudflare challenge handling)', () => {
     // friendly error is the correct outcome.
     expect(MockCloudflarePresent).not.toHaveBeenCalled();
     expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+  });
+});
+
+describe('API error messages that are not strings', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  const axiosErrWithObjectMessage: any = {
+    isAxiosError: true,
+    response: {status: 400, data: {message: {code: 'invalid'}}},
+    message: 'Request failed with status code 400',
+  };
+
+  it('startCreateAccount still fails with a string error', async () => {
+    (MockAuthApi.register as jest.Mock).mockRejectedValueOnce(
+      axiosErrWithObjectMessage,
+    );
+
+    const store = baseStore();
+    await store.dispatch(
+      startCreateAccount({
+        givenName: 'Alice',
+        familyName: 'Doe',
+        email: 'alice@example.com',
+        password: 'hunter2',
+        agreedToTOSandPP: true,
+        agreedToMarketingCommunications: false,
+      }),
+    );
+
+    expect(store.getState().BITPAY_ID.createAccountStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.createAccountError).toBe(
+      '[object Object]',
+    );
+  });
+
+  it('startLogin still fails with a string error', async () => {
+    MockGetPasskeyStatus.mockResolvedValueOnce({passkey: false});
+    (MockAuthApi.login as jest.Mock).mockRejectedValueOnce(
+      axiosErrWithObjectMessage,
+    );
+
+    const store = baseStore();
+    const result = await store.dispatch(
+      startLogin({email: 'alice@example.com', password: 'hunter2'}),
+    );
+
+    expect(result).toBe(false);
+    expect(store.getState().BITPAY_ID.loginStatus).toBe('failed');
+    expect(store.getState().BITPAY_ID.loginError).toBe('[object Object]');
   });
 });
 
@@ -785,31 +849,54 @@ describe('startFetchBasicInfo', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// startFetchDoshToken
-// ---------------------------------------------------------------------------
-
-describe('startFetchDoshToken', () => {
+describe('startFetchReceivingAddresses', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('dispatches successFetchDoshToken with the returned token', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockResolvedValueOnce('dosh-xyz');
-
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-
-    expect(store.getState().BITPAY_ID.doshToken[Network.mainnet]).toBe(
-      'dosh-xyz',
-    );
+  const receivingAddress = (address: string) => ({
+    id: address,
+    currency: 'BTC',
+    address,
+    usedFor: {payToEmail: true},
   });
 
-  it('dispatches failedFetchDoshToken when API call fails', async () => {
-    (MockUserApi.fetchDoshToken as jest.Mock).mockRejectedValueOnce(
-      new Error('dosh error'),
+  const signedInStore = () =>
+    configureTestStore({
+      BITPAY_ID: {
+        apiToken: {[Network.mainnet]: 'token-abc'},
+        user: {[Network.mainnet]: makeUser()},
+      },
+      APP: {network: Network.mainnet},
+    });
+
+  it('stores the receiving addresses of the signed-in user', async () => {
+    (MockBitPayIdApi.apiCall as jest.Mock).mockResolvedValueOnce([
+      receivingAddress('own-address'),
+    ]);
+
+    const store = signedInStore();
+    await store.dispatch(startFetchReceivingAddresses());
+
+    expect(
+      store.getState().BITPAY_ID.receivingAddresses[Network.mainnet],
+    ).toEqual([expect.objectContaining({address: 'own-address'})]);
+  });
+
+  it('returns the addresses looked up by email without storing them as the user own', async () => {
+    (MockBitPayIdApi.apiCall as jest.Mock)
+      .mockResolvedValueOnce([receivingAddress('own-address')])
+      .mockResolvedValueOnce([receivingAddress('recipient-address')]);
+
+    const store = signedInStore();
+    await store.dispatch(startFetchReceivingAddresses());
+    const recipientAddresses = await store.dispatch(
+      startFetchReceivingAddresses({email: 'bob@example.com', currency: 'BTC'}),
     );
 
-    const store = baseStore();
-    await store.dispatch(startFetchDoshToken());
-    expect(store.getState().BITPAY_ID.fetchDoshTokenStatus).toBe('failed');
+    expect(recipientAddresses).toEqual([
+      expect.objectContaining({address: 'recipient-address'}),
+    ]);
+    expect(
+      store.getState().BITPAY_ID.receivingAddresses[Network.mainnet],
+    ).toEqual([expect.objectContaining({address: 'own-address'})]);
   });
 });

@@ -1,7 +1,7 @@
 import React, {memo} from 'react';
 import {ContentCard} from '@braze/react-native-sdk';
 import {StyleSheet, View} from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import {Carousel} from 'react-native-reanimated-carousel';
 import {ScreenGutter, WIDTH} from '../../../../../components/styled/Containers';
 import OfferCard from './OfferCard';
 
@@ -41,15 +41,10 @@ const OffersCarousel: React.FC<OfferSlidesProps> = props => {
         gestureChain.activeOffsetX([-10, 10]);
         gestureChain.failOffsetY([-10, 10]);
       }}
-      loop={false}
-      vertical={false}
-      style={{width: WIDTH}}
-      width={itemWidth + horizontalPadding * 2}
-      height={itemHeight}
-      autoPlay={false}
+      style={{width: WIDTH, height: itemHeight}}
+      itemSize={itemWidth + horizontalPadding * 2}
       data={contentCards}
-      scrollAnimationDuration={1000}
-      enabled={true}
+      animation={{type: 'timing', duration: 1000}}
       renderItem={renderOffer}
     />
   );

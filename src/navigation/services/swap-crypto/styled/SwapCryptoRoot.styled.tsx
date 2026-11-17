@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexShrink: 1,
-    height: 23,
+    minHeight: 23,
     borderRadius: 27.5,
   },
   swapCardAccountText: {
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     alignSelf: 'flex-end',
-    height: 36,
+    minHeight: 36,
     padding: 8,
     minWidth: 146,
     borderRadius: 27.5,
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletSelector: {
-    height: 40,
+    minHeight: 40,
     borderRadius: 27.5,
     display: 'flex',
     flexDirection: 'row',
@@ -236,6 +236,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     marginLeft: 8,
     marginRight: 5,
+    flexShrink: 1,
   },
   selectedOptionText: {
     fontSize: 13,
@@ -616,6 +617,7 @@ export const WalletSelectorName = React.forwardRef<Text, TextProps>(
     return (
       <Text
         ref={ref}
+        maxFontSizeMultiplier={1.5}
         style={[
           styles.walletSelectorName,
           {color: theme.dark ? White : SlateDark},
@@ -704,6 +706,10 @@ export const AmountText = React.forwardRef<
   return (
     <BaseText
       ref={ref}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.5}
+      maxFontSizeMultiplier={1.5}
       style={[
         styles.amountText,
         {

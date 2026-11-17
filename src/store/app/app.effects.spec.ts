@@ -25,6 +25,15 @@ jest.mock('@braze/react-native-sdk', () => ({
 }));
 
 jest.mock('react-native-bootsplash', () => ({hide: jest.fn()}));
+jest.mock('../../utils/deviceIntegrity', () => ({
+  getDeviceIntegrity: jest.fn(() => ({
+    isCompromised: false,
+    hookDetected: false,
+    mockLocationEnabled: false,
+    reason: null,
+  })),
+  reportDeviceIntegrityToSentry: jest.fn(),
+}));
 jest.mock('../wallet-secrets/wallet-secrets.effects', () => ({
   migrateWalletSecrets: jest.fn(() => async () => {}),
 }));
@@ -99,10 +108,6 @@ jest.mock('../../constants/currencies', () => ({
 
 jest.mock('@react-navigation/native', () => ({
   getStateFromPath: jest.fn(),
-}));
-jest.mock('../../navigation/card/CardStack', () => ({CardScreens: {}}));
-jest.mock('../../navigation/card-activation/CardActivationGroup', () => ({
-  CardActivationScreens: {},
 }));
 jest.mock('../../navigation/tabs/TabsStack', () => ({TabsScreens: {}}));
 jest.mock('../../navigation/wallet/WalletGroup', () => ({
@@ -191,6 +196,11 @@ jest.mock('../wallet/wallet.actions', () => ({
 }));
 jest.mock('../wallet', () => ({WalletActions: {}}));
 
+jest.mock('../vault-runtime', () => ({
+  readVaultTransferRecord: jest.fn(() => null),
+  vaultLegacySourceExists: jest.fn(),
+}));
+
 jest.mock('../analytics/analytics.effects', () => ({
   Analytics: {
     initialize: jest.fn(() => ({type: 'ANALYTICS_INITIALIZE'})),
@@ -200,7 +210,6 @@ jest.mock('../analytics/analytics.effects', () => ({
   },
 }));
 jest.mock('../bitpay-id', () => ({BitPayIdEffects: {}}));
-jest.mock('../card', () => ({CardActions: {}, CardEffects: {}}));
 jest.mock('../sumsub', () => ({
   SumSubEffects: {startGetKycStatus: jest.fn(() => ({type: 'GET_KYC_STATUS'}))},
 }));
@@ -438,6 +447,28 @@ describe('startAppInit', () => {
     await initPromise;
 
     expect(mockCleanupDisabledSessionLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs the startup device-integrity report only once startup has settled', async () => {
+    const {getDeviceIntegrity} = jest.requireMock(
+      '../../utils/deviceIntegrity',
+    );
+    const startupSignals = jest.requireActual('../../utils/startupSignals');
+    startupSignals.resetStartupSignalsForTests();
+    const dispatch = jest.fn(action =>
+      typeof action === 'function'
+        ? action(dispatch, jest.fn(makeState), undefined)
+        : action,
+    );
+
+    await startAppInit()(dispatch, jest.fn(makeState), undefined as any);
+    expect(getDeviceIntegrity).not.toHaveBeenCalled();
+
+    startupSignals.markFirstScreenShown();
+    await new Promise(resolve => setTimeout(resolve, 10));
+    await flushMicrotasks();
+
+    expect(getDeviceIntegrity).toHaveBeenCalledTimes(1);
   });
 
   it('does not clean session logs again after the production cleanup has run', async () => {

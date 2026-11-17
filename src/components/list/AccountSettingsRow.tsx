@@ -13,6 +13,7 @@ import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
 import {IsVMChain} from '../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks/useFontScale';
 
 interface Props {
   id: string;
@@ -33,12 +34,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     gap: 8,
   },
+  accountSettingsContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
 });
 
 const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
   const {accountName, receiveAddress, wallets, isMultiNetworkSupported} =
     accountItem;
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
 
   const hideAccount = accountInfo?.[accountItem.receiveAddress]?.hideAccount;
   const isHidden = IsVMChain(wallets[0].chain)
@@ -47,7 +53,10 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
 
   return (
     <TouchableOpacity
-      style={styles.accountSettingsContainer}
+      style={[
+        styles.accountSettingsContainer,
+        stacked && styles.accountSettingsContainerStacked,
+      ]}
       activeOpacity={ActiveOpacity}
       onPress={() => onPress()}>
       <CurrencyImageContainer style={{height: 40, width: 40}}>
@@ -62,7 +71,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
         )}
       </CurrencyImageContainer>
       <Column>
-        <H5 ellipsizeMode="tail" numberOfLines={1}>
+        <H5 ellipsizeMode="tail" numberOfLines={stacked ? 3 : 1}>
           {accountName || t('[Account Name]')}
         </H5>
       </Column>

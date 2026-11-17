@@ -15,6 +15,7 @@ import {
   clearPendingJoinerSession,
   validateJoinCode,
   joinTSSWithCode,
+  createTSSChainWallets,
 } from './create-multisig';
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
@@ -55,6 +56,16 @@ jest.mock('@test/store', () => ({
         return action(dispatch, getState);
       }
       actions.push(action);
+      if (
+        action.type === 'WALLET/SUCCESS_CREATE_KEY' ||
+        action.type === 'WALLET/SUCCESS_UPDATE_KEY'
+      ) {
+        const {key} = action.payload;
+        state.WALLET = {
+          ...state.WALLET,
+          keys: {...state.WALLET.keys, [key.id]: key},
+        };
+      }
       return action;
     });
 
@@ -146,7 +157,7 @@ function createFakeKeyGen(overrides: any = {}) {
     restoreSession: jest.fn(() => Promise.resolve()),
     exportSession: jest.fn(() => 'exported-session-string'),
     checkJoinCode: jest.fn(() => ({chain: 'btc', network: 'livenet'})),
-    createJoinCode: jest.fn(() => 'join-code-abc'),
+    createJoinCode: jest.fn(() => Promise.resolve('join-code-abc')),
     getTssKey: jest.fn(() => createFakeTssKey()),
   };
   return Object.assign(fake, overrides);
@@ -155,33 +166,47 @@ function createFakeKeyGen(overrides: any = {}) {
 // Stateful: toObj() only carries tssKeyId if addWalletInfo() attached it —
 // the exact signal the retry-exhaustion BUG test asserts on.
 function createFakeCredentials(initial: any = {}) {
-  const state: any = {
+  const credentials: any = {
     tssKeyId: undefined,
     publicKeyRing: undefined,
-    ...initial,
-  };
-  return {
     requestPubKey: 'request-pub-key-abc',
     copayerId: 'copayer-1',
     xPubKey: 'xpub-abc',
+    ...initial,
     addWalletInfo: jest.fn(
       (
-        _id: any,
-        _name: any,
-        _m: any,
-        _n: any,
-        _copayerName: any,
+        walletId: any,
+        walletName: any,
+        m: any,
+        n: any,
+        copayerName: any,
         opts: any = {},
       ) => {
-        state.tssKeyId = opts.tssKeyId;
+        Object.assign(credentials, {
+          walletId,
+          walletName,
+          m,
+          n,
+          copayerName,
+          tssKeyId: opts.tssKeyId,
+        });
       },
     ),
     addPublicKeyRing: jest.fn((ring: any) => {
-      state.publicKeyRing = ring;
+      credentials.publicKeyRing = ring;
     }),
-    addWalletPrivateKey: jest.fn(),
-    toObj: jest.fn(() => ({...state})),
+    addWalletPrivateKey: jest.fn((walletPrivKey: string) => {
+      credentials.walletPrivKey = walletPrivKey;
+    }),
+    toObj: jest.fn(() =>
+      Object.fromEntries(
+        Object.entries(credentials).filter(
+          ([, value]) => typeof value !== 'function',
+        ),
+      ),
+    ),
   };
+  return credentials;
 }
 
 function createFakePartyKey(overrides: any = {}) {
@@ -226,7 +251,7 @@ function createFakeWalletClient(overrides: any = {}) {
   };
   // Mirrors BWC: fromObj replaces .credentials (read by the retry loop).
   client.fromObj = jest.fn((obj: any) => {
-    client.credentials = obj;
+    client.credentials = createFakeCredentials(obj);
   });
   return Object.assign(client, overrides);
 }
@@ -240,6 +265,8 @@ jest.mock('../../../../lib/bwc', () => {
   const mockInstance: any = {
     createKey: jest.fn(),
     createKeyGen: jest.fn(),
+    createTssWallet: jest.fn(),
+    joinTssWallet: jest.fn(),
     getClient: jest.fn(),
     getBitcore: jest.fn(() => ({
       PrivateKey: class {
@@ -276,6 +303,12 @@ beforeEach(() => {
 
   lastWalletClient = createFakeWalletClient();
   mockBwcInstance.getClient.mockImplementation(() => lastWalletClient);
+  mockBwcInstance.createTssWallet.mockRejectedValue(
+    new Error('sibling unavailable'),
+  );
+  mockBwcInstance.joinTssWallet.mockRejectedValue(
+    new Error('sibling unavailable'),
+  );
 });
 
 // Restore real timers even when a fake-timer test fails mid-assertion.
@@ -540,7 +573,7 @@ describe('addCoSignerToTSS', () => {
     const store = configureTestStore({
       WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
     });
-    lastKeyGen.createJoinCode.mockReturnValue('the-join-code');
+    lastKeyGen.createJoinCode.mockResolvedValue('the-join-code');
 
     const {joinCode} = await store.dispatch(
       addCoSignerToTSS({
@@ -651,6 +684,97 @@ describe('addCoSignerToTSS', () => {
     expect(updateAction.payload.key.tssSession.status).toBe(
       'collecting_copayers',
     );
+  });
+
+  it('re-exports the keygen session after createJoinCode so the roster is persisted', async () => {
+    const keyId = 'key-roster-persist';
+    const store = configureTestStore({
+      WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
+    });
+    lastKeyGen.exportSession.mockReturnValue('export-with-roster');
+
+    await store.dispatch(
+      addCoSignerToTSS({
+        keyId,
+        joinerSessionId: encodeJoinerSessionId({pubKey: 'joiner-pub-key'}),
+        partyId: 1,
+      }),
+    );
+
+    expect(lastKeyGen.exportSession).toHaveBeenCalled();
+    expect(lastKeyGen.createJoinCode.mock.invocationCallOrder[0]).toBeLessThan(
+      lastKeyGen.exportSession.mock.invocationCallOrder[0],
+    );
+
+    const updateAction = store
+      .getActions()
+      .find((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY);
+    expect(updateAction.payload.key.tssSession.sessionExport).toBe(
+      'export-with-roster',
+    );
+  });
+
+  it('does not restore a deleted key when restoreSession finishes', async () => {
+    const keyId = 'key-deleted-during-invite';
+    const store = configureTestStore({
+      WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
+    });
+    let finishRestore!: () => void;
+    lastKeyGen.restoreSession.mockImplementationOnce(
+      () => new Promise<void>(resolve => (finishRestore = resolve)),
+    );
+
+    const resultPromise = store.dispatch(
+      addCoSignerToTSS({
+        keyId,
+        joinerSessionId: encodeJoinerSessionId({pubKey: 'p1'}),
+        partyId: 1,
+      }),
+    );
+    resultPromise.catch(() => {});
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishRestore();
+
+    await expect(resultPromise).rejects.toThrow(
+      'Key not found or no TSS session',
+    );
+    expect(
+      store
+        .getActions()
+        .filter((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
+  });
+
+  it('does not restore a deleted key when createJoinCode finishes', async () => {
+    const keyId = 'key-deleted-during-register';
+    const store = configureTestStore({
+      WALLET: {keys: {[keyId]: makeKeyWithSession(keyId)}},
+    });
+    let finishJoinCode!: (code: string) => void;
+    lastKeyGen.createJoinCode.mockImplementationOnce(
+      () => new Promise<string>(resolve => (finishJoinCode = resolve)),
+    );
+
+    const resultPromise = store.dispatch(
+      addCoSignerToTSS({
+        keyId,
+        joinerSessionId: encodeJoinerSessionId({pubKey: 'p1'}),
+        partyId: 1,
+      }),
+    );
+    resultPromise.catch(() => {});
+    await tick();
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishJoinCode('the-join-code');
+
+    await expect(resultPromise).rejects.toThrow(
+      'Key not found or no TSS session',
+    );
+    expect(
+      store
+        .getActions()
+        .filter((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
   });
 });
 
@@ -810,6 +934,216 @@ describe('startTSSCeremony', () => {
     await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
   });
 
+  it('does not restore a deleted key when restoreSession finishes', async () => {
+    const keyId = 'ceremony-deleted-during-restore';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    let finishRestore!: () => void;
+    lastKeyGen.restoreSession.mockImplementationOnce(
+      () => new Promise<void>(resolve => (finishRestore = resolve)),
+    );
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishRestore();
+    await tick();
+
+    // Let an unguarded ceremony settle too, so the regression cannot leak it.
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(lastKeyGen.subscribe).not.toHaveBeenCalled();
+    expect(
+      store
+        .getActions()
+        .filter((a: any) => a.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
+  });
+
+  it('does not complete a cancelled ceremony while the wallet refresh is pending', async () => {
+    const keyId = 'ceremony-cancelled-during-refresh';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    let finishRefresh!: (err: Error | null, status: any) => void;
+    lastWalletClient.getStatus.mockImplementationOnce((_opts: any, cb: any) => {
+      finishRefresh = cb;
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await tick();
+
+    store.dispatch(cancelTSSCeremony(keyId));
+    finishRefresh(null, {
+      wallet: {
+        id: DEFAULT_BWS_WALLET_ID,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+        publicKeyRing: [{xPubKey: 'a'}, {xPubKey: 'b'}, {xPubKey: 'c'}],
+      },
+    });
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(createWalletAddress).not.toHaveBeenCalled();
+    expect(store.getState().WALLET.keys[keyId]).toBeDefined();
+    expect(
+      store
+        .getActions()
+        .filter(
+          (a: any) =>
+            a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            a.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(0);
+  });
+
+  it('does not complete a deleted key while the first address is pending', async () => {
+    const keyId = 'ceremony-deleted-during-address';
+    const store = configureTestStore({
+      APP: {
+        notificationsAccepted: true,
+        emailNotifications: {accepted: true, email: 'user@example.com'},
+        brazeEid: 'braze-42',
+        defaultLanguage: 'en',
+      },
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {subscribePushNotifications, subscribeEmailNotifications} =
+      jest.requireMock('../../../app/app.effects');
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    let finishAddress!: (address: string) => void;
+    createWalletAddress.mockImplementationOnce(
+      () => () =>
+        new Promise<string>(resolve => {
+          finishAddress = resolve;
+        }),
+    );
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await tick();
+
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishAddress('mock-address-1');
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(subscribePushNotifications).not.toHaveBeenCalled();
+    expect(subscribeEmailNotifications).not.toHaveBeenCalled();
+    expect(
+      store
+        .getActions()
+        .filter(
+          (a: any) =>
+            a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            a.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(0);
+  });
+
+  it('keeps a restarted ceremony active when the cancelled attempt finishes', async () => {
+    const keyId = 'ceremony-restarted-during-refresh';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const firstKeyGen = lastKeyGen;
+    let finishFirstRefresh!: (err: Error | null, status: any) => void;
+    lastWalletClient.getStatus.mockImplementationOnce((_opts: any, cb: any) => {
+      finishFirstRefresh = cb;
+    });
+
+    const firstPromise = store.dispatch(startTSSCeremony(keyId));
+    const firstOutcome = firstPromise.then(
+      (key: any) => ({key, error: undefined}),
+      (error: Error) => ({key: undefined, error}),
+    );
+    await tick();
+    firstKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    firstKeyGen.emit('complete');
+    await tick();
+
+    store.dispatch(cancelTSSCeremony(keyId));
+    const secondKeyGen = createFakeKeyGen();
+    createKeyGenMock.mockReturnValueOnce(secondKeyGen);
+    mockBwcInstance.getClient.mockReturnValueOnce(createFakeWalletClient());
+    const secondPromise = store.dispatch(startTSSCeremony(keyId));
+    const secondOutcome = secondPromise.then(
+      (key: any) => ({key, error: undefined}),
+      (error: Error) => ({key: undefined, error}),
+    );
+    await tick();
+
+    finishFirstRefresh(null, {
+      wallet: {
+        id: DEFAULT_BWS_WALLET_ID,
+        copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+        publicKeyRing: [{xPubKey: 'a'}, {xPubKey: 'b'}, {xPubKey: 'c'}],
+      },
+    });
+    const firstResult = await firstOutcome;
+    const secondUnsubscribeCalls = secondKeyGen.unsubscribe.mock.calls.length;
+
+    secondKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    secondKeyGen.emit('complete');
+    const secondResult = await secondOutcome;
+
+    expect(firstResult.error?.message).toBe('CEREMONY_CANCELLED');
+    expect(secondUnsubscribeCalls).toBe(0);
+    expect(secondResult.error).toBeUndefined();
+    expect(secondResult.key.tssSession.status).toBe('complete');
+    expect(
+      store
+        .getActions()
+        .filter(
+          (a: any) =>
+            a.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            a.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(1);
+  });
+
   it('marks the tssSession as ceremony_in_progress as soon as the ceremony registers', async () => {
     const keyId = 'ceremony-in-progress-flag';
     const store = configureTestStore({
@@ -877,6 +1211,116 @@ describe('startTSSCeremony', () => {
     expect(lastKeyGen.unsubscribe).toHaveBeenCalled();
   });
 
+  it('subscribes without chains and skips siblings for a non-EVM ceremony', async () => {
+    const keyId = 'ceremony-non-evm-chains';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+
+    expect(lastKeyGen.subscribe.mock.calls[0][0]).not.toHaveProperty('chains');
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await resultPromise;
+
+    expect(mockBwcInstance.createTssWallet).not.toHaveBeenCalled();
+    expect(mockBwcInstance.joinTssWallet).not.toHaveBeenCalled();
+  });
+
+  it('saves the primary wallet before optional siblings and returns within twenty seconds', async () => {
+    jest.useFakeTimers();
+    const keyId = 'ceremony-primary-before-siblings';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: makeKeyWithSession(keyId, {
+            status: 'ready_to_start',
+            coin: 'eth',
+            chain: 'eth',
+          }),
+        },
+      },
+    });
+    mockBwcInstance.createTssWallet.mockImplementation(
+      () => new Promise(() => {}),
+    );
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      chain: 'eth',
+      coin: 'eth',
+      network: 'livenet',
+      m: 1,
+      n: 1,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await tick(40);
+
+    const savedKey = store.getState().WALLET.keys['final-tss-key-id'];
+    expect(savedKey.tssSession.status).toBe('complete');
+    expect(savedKey.wallets).toHaveLength(1);
+    expect(savedKey.wallets[0].id).toBe(DEFAULT_BWS_WALLET_ID);
+    expect(mockBwcInstance.createTssWallet).toHaveBeenCalled();
+
+    await advanceAndFlush(20_000, 20);
+    const finalKey = await resultPromise;
+
+    expect(finalKey.wallets).toHaveLength(1);
+    expect(finalKey.wallets[0].id).toBe(DEFAULT_BWS_WALLET_ID);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('restores the primary wallet private key instead of retaining a new random key', async () => {
+    const keyId = 'ceremony-recovered-wallet-private-key';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const tssKey = createFakeTssKey();
+    lastKeyGen.getTssKey.mockReturnValue(tssKey);
+    lastWalletClient.getStatus.mockImplementation((_opts: any, cb: any) =>
+      cb(null, {
+        wallet: {
+          id: DEFAULT_BWS_WALLET_ID,
+          copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+          publicKeyRing: [{}, {}, {}],
+        },
+        customData: {walletPrivKey: 'recovered-wallet-private-key'},
+      }),
+    );
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 1,
+      n: 1,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    const finalKey = await resultPromise;
+
+    expect(tssKey.createCredentials.mock.calls[0][1]).not.toHaveProperty(
+      'walletPrivKey',
+    );
+    expect(finalKey.wallets[0].credentials.walletPrivKey).toBe(
+      'recovered-wallet-private-key',
+    );
+  });
+
   it('creates the first address only after the refresh brings every co-signer into the publicKeyRing', async () => {
     const keyId = 'ceremony-address-after-refresh';
     const store = configureTestStore({
@@ -908,7 +1352,7 @@ describe('startTSSCeremony', () => {
     expect(publicKeyRingAtAddressCreation).toHaveLength(3);
   });
 
-  it('continues (without throwing) when refreshWalletWithRetry exhausts all retries', async () => {
+  it('rejects with CEREMONY_TIMEOUT and keeps the key pending when refreshWalletWithRetry exhausts all retries', async () => {
     jest.useFakeTimers();
     const keyId = 'ceremony-retry-exhausted';
     const store = configureTestStore({
@@ -917,7 +1361,6 @@ describe('startTSSCeremony', () => {
       },
     });
 
-    // Server never reports the full copayer set on any status refresh.
     lastWalletClient.getStatus = jest.fn((_opts: any, cb: any) =>
       cb(null, {
         wallet: {id: DEFAULT_BWS_WALLET_ID, copayers: [{id: 'c1'}]},
@@ -936,15 +1379,18 @@ describe('startTSSCeremony', () => {
     });
     lastKeyGen.emit('complete');
 
+    const outcome = expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
     for (let i = 0; i < 5; i++) {
       await advanceAndFlush(1000);
     }
 
-    const finalKey = await resultPromise;
-
-    // The leader attaches tssKeyId (addWalletInfo) before the retry loop runs.
-    expect(finalKey.wallets[0].tssKeyId).toBe('server-assigned-tss-key-id');
+    await outcome;
     expect(lastWalletClient.getStatus).toHaveBeenCalledTimes(5);
+    expect(
+      store
+        .getActions()
+        .some((a: any) => a.payload?.key?.tssSession?.status === 'complete'),
+    ).toBe(false);
   });
 
   it('rejects with CEREMONY_TIMEOUT if the ceremony never completes after round 2 is ready', async () => {
@@ -968,6 +1414,29 @@ describe('startTSSCeremony', () => {
 
     await expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
     expect(lastKeyGen.unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects with CEREMONY_CANCELLED and clears the timeout when cancelled after round 2 is ready', async () => {
+    jest.useFakeTimers();
+    const keyId = 'ceremony-cancelled-after-round-2';
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start', n: 3}),
+        },
+      },
+    });
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+
+    lastKeyGen.emit('roundready', 1);
+    lastKeyGen.emit('roundready', 2);
+    store.dispatch(cancelTSSCeremony(keyId));
+
+    expect(jest.getTimerCount()).toBe(0);
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
   });
 
   it('rejects with CEREMONY_STUCK after 10 consecutive TSS_ROUND_ALREADY_DONE errors', async () => {
@@ -1194,6 +1663,43 @@ describe('startTSSCeremony', () => {
     );
   });
 
+  it('does not refresh, subscribe notifications or create an address when cancelled on complete', async () => {
+    const keyId = 'ceremony-cancelled-on-complete';
+    const store = configureTestStore({
+      APP: {
+        notificationsAccepted: true,
+        emailNotifications: {accepted: true, email: 'user@example.com'},
+        brazeEid: 'braze-42',
+        defaultLanguage: 'en',
+      },
+      WALLET: {
+        keys: {[keyId]: makeKeyWithSession(keyId, {status: 'ready_to_start'})},
+      },
+    });
+    const {subscribePushNotifications, subscribeEmailNotifications} =
+      jest.requireMock('../../../app/app.effects');
+    const {createWalletAddress} = jest.requireMock('../address/address');
+
+    const resultPromise = store.dispatch(startTSSCeremony(keyId));
+    resultPromise.catch(() => {});
+    await tick();
+
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 2,
+      n: 3,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    store.dispatch(cancelTSSCeremony(keyId));
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(lastWalletClient.getStatus).not.toHaveBeenCalled();
+    expect(subscribePushNotifications).not.toHaveBeenCalled();
+    expect(subscribeEmailNotifications).not.toHaveBeenCalled();
+    expect(createWalletAddress).not.toHaveBeenCalled();
+  });
+
   it('logs a warning and keeps retrying when getStatus reports an error during refreshWalletWithRetry', async () => {
     jest.useFakeTimers();
     const keyId = 'ceremony-getstatus-error';
@@ -1241,6 +1747,393 @@ describe('startTSSCeremony', () => {
 });
 
 // ─── joinTSSWithCode (joiner: fresh join + resume) ─────────────────────────
+
+describe('createTSSChainWallets', () => {
+  const keyId = 'completed-tss-key';
+  let store: MockStore;
+  let tssKey: any;
+  let primaryCredentials: any;
+  let clients: any[];
+
+  const siblingResult = ({opts}: any) => {
+    const wallet = {
+      id: `${opts.chain}-wallet`,
+      name: `Shared Wallet ${opts.chain}`,
+      ...opts,
+      tssKeyId: 'session-id-1',
+      m: 1,
+      n: 1,
+    };
+    return {
+      wallet,
+      credentials: createFakeCredentials({
+        ...opts,
+        walletId: wallet.id,
+        walletName: wallet.name,
+        walletPrivKey: `wallet-private-key-${opts.chain}`,
+        sharedEncryptingKey: `shared-key-${opts.chain}`,
+        xPubKey: `sibling-xpub-${opts.chain}`,
+        tssKeyId: wallet.tssKeyId,
+        publicKeyRing: [],
+      }),
+    };
+  };
+
+  beforeEach(() => {
+    tssKey = createFakeTssKey({
+      id: keyId,
+      metadata: {
+        id: 'session-id-1',
+        m: 2,
+        n: 3,
+        partyId: 0,
+        keygenChain: 'eth',
+        keygenNetwork: 'livenet',
+      },
+    });
+    primaryCredentials = createFakeCredentials({
+      chain: 'eth',
+      coin: 'eth',
+      network: 'livenet',
+      walletId: 'primary-wallet',
+      walletName: 'Shared Wallet',
+      copayerName: 'Alice',
+      publicKeyRing: [{}, {}, {}],
+    });
+    store = configureTestStore({
+      WALLET: {
+        keys: {
+          [keyId]: {
+            id: keyId,
+            methods: tssKey,
+            keyName: 'My shared key',
+            wallets: [
+              {
+                id: 'primary-wallet',
+                walletName: 'Shared Wallet',
+                chain: 'eth',
+                network: 'livenet',
+                credentials: primaryCredentials,
+              },
+            ],
+          },
+        },
+      },
+    });
+    clients = [];
+    mockBwcInstance.createTssWallet.mockImplementation(async (params: any) =>
+      siblingResult(params),
+    );
+    mockBwcInstance.joinTssWallet.mockImplementation(async (params: any) =>
+      siblingResult(params),
+    );
+    mockBwcInstance.getClient.mockImplementation(() => {
+      const client = createFakeWalletClient({
+        isComplete: jest.fn(() => true),
+        openWallet: jest.fn(async () => {
+          client.credentials.publicKeyRing = [{}, {}, {}];
+          return {
+            wallet: {
+              ...client.credentials.toObj(),
+              id: client.credentials.walletId,
+              name: client.credentials.walletName,
+              m: 1,
+              n: 1,
+            },
+          };
+        }),
+      });
+      clients.push(client);
+      return client;
+    });
+  });
+
+  it('creates sibling wallets with the persisted base credentials and preserves the returned credentials', async () => {
+    await store.dispatch(createTSSChainWallets(keyId));
+
+    expect(mockBwcInstance.createTssWallet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseKey: tssKey,
+        baseCredentials: primaryCredentials,
+        baseUrl: expect.any(String),
+        copayerName: 'Alice',
+        walletName: expect.any(String),
+        opts: {chain: 'arb', coin: 'eth', network: 'livenet'},
+      }),
+    );
+    expect(mockBwcInstance.createTssWallet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        opts: {chain: 'matic', coin: 'matic', network: 'livenet'},
+      }),
+    );
+    expect(mockBwcInstance.joinTssWallet).not.toHaveBeenCalled();
+    expect(tssKey.createCredentials).not.toHaveBeenCalled();
+    expect(
+      clients.every(client => client.openWallet.mock.calls[0][0].forceOpen),
+    ).toBe(true);
+    const arb = store
+      .getState()
+      .WALLET.keys[keyId].wallets.find((wallet: any) => wallet.chain === 'arb');
+    expect(arb.credentials.walletPrivKey).toBe('wallet-private-key-arb');
+    expect(arb.credentials.sharedEncryptingKey).toBe('shared-key-arb');
+    expect(arb.credentials.xPubKey).toBe('sibling-xpub-arb');
+    expect(arb.tssMetadata).toMatchObject({
+      keygenChain: 'eth',
+      keygenNetwork: 'livenet',
+    });
+  });
+
+  it('joins siblings on the primary wallet network and retries while the leader has not published the secret', async () => {
+    jest.useFakeTimers();
+    tssKey.metadata.partyId = 1;
+    primaryCredentials.network = 'testnet';
+    store.getState().WALLET.keys[keyId].wallets[0].network = 'testnet';
+    const attempts: Record<string, number> = {};
+    mockBwcInstance.joinTssWallet.mockImplementation(async (params: any) => {
+      const {chain} = params.opts;
+      attempts[chain] = (attempts[chain] || 0) + 1;
+      if (chain === 'arb' && attempts[chain] === 1) {
+        throw new Error('TSS_BWS_JOIN_SECRET_NOT_FOUND');
+      }
+      return siblingResult(params);
+    });
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    await advanceAndFlush(1000);
+    await resultPromise;
+
+    expect(mockBwcInstance.joinTssWallet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseKey: tssKey,
+        baseCredentials: primaryCredentials,
+        copayerName: 'Alice',
+        opts: {chain: 'arb', coin: 'eth', network: 'testnet'},
+      }),
+    );
+    expect(attempts.arb).toBe(2);
+    expect(mockBwcInstance.createTssWallet).not.toHaveBeenCalled();
+    expect(
+      store
+        .getState()
+        .WALLET.keys[keyId].wallets.every(
+          (wallet: any) => wallet.network === 'testnet',
+        ),
+    ).toBe(true);
+  });
+
+  it('requires every copayer even when BWC considers a two-of-three wallet complete', async () => {
+    jest.useFakeTimers();
+    mockBwcInstance.getClient.mockImplementation(() => {
+      const client = createFakeWalletClient({
+        isComplete: jest.fn(() => true),
+        openWallet: jest.fn(async () => {
+          client.credentials.publicKeyRing = [{}, {}];
+          return {
+            wallet: {
+              id: client.credentials.walletId,
+              chain: client.credentials.chain,
+            },
+          };
+        }),
+      });
+      clients.push(client);
+      return client;
+    });
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    await advanceAndFlush(20_000, 20);
+    await resultPromise;
+
+    expect(store.getState().WALLET.keys[keyId].wallets).toHaveLength(1);
+    expect(
+      clients.every(client => client.openWallet.mock.calls.length > 1),
+    ).toBe(true);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('retries opening a created sibling without creating it again', async () => {
+    jest.useFakeTimers();
+    const createClient = mockBwcInstance.getClient.getMockImplementation();
+    mockBwcInstance.getClient.mockImplementation(() => {
+      const client = createClient();
+      if (clients.length === 1) {
+        client.openWallet.mockRejectedValueOnce(new Error('CONNECTION_ERROR'));
+      }
+      return client;
+    });
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    await advanceAndFlush(1000);
+    await resultPromise;
+
+    expect(mockBwcInstance.createTssWallet).toHaveBeenCalledTimes(4);
+    expect(clients[0].openWallet).toHaveBeenCalledTimes(2);
+    const chain = clients[0].credentials.chain;
+    const wallet = store
+      .getState()
+      .WALLET.keys[keyId].wallets.find(
+        (sibling: any) => sibling.chain === chain,
+      );
+    expect(wallet.credentials.walletPrivKey).toBe(
+      `wallet-private-key-${chain}`,
+    );
+    expect(wallet.credentials.xPubKey).toBe(`sibling-xpub-${chain}`);
+  });
+
+  it('bounds all hanging sibling requests by one shared twenty-second deadline', async () => {
+    jest.useFakeTimers();
+    mockBwcInstance.createTssWallet.mockImplementation(
+      () => new Promise(() => {}),
+    );
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    expect(mockBwcInstance.createTssWallet).toHaveBeenCalledTimes(4);
+    await advanceAndFlush(20_000, 20);
+    await resultPromise;
+
+    expect(store.getState().WALLET.keys[keyId].wallets).toHaveLength(1);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('keeps successful siblings when another sibling fails and skips them on retry', async () => {
+    const createSibling = async (params: any) => {
+      if (params.opts.chain === 'arb') {
+        throw new Error('CONNECTION_ERROR');
+      }
+      return siblingResult(params);
+    };
+    mockBwcInstance.createTssWallet.mockImplementation(createSibling);
+    await store.dispatch(createTSSChainWallets(keyId));
+    expect(store.getState().WALLET.keys[keyId].wallets).toHaveLength(4);
+
+    mockBwcInstance.createTssWallet.mockClear();
+    mockBwcInstance.createTssWallet.mockImplementation(async (params: any) =>
+      siblingResult(params),
+    );
+    await store.dispatch(createTSSChainWallets(keyId));
+
+    expect(mockBwcInstance.createTssWallet).toHaveBeenCalledTimes(1);
+    expect(mockBwcInstance.createTssWallet.mock.calls[0][0].opts.chain).toBe(
+      'arb',
+    );
+    expect(store.getState().WALLET.keys[keyId].wallets).toHaveLength(5);
+  });
+
+  it('leaves the saved primary wallet intact when opening siblings fails', async () => {
+    jest.useFakeTimers();
+    mockBwcInstance.getClient.mockImplementation(() =>
+      createFakeWalletClient({
+        openWallet: jest.fn(async () => {
+          throw new Error('CONNECTION_ERROR');
+        }),
+      }),
+    );
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    await advanceAndFlush(20_000, 20);
+    await expect(resultPromise).resolves.toBeDefined();
+
+    expect(store.getState().WALLET.keys[keyId].wallets[0].id).toBe(
+      'primary-wallet',
+    );
+    expect(store.getState().WALLET.keys[keyId].wallets).toHaveLength(1);
+  });
+
+  it('does not restore a deleted key when sibling creation finishes', async () => {
+    const pending: Array<() => void> = [];
+    mockBwcInstance.createTssWallet.mockImplementation(
+      (params: any) =>
+        new Promise(resolve => {
+          pending.push(() => resolve(siblingResult(params)));
+        }),
+    );
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    pending.forEach(finish => finish());
+    await resultPromise;
+
+    expect(store.getState().WALLET.keys[keyId]).toBeUndefined();
+    expect(
+      store
+        .getActions()
+        .filter(action => action.type === WalletActionTypes.SUCCESS_UPDATE_KEY),
+    ).toHaveLength(0);
+  });
+
+  it('does not create an address when opening a sibling finishes after the deadline', async () => {
+    jest.useFakeTimers();
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    const pending: Array<() => void> = [];
+    mockBwcInstance.getClient.mockImplementation(() => {
+      const client = createFakeWalletClient({
+        openWallet: jest.fn(
+          () =>
+            new Promise(resolve => {
+              pending.push(() => {
+                client.credentials.publicKeyRing = [{}, {}, {}];
+                resolve({
+                  wallet: {
+                    id: client.credentials.walletId,
+                    chain: client.credentials.chain,
+                  },
+                });
+              });
+            }),
+        ),
+      });
+      return client;
+    });
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    await advanceAndFlush(20_000, 20);
+    await resultPromise;
+    pending.forEach(finish => finish());
+    await tick(30);
+
+    expect(createWalletAddress).not.toHaveBeenCalled();
+    expect(store.getState().WALLET.keys[keyId].wallets).toHaveLength(1);
+  });
+
+  it('does not create an address when the key is deleted while a sibling is opening', async () => {
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    const pending: Array<() => void> = [];
+    mockBwcInstance.getClient.mockImplementation(() => {
+      const client = createFakeWalletClient({
+        openWallet: jest.fn(
+          () =>
+            new Promise(resolve => {
+              pending.push(() => {
+                client.credentials.publicKeyRing = [{}, {}, {}];
+                resolve({
+                  wallet: {
+                    id: client.credentials.walletId,
+                    chain: client.credentials.chain,
+                  },
+                });
+              });
+            }),
+        ),
+      });
+      return client;
+    });
+
+    const resultPromise = store.dispatch(createTSSChainWallets(keyId));
+    await tick(30);
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    pending.forEach(finish => finish());
+    await resultPromise;
+
+    expect(createWalletAddress).not.toHaveBeenCalled();
+    expect(store.getState().WALLET.keys[keyId]).toBeUndefined();
+  });
+});
 
 const freshJoinOpts = () => ({
   joinCode: 'the-join-code',
@@ -1339,7 +2232,45 @@ describe('joinTSSWithCode — fresh join', () => {
     expect(finalKey.tssSession!.status).toBe('complete');
   });
 
-  it('BUG: leaves tssKeyId undefined when refreshWalletWithRetry exhausts all retries — even though the wallet is no longer flagged pendingTssSession', async () => {
+  it('does not restore a deleted joiner key while the first address is pending', async () => {
+    const store = configureTestStore();
+    const {createWalletAddress} = jest.requireMock('../address/address');
+    let finishAddress!: (address: string) => void;
+    createWalletAddress.mockImplementationOnce(
+      () => () =>
+        new Promise<string>(resolve => {
+          finishAddress = resolve;
+        }),
+    );
+
+    const resultPromise = store.dispatch(joinTSSWithCode(freshJoinOpts()));
+    resultPromise.catch(() => {});
+    await tick();
+    lastKeyGen.emit('wallet', {
+      id: DEFAULT_BWS_WALLET_ID,
+      m: 1,
+      n: 1,
+      copayers: [{id: 'c1'}, {id: 'c2'}, {id: 'c3'}],
+    });
+    lastKeyGen.emit('complete');
+    await tick(30);
+    store.setState({WALLET: {...store.getState().WALLET, keys: {}}});
+    finishAddress('mock-address-1');
+
+    await expect(resultPromise).rejects.toThrow('CEREMONY_CANCELLED');
+    expect(store.getState().WALLET.keys).toEqual({});
+    expect(
+      store
+        .getActions()
+        .filter(
+          (action: any) =>
+            action.type === WalletActionTypes.SUCCESS_UPDATE_KEY &&
+            action.payload.key.tssSession.status === 'complete',
+        ),
+    ).toHaveLength(0);
+  });
+
+  it('rejects with CEREMONY_TIMEOUT and keeps the key pending when refreshWalletWithRetry exhausts all retries', async () => {
     jest.useFakeTimers();
     const store = configureTestStore();
 
@@ -1363,17 +2294,18 @@ describe('joinTSSWithCode — fresh join', () => {
     });
     lastKeyGen.emit('complete');
 
+    const outcome = expect(resultPromise).rejects.toThrow('CEREMONY_TIMEOUT');
     for (let i = 0; i < 5; i++) {
       await advanceAndFlush(1000);
     }
 
-    const finalKey = await resultPromise;
-
+    await outcome;
     expect(lastWalletClient.getStatus).toHaveBeenCalledTimes(5);
-    // The ceremony "completes" and drops the pending flag, yet tssKeyId is gone.
-    expect(finalKey.wallets[0].pendingTssSession).toBeUndefined();
-    expect(finalKey.tssSession!.status).toBe('complete');
-    expect(finalKey.wallets[0].tssKeyId).toBeUndefined();
+    expect(
+      store
+        .getActions()
+        .some((a: any) => a.payload?.key?.tssSession?.status === 'complete'),
+    ).toBe(false);
   });
 
   it('rejects with CEREMONY_STUCK after 20 consecutive TSS_ROUND_ALREADY_DONE errors', async () => {

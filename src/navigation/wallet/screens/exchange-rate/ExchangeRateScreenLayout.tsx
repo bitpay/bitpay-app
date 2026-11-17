@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    height: 75,
+    minHeight: 75,
   },
   walletLeft: {
     flex: 1,
@@ -506,6 +506,7 @@ const ExchangeRateScreenLayout = ({
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- collapses the About section when the viewed asset changes
     setIsAboutExpanded(false);
   }, [
     shared.assetContext.chain,

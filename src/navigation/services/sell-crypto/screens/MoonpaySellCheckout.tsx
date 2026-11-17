@@ -1,5 +1,4 @@
-import Transport from '@ledgerhq/hw-transport';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {ScrollView, SafeAreaView, StyleSheet, ViewProps} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
@@ -10,7 +9,7 @@ import {
   CommonActions,
 } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../../utils/object';
 import {
   useAppDispatch,
   useAppSelector,
@@ -29,7 +28,6 @@ import {
   Wallet,
   TransactionProposal,
   SendMaxInfo,
-  Key,
   TSSSigningStatus,
   TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
@@ -45,6 +43,7 @@ import {
   GetExcludedUtxosMessage,
   parseAmountToStringIfBN,
   SatToUnit,
+  ToBaseUnits,
 } from '../../../../store/wallet/effects/amount/amount';
 import {
   formatCryptoAddress,
@@ -106,25 +105,11 @@ import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {WithdrawalMethodsAvailable} from '../constants/SellCryptoConstants';
 import {getSendMaxData} from '../../utils/external-services-utils';
-import {
-  ConfirmHardwareWalletModal,
-  SimpleConfirmPaymentState,
-} from '../../../../components/modal/confirm-hardware-wallet/ConfirmHardwareWalletModal';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
-import {
-  getLedgerErrorMessage,
-  prepareLedgerApp,
-} from '../../../../components/modal/import-ledger-wallet/utils';
-import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
-import TransportHID from '@ledgerhq/react-native-hid';
-import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
-import {Network} from '../../../../constants';
-import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 const styles = StyleSheet.create({
@@ -172,7 +157,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const sellOrder: MoonpaySellOrderData = useAppSelector(
     ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCryptoExternalId],
   );
-  const [isToken, setIsToken] = useState(
+  const [isToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -182,7 +167,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [expiredAnalyticSent, setExpiredAnalyticSent] =
     useState<boolean>(false);
-  const [amountExpected, setAmountExpected] = useState<number>(amount);
+  const [amountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
   const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
@@ -194,13 +179,6 @@ const MoonpaySellCheckout: React.FC = () => {
   );
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<MoonpaySellTransactionDetails>();
-
-  const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
-    useState(false);
-  const [hardwareWalletTransport, setHardwareWalletTransport] =
-    useState<Transport | null>(null);
-  const [confirmHardwareState, setConfirmHardwareState] =
-    useState<SimpleConfirmPaymentState | null>(null);
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
@@ -227,50 +205,6 @@ const MoonpaySellCheckout: React.FC = () => {
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
 
-  // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
-  const transportRef = useRef(hardwareWalletTransport);
-  transportRef.current = hardwareWalletTransport;
-
-  const setPromptOpenAppState = (state: boolean) =>
-    state && setConfirmHardwareState('selecting');
-
-  // We need a constant fn (no deps) that persists across renders that we can attach to AND detach from transports
-  const onDisconnect = useCallback(async () => {
-    let retryAttempts = 2;
-    let newTp: Transport | null = null;
-
-    // avoid closure values
-    const isBle = transportRef.current instanceof TransportBLE;
-    const isHid = transportRef.current instanceof TransportHID;
-    const shouldReconnect =
-      isConfirmHardwareWalletModalVisible && (isBle || isHid);
-
-    if (!shouldReconnect) {
-      setHardwareWalletTransport(null);
-      return;
-    }
-
-    // try to reconnect a few times
-    while (!newTp && retryAttempts > 0) {
-      if (isBle) {
-        newTp = await TransportBLE.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      } else if (isHid) {
-        newTp = await TransportHID.create(OPEN_TIMEOUT, LISTEN_TIMEOUT).catch(
-          () => null,
-        );
-      }
-
-      retryAttempts--;
-    }
-
-    if (newTp) {
-      newTp.on('disconnect', onDisconnect);
-    }
-    setHardwareWalletTransport(newTp);
-  }, []);
-
   const copyText = (text: string) => {
     haptic('impactLight');
     Clipboard.setString(text);
@@ -289,15 +223,15 @@ const MoonpaySellCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timeout,
+    intervalId?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr('expired');
-      if (countDown) {
-        clearInterval(countDown);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
       return;
     }
@@ -452,10 +386,7 @@ const MoonpaySellCheckout: React.FC = () => {
         wallet.tokenAddress,
       ),
     );
-    // To Sat
-    const depositSat = Number(
-      (amountExpected * precision!.unitToSatoshi).toFixed(0),
-    );
+    const depositSat = ToBaseUnits(amountExpected, precision!.unitDecimals);
 
     if (
       wallet.currencyAbbreviation.toLowerCase() === 'bch' &&
@@ -473,15 +404,15 @@ const MoonpaySellCheckout: React.FC = () => {
     }
 
     createTx(wallet, toAddress, depositSat, destinationTag)
-      .then(async ctxp => {
-        setCtxp(ctxp);
-        setFee(ctxp.fee);
+      .then(async newCtxp => {
+        setCtxp(newCtxp);
+        setFee(newCtxp.fee);
         setIsLoading(false);
         hideOngoingProcess();
         await sleep(400);
 
         if (useSendMax) {
-          showSendMaxWarning(ctxp.coin, ctxp.chain, wallet.tokenAddress);
+          showSendMaxWarning(newCtxp.coin, newCtxp.chain, wallet.tokenAddress);
         }
         return;
       })
@@ -507,37 +438,37 @@ const MoonpaySellCheckout: React.FC = () => {
   };
 
   const createTx = async (
-    wallet: Wallet,
-    toAddress: string,
-    depositSat: number,
+    txWallet: Wallet,
+    txToAddress: string,
+    depositSat: string,
     destTag?: string,
   ): Promise<TransactionProposal> => {
     try {
-      const message = `Sold ${wallet.currencyAbbreviation.toUpperCase()}`;
+      const message = `Sold ${txWallet.currencyAbbreviation.toUpperCase()}`;
       let outputs = [];
 
       outputs.push({
-        toAddress,
+        toAddress: txToAddress,
         amount: depositSat,
         message: message,
       });
 
       let txp: Partial<TransactionProposal> = {
-        toAddress,
+        toAddress: txToAddress,
         amount: depositSat,
-        chain: wallet.chain,
+        chain: txWallet.chain,
         outputs,
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
         customData: {
-          moonpay: toAddress,
+          moonpay: txToAddress,
           service: 'moonpay',
         },
       };
 
       if (isToken) {
-        if (wallet.tokenAddress) {
-          txp.tokenAddress = wallet.tokenAddress;
+        if (txWallet.tokenAddress) {
+          txp.tokenAddress = txWallet.tokenAddress;
           if (IsEVMChain(txp.chain!)) {
             if (txp.outputs) {
               for (const output of txp.outputs) {
@@ -546,19 +477,19 @@ const MoonpaySellCheckout: React.FC = () => {
                 }
                 if (!output.data) {
                   output.data = BWC.getCore()
-                    .Transactions.get({chain: getCWCChain(wallet.chain)})
+                    .Transactions.get({chain: getCWCChain(txWallet.chain)})
                     .encodeData({
                       recipients: [
                         {address: output.toAddress, amount: output.amount},
                       ],
-                      tokenAddress: wallet.tokenAddress,
+                      tokenAddress: txWallet.tokenAddress,
                     });
                 }
               }
             }
           } else if (IsSVMChain(txp.chain!)) {
             const receiveAddressSolanaTokens: SolanaTokenData[] =
-              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
+              await getSolanaATAs(txWallet?.receiveAddress!, txWallet?.network);
 
             let ataReceiveAddress: SolanaTokenData | undefined;
             if (receiveAddressSolanaTokens) {
@@ -576,7 +507,7 @@ const MoonpaySellCheckout: React.FC = () => {
               const _ataReceiveAddress =
                 await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
-                  feePayer: wallet?.receiveAddress!,
+                  feePayer: txWallet?.receiveAddress!,
                 });
               txp.fromAta = _ataReceiveAddress;
               logger.debug(
@@ -586,7 +517,7 @@ const MoonpaySellCheckout: React.FC = () => {
 
             if (txp.outputs) {
               const toAddressSolanaTokens: SolanaTokenData[] =
-                await getSolanaATAs(toAddress, wallet?.network);
+                await getSolanaATAs(txToAddress, txWallet?.network);
 
               let ataToAddress: string | undefined;
               if (toAddressSolanaTokens) {
@@ -598,16 +529,16 @@ const MoonpaySellCheckout: React.FC = () => {
               if (!ataToAddress) {
                 ataToAddress = await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
-                  feePayer: toAddress,
+                  feePayer: txToAddress,
                 });
-                setAtaOwnerAddress(toAddress);
+                setAtaOwnerAddress(txToAddress);
                 logger.debug(
                   `Using ATA toAddress from getOrCreateAssociatedTokenAddress: ${ataToAddress}`,
                 );
               }
 
               for (const output of txp.outputs) {
-                if (output.toAddress === toAddress) {
+                if (output.toAddress === txToAddress) {
                   output.toAddress = ataToAddress;
                 }
               }
@@ -616,7 +547,7 @@ const MoonpaySellCheckout: React.FC = () => {
         }
       }
 
-      if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
+      if (['btc', 'eth', 'matic'].includes(txWallet.chain)) {
         txp.feeLevel = 'priority';
       } // Avoid expired order due to slow TX confirmation
 
@@ -624,8 +555,8 @@ const MoonpaySellCheckout: React.FC = () => {
         txp.destinationTag = Number(destTag);
       }
 
-      const ctxp = await dispatch(createTxProposal(wallet, txp));
-      return Promise.resolve(ctxp);
+      const createdTxp = await dispatch(createTxProposal(txWallet, txp));
+      return Promise.resolve(createdTxp);
     } catch (err: any) {
       const errStr =
         err instanceof Error
@@ -640,51 +571,20 @@ const MoonpaySellCheckout: React.FC = () => {
     }
   };
 
-  const makePayment = async ({transport}: {transport?: Transport}) => {
-    const isUsingHardwareWallet = !!transport;
+  const makePayment = async () => {
     let broadcastedTx;
 
     try {
-      if (isUsingHardwareWallet) {
-        const {chain, network} = wallet.credentials;
-        const configFn = currencyConfigs[chain];
-        if (!configFn) {
-          throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
-        }
-        const params = configFn(network as Network);
-        await prepareLedgerApp(
-          params.appName,
-          transportRef,
-          setHardwareWalletTransport,
-          onDisconnect,
-          setPromptOpenAppState,
-        );
-        setConfirmHardwareState('sending');
-        await sleep(500);
-        broadcastedTx = await dispatch(
-          publishAndSign({
-            txp: ctxp! as TransactionProposal,
-            key,
-            wallet,
-            transport,
-            ataOwnerAddress,
-          }),
-        );
-        setConfirmHardwareState('complete');
-        await sleep(1000);
-        setConfirmHardwareWalletVisible(false);
-      } else {
-        broadcastedTx = await dispatch(
-          publishAndSign({
-            txp: ctxp! as TransactionProposal,
-            key,
-            wallet,
-            ataOwnerAddress,
-            ...(isTSSWallet(wallet) && {tssCallbacks}),
-            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
-          }),
-        );
-      }
+      broadcastedTx = await dispatch(
+        publishAndSign({
+          txp: ctxp! as TransactionProposal,
+          key,
+          wallet,
+          ataOwnerAddress,
+          ...(isTSSWallet(wallet) && {tssCallbacks}),
+          ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
+        }),
+      );
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       showPaymentSent({
         onCloseModal,
@@ -724,11 +624,6 @@ const MoonpaySellCheckout: React.FC = () => {
         setShowTSSProgressModal(false);
       }
 
-      if (isUsingHardwareWallet) {
-        setConfirmHardwareWalletVisible(false);
-        setConfirmHardwareState(null);
-        err = getLedgerErrorMessage(err);
-      }
       hideOngoingProcess();
       await sleep(500);
       setResetSwipeButton(true);
@@ -763,46 +658,13 @@ const MoonpaySellCheckout: React.FC = () => {
     hidePaymentSent();
   };
 
-  // on hardware wallet disconnect, just clear the cached transport object
-  // errors will be thrown and caught as needed in their respective workflows
-  const disconnectFn = () => setHardwareWalletTransport(null);
-  const disconnectFnRef = useRef(disconnectFn);
-  disconnectFnRef.current = disconnectFn;
-
-  const onHardwareWalletPaired = (args: {transport: Transport}) => {
-    const {transport} = args;
-
-    transport.on('disconnect', disconnectFnRef.current);
-
-    setHardwareWalletTransport(transport);
-    makePayment({transport});
-  };
-
   const onSwipeComplete = async () => {
     try {
       logger.debug('Swipe completed. Making payment...');
-      if (key.hardwareSource) {
-        await onSwipeCompleteHardwareWallet(key);
-      } else {
-        await makePayment({});
-      }
+      await makePayment();
     } catch (err) {
       let msg = getErrorMsgFromError(err);
       logger.error('makePayment error: ' + msg);
-    }
-  };
-
-  const onSwipeCompleteHardwareWallet = async (key: Key) => {
-    if (key.hardwareSource === 'ledger') {
-      if (hardwareWalletTransport) {
-        setConfirmHardwareWalletVisible(true);
-        await makePayment({transport: hardwareWalletTransport});
-      } else {
-        setConfirmHardwareWalletVisible(true);
-      }
-    } else {
-      const msg = t('Uh oh, something went wrong. Please try again later');
-      showError(msg, t('Unsupported hardware wallet'));
     }
   };
 
@@ -816,9 +678,7 @@ const MoonpaySellCheckout: React.FC = () => {
       txSentId: broadcastedTx?.txid,
       status: 'bitpayTxSent',
       fiatAmount: moonpayTxData.quoteCurrencyAmount,
-      baseCurrencyCode: cloneDeep(
-        moonpayTxData.quoteCurrency.code,
-      ).toUpperCase(),
+      baseCurrencyCode: moonpayTxData.quoteCurrency.code.toUpperCase(),
       totalFee: totalExchangeFee,
       isTSSWallet: isTSSWallet(wallet),
     };
@@ -865,11 +725,13 @@ const MoonpaySellCheckout: React.FC = () => {
     let warningMsg = dispatch(
       GetExcludedUtxosMessage(coin, chain, tokenAddress, sendMaxInfo),
     );
-    const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
+    const sendMaxFee = dispatch(
+      SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress),
+    );
 
     const realMaxAmount = dispatch(
       SatToUnit(
-        cloneDeep(sendMaxInfo.amount),
+        sendMaxInfo.amount,
         wallet.currencyAbbreviation,
         wallet.chain,
         wallet.tokenAddress,
@@ -896,7 +758,7 @@ const MoonpaySellCheckout: React.FC = () => {
           },
         );
         warningMsg = warningMsg + `\n${message}`;
-      } catch (err) {
+      } catch {
         // continue without message
       }
     }
@@ -905,9 +767,8 @@ const MoonpaySellCheckout: React.FC = () => {
       t(
         'Because you are sending the maximum amount contained in this wallet, the {{chain}} miner fee ({{fee}} {{coin}}) will be deducted from the total.',
         {
-          chain:
-            dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase(),
-          fee,
+          chain: dispatch(GetName(chain, chain)) || chain.toUpperCase(),
+          fee: sendMaxFee,
           coin: coin.toUpperCase(),
         },
       ) + `\n${warningMsg}`;
@@ -1002,17 +863,19 @@ const MoonpaySellCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    const _getSendMaxData = async (wallet: Wallet) => {
+    const _getSendMaxData = async (sendMaxWallet: Wallet) => {
       // We obtain the sendMaxData, but we do not send the maximum amount, since Moonpay misinterprets it
       // (It rounds the last digit of the decimal up, based on a variable precision number from its side. Therefore, it causes a failure in the execution of the order)
       // As a workaround we continue to use the previously agreed amount
-      const sendMaxData = await getSendMaxData(wallet);
+      const sendMaxData = await getSendMaxData(sendMaxWallet);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only init() below (same mount-time closure) needs to see the fetched value
       sendMaxInfo = cloneDeep(sendMaxData);
       init();
     };
 
     showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only init() below (same mount-time closure) needs to see the overridden value
       useSendMax = false;
     }
     if (sellOrder?.send_max && !isToken) {
@@ -1043,7 +906,8 @@ const MoonpaySellCheckout: React.FC = () => {
       );
       setExpiredAnalyticSent(true);
     }
-  }, [remainingTimeStr, expiredAnalyticSent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on expiry state changes only; order/wallet values are read at that time for the analytics payload
+  }, [remainingTimeStr, expiredAnalyticSent, dispatch]);
 
   useEffect(() => {
     if (!resetSwipeButton) {
@@ -1287,22 +1151,6 @@ const MoonpaySellCheckout: React.FC = () => {
           </>
         )}
       </ScrollView>
-
-      {key?.hardwareSource && wallet ? (
-        <ConfirmHardwareWalletModal
-          isVisible={isConfirmHardwareWalletModalVisible}
-          state={confirmHardwareState}
-          hardwareSource={key.hardwareSource}
-          transport={hardwareWalletTransport}
-          currencyLabel={BitpaySupportedCoins[wallet.chain]?.name}
-          onBackdropPress={() => {
-            setConfirmHardwareWalletVisible(false);
-            setResetSwipeButton(true);
-            setConfirmHardwareState(null);
-          }}
-          onPaired={onHardwareWalletPaired}
-        />
-      ) : null}
 
       {!paymentExpired ? (
         <>

@@ -78,14 +78,16 @@ const SwipeButtonOverlay: React.FC<{
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
-    opacity.value = withTiming(isVisible ? 1 : 0, {
-      duration: 180,
-      easing: Easing.inOut(Easing.ease),
-    });
-  }, [isVisible]);
+    opacity.set(
+      withTiming(isVisible ? 1 : 0, {
+        duration: 180,
+        easing: Easing.inOut(Easing.ease),
+      }),
+    );
+  }, [isVisible, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: opacity.get(),
   }));
 
   const getBackgroundColor = () => {
@@ -164,7 +166,7 @@ const SwipeButton = ({
             setState('loading');
             try {
               await onSwipeComplete();
-            } catch (_) {
+            } catch {
             } finally {
               setState(null);
             }
@@ -186,6 +188,10 @@ const SwipeButton = ({
           title={title}
           titleColor={theme.dark ? (disabled ? '#656565' : White) : White}
           titleStyles={{fontWeight: '500'}}
+          // Fixed-height rail with a full-height thumb: the label is capped so
+          // it stays inside the track instead of running under the thumb.
+          titleMaxFontScale={1.3}
+          titleMaxLines={2}
           shouldResetAfterSuccess={true} // Button resets automatically after swipe success
           resetAfterSuccessAnimDelay={1000} // Reset after 1s
           forceReset={(reset: any) => {

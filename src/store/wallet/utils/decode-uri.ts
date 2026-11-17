@@ -25,5 +25,5 @@ export const ExtractCoinNetworkAddress = (str: string): string => {
 };
 
 export const ExtractUriAmount = (uri: string): RegExpExecArray | null => {
-  return /[\?\&]amount=(\d+([\,\.]\d+)?)/i.exec(uri);
+  return /[?&]amount=(\d+([,.]\d+)?)/i.exec(uri);
 };

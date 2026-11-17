@@ -16,6 +16,23 @@ import {
   writeAccountListSnapshot,
 } from '../../../store/wallet/utils/accountListCache';
 
+// Minimal Reanimated shared value fake: keeps a plain `value` field (read by
+// dependency code and assertions) plus the `get`/`set` API the app code uses.
+// A hoisted function declaration so jest.mock factories can call it.
+function mockSharedValue<T>(initial: T) {
+  const sharedValue = {
+    value: initial,
+    get: (): T => sharedValue.value,
+    set: (next: T | ((current: T) => T)) => {
+      sharedValue.value =
+        typeof next === 'function'
+          ? (next as (current: T) => T)(sharedValue.value)
+          : next;
+    },
+  };
+  return sharedValue;
+}
+
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 jest.mock('react-native-worklets', () => ({
@@ -52,8 +69,11 @@ jest.mock('react-native-reanimated', () => {
     ),
     runOnJS: (fn: (...args: any[]) => any) => fn,
     useAnimatedStyle: (fn: () => unknown) => fn(),
-    useDerivedValue: (fn: () => unknown) => ({value: fn()}),
-    useSharedValue: (value: unknown) => ({value}),
+    useDerivedValue: (fn: () => unknown) => {
+      const value = fn();
+      return {value, get: () => value};
+    },
+    useSharedValue: (value: unknown) => mockSharedValue(value),
     withDelay: (_delay: number, value: unknown) => value,
     withSequence: (...values: unknown[]) => values[values.length - 1],
     withTiming: (
@@ -278,11 +298,14 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('lodash.debounce', () => (fn: (...args: any[]) => any) => {
-  const debounced = (...args: any[]) => fn(...args);
-  debounced.cancel = jest.fn();
-  return debounced;
-});
+jest.mock('../../../utils/debounce', () => ({
+  ...jest.requireActual('../../../utils/debounce'),
+  debounce: (fn: (...args: any[]) => any) => {
+    const debounced = (...args: any[]) => fn(...args);
+    debounced.cancel = jest.fn();
+    return debounced;
+  },
+}));
 
 jest.mock('../../../utils/hooks', () => ({
   useAppDispatch: () => mockDispatch,
@@ -526,6 +549,7 @@ const mockLegacyLastDayPnl = (currentFiat: unknown, lastDayFiat: unknown) => {
 };
 
 jest.mock('../../../utils/portfolio/assets', () => ({
+  getPopulateProgressForWallets: jest.fn(() => undefined),
   buildLegacyLastDayRateRequestsForWallets: jest.fn(
     ({wallets}: {wallets?: any[]}) =>
       (wallets || [])
@@ -724,6 +748,7 @@ jest.mock('../../../store/wallet/effects/tss-send/tss-send', () => ({
 }));
 
 jest.mock('../../../store/wallet/utils/currency', () => ({
+  GetPrecision: jest.fn(() => () => ({unitDecimals: 8, unitToSatoshi: 1e8})),
   IsERCToken: jest.fn(() => false),
   IsEVMChain: jest.fn(() => false),
   IsSVMChain: jest.fn(() => false),
@@ -1468,11 +1493,15 @@ describe('portfolio chart visibility guards', () => {
     expect(mockBalanceHistoryChart).not.toHaveBeenCalled();
   });
 
-  it('preloads the Receive and Send selectors after Home is idle', async () => {
+  it('preloads only the Receive selector after Home is idle', async () => {
     resetState(false, {completedFullPopulate: true});
     mockWallet.isComplete = jest.fn(() => true);
     mockState.APP.appIsLoading = false;
     mockIsFocused = true;
+    // Home holds this preload until startup has settled, plus a delay.
+    const startupSignals = require('../../../utils/startupSignals');
+    startupSignals.resetStartupSignalsForTests();
+    startupSignals.markFirstScreenShown();
 
     await act(async () => {
       renderWithTheme(
@@ -1492,6 +1521,13 @@ describe('portfolio chart visibility guards', () => {
     };
 
     await act(async () => {
+      // Settles startup, then runs out HOME_FLOW_PRELOAD_STARTUP_DELAY_MS.
+      jest.advanceTimersByTime(2000);
+      await Promise.resolve();
+    });
+    expect(mockNavigation.preload).not.toHaveBeenCalled();
+
+    await act(async () => {
       mockTransitionEndListener?.({data: {closing: false}});
       jest.advanceTimersByTime(0);
       await Promise.resolve();
@@ -1508,11 +1544,7 @@ describe('portfolio chart visibility guards', () => {
       context: 'receive',
       _preloadContent: true,
     });
-
-    expect(mockNavigation.preload).toHaveBeenCalledWith('GlobalSelect', {
-      context: 'send',
-      _preloadContent: true,
-    });
+    expect(mockNavigation.preload).toHaveBeenCalledTimes(1);
   });
 
   it('mounts the Home portfolio balance chart with a loader while its initial populate scope is still running', async () => {

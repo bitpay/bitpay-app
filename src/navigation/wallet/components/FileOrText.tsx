@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput, {INPUT_HEIGHT} from '../../../components/form/BoxInput';
@@ -50,13 +50,9 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {populateImportedKeyPortfolio} from '../../../store/portfolio';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {ScrollView, Keyboard, TextInput, AppState} from 'react-native';
+import {ScrollView, Keyboard, AppState} from 'react-native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useSensitiveRefClear,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {useOngoingProcess} from '../../../contexts';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
@@ -260,9 +256,6 @@ const FileOrText = () => {
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
 
-  const plainTextRef = useRef<TextInput>(null);
-  const {clearSensitive} = useSensitiveRefClear([plainTextRef]);
-
   const [importButtonState, setImportButtonState] = useState<ButtonState>();
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isFromClipboard, setIsFromClipboard] = useState(false);
@@ -274,6 +267,17 @@ const FileOrText = () => {
     setValue,
     formState: {errors},
   } = useForm<FileOrTextFieldValues>({resolver: yupResolver(schema)});
+
+  const handleClearFile = useCallback(() => {
+    setUploadedFileName('');
+    setIsFromClipboard(false);
+    setValue('text', '');
+  }, [setValue]);
+
+  const clearSensitive = useCallback(() => {
+    handleClearFile();
+    setValue('password', '');
+  }, [handleClearFile, setValue]);
 
   const importWallet = async (
     decryptBackupText: string,
@@ -303,7 +307,7 @@ const FileOrText = () => {
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
         populateImportedKeyPortfolio({dispatch, key, logger});
-      } catch (error) {
+      } catch {
         // ignore error
       }
 
@@ -359,7 +363,7 @@ const FileOrText = () => {
 
   const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
-    clearSensitive();
+    setValue('password', '');
     Keyboard.dismiss();
 
     let opts: Partial<KeyOptions> = {};
@@ -430,7 +434,7 @@ const FileOrText = () => {
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
         populateImportedKeyPortfolio({dispatch, key, logger});
-      } catch (error) {}
+      } catch {}
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
@@ -546,12 +550,6 @@ const FileOrText = () => {
       logManager.error(`[FileOrText] Error pasting clipboard: ${errorMsg}`);
       showErrorModal(t('Failed to paste from clipboard'));
     }
-  };
-
-  const handleClearFile = () => {
-    setUploadedFileName('');
-    setIsFromClipboard(false);
-    setValue('text', '');
   };
 
   const fileError = errors.text?.message;

@@ -13,6 +13,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import QRCode from 'react-native-qrcode-svg';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {requestDklsWorkerMount} from '../../../dkls/DklsWorker';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   startTSSCeremony,
@@ -82,6 +83,9 @@ import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
+import Settings from '../../../components/settings/Settings';
+import OptionsSheet from '../components/OptionsSheet';
+import Icons from '../components/WalletIcons';
 
 const styles = StyleSheet.create({
   container: {
@@ -238,8 +242,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   helpStepBubble: {
-    width: 18,
-    height: 18,
+    minWidth: 18,
+    minHeight: 18,
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
@@ -442,13 +446,6 @@ const ModalTitle = ({
   );
 };
 
-const HeaderButton = ({
-  style,
-  ...rest
-}: React.ComponentProps<typeof RNTouchableOpacity>) => (
-  <RNTouchableOpacity style={[styles.headerButton, style]} {...rest} />
-);
-
 const PlaceholderView = ({
   style,
   ...rest
@@ -521,10 +518,6 @@ const StatusContainer = ({
   ...rest
 }: React.ComponentProps<typeof View>) => (
   <View style={[styles.statusContainer, style]} {...rest} />
-);
-
-const QRCodeWrapper = ({style, ...rest}: React.ComponentProps<typeof View>) => (
-  <View style={[styles.qrCodeWrapper, style]} {...rest} />
 );
 
 const ShareButton = ({
@@ -659,6 +652,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
   const [addCoSignerError, setAddCoSignerError] = useState<string | null>(null);
+  const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   useAndroidBackHandler(() => isCeremonyStarted);
 
@@ -666,8 +660,15 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     navigation.setOptions({
       gestureEnabled: !isCeremonyStarted,
       headerLeft: isCeremonyStarted ? () => null : undefined,
+      headerRight: isCeremonyComplete
+        ? () => null
+        : () => <Settings onPress={() => setShowKeyOptions(true)} />,
     });
-  }, [isCeremonyStarted, navigation]);
+  }, [isCeremonyStarted, isCeremonyComplete, navigation]);
+
+  useEffect(() => {
+    requestDklsWorkerMount();
+  }, []);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
@@ -678,11 +679,22 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     }
   }, [pendingJoinCode, currentStep]);
 
+  useEffect(() => {
+    if (tssSession?.status === 'ceremony_in_progress') {
+      // eslint-disable-next-line react-hooks/immutability -- the effect must sit above the early return; it runs after render, once handleStartCeremony is initialized
+      handleStartCeremony();
+    }
+    return () => {
+      dispatch(cancelTSSCeremony(keyId));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount (resume an in-progress ceremony); cleanup cancels it on unmount
+  }, []);
+
   if (!tssSession) {
     return null;
   }
 
-  const {m, n, walletName, copayers = []} = tssSession;
+  const {copayers = []} = tssSession;
   const allInvited = copayers.every(c => c.status === 'invited');
 
   const handleOpenModal = (copayer: TSSCopayerInfo) => {
@@ -781,15 +793,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       }
     }
   };
-
-  useEffect(() => {
-    if (tssSession?.status === 'ceremony_in_progress') {
-      handleStartCeremony();
-    }
-    return () => {
-      dispatch(cancelTSSCeremony(keyId));
-    };
-  }, []);
 
   const handleStartCeremony = async () => {
     setIsCeremonyStarted(true);
@@ -1135,13 +1138,31 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     });
   };
 
+  const keyOptionsSheet = (
+    <OptionsSheet
+      isVisible={showKeyOptions}
+      title={t('Key Options')}
+      options={[
+        {
+          img: <Icons.Delete />,
+          title: t('Delete'),
+          description: t('Permanently deletes all wallets using this key.'),
+          onPress: () => {
+            navigation.navigate('DeleteKey', {keyId});
+          },
+        },
+      ]}
+      closeModal={() => setShowKeyOptions(false)}
+    />
+  );
+
   if (isCeremonyStarted) {
     return (
       <Container>
         <Content
           contentContainerStyle={{flex: 1, justifyContent: 'flex-start'}}>
           <TopSection>
-            <TopSectionContainer style={{height: 190}}>
+            <TopSectionContainer style={{minHeight: 190}}>
               <StatusContainer>
                 {isCeremonyComplete ? (
                   <>
@@ -1183,6 +1204,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
             </ButtonContainer>
           )}
         </Content>
+        {keyOptionsSheet}
       </Container>
     );
   }
@@ -1284,6 +1306,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           </ModalContent>
         </ModalContainer>
       </Modal>
+
+      {keyOptionsSheet}
     </Container>
   );
 };

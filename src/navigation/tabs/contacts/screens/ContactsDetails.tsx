@@ -3,6 +3,7 @@ import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {useAppSelector} from '../../../../utils/hooks';
 import {useTheme} from '../../../../contexts';
 import {useNavigation} from '@react-navigation/core';
+import {StackActions} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
@@ -29,15 +30,10 @@ import EditIcon from '../../../../../assets/img/edit-icon.svg';
 import EditIconWhite from '../../../../../assets/img/edit-icon-white.svg';
 import DeleteIconWhite from '../../../../../assets/img/delete-icon-white.svg';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
+import {getContactSendRecipient} from '../../../wallet/screens/send/sendTo.utils';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {ContactRowProps} from '../../../../components/list/ContactRow';
-import {
-  IsEVMChain,
-  IsSVMChain,
-  IsVMChain,
-} from '../../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const styles = StyleSheet.create({
@@ -54,7 +50,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 60,
+    minHeight: 60,
   },
   notes: {
     flexDirection: 'row',
@@ -203,12 +199,18 @@ const ContactsDetails = ({
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {contact: _contact} = route.params;
-  const [contact, setContact] = useState(_contact);
+  const contact =
+    useAppSelector(({CONTACT}) =>
+      CONTACT.list.find(c => c.address === _contact.address),
+    ) ?? _contact;
 
   const [copied, setCopied] = useState(false);
   const [copiedContractAddress, setCopiedContractAddress] = useState(false);
   const [showIconOptions, setShowIconOptions] = useState(false);
 
+  const isLastContact = useAppSelector(
+    ({CONTACT}) => CONTACT.list.length === 1,
+  );
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const contactOptions: Array<ModalOpt> = [];
   let availableWallets = Object.values(keys)
@@ -227,11 +229,6 @@ const ContactsDetails = ({
   );
 
   if (availableWallets.length) {
-    let newAddress = contact.address;
-    if (contact.coin === 'bch') {
-      // Remove prefix
-      newAddress = ToCashAddress(contact.address, false);
-    }
     contactOptions.push({
       img: theme.dark ? <SendIconWhite /> : <SendIcon />,
       title: t('Send to this contact'),
@@ -240,18 +237,7 @@ const ContactsDetails = ({
         await sleep(500);
         navigation.navigate('GlobalSelect', {
           context: 'contact',
-          recipient: {
-            name: contact.name,
-            address: newAddress,
-            currency: contact.coin,
-            chain: contact.chain,
-            network: contact.network,
-            destinationTag: contact.tag || contact.destinationTag,
-            opts: {
-              showEVMWalletsAndTokens: IsEVMChain(contact.chain),
-              showSVMWalletsAndTokens: IsSVMChain(contact.chain),
-            },
-          },
+          recipient: getContactSendRecipient(contact),
         });
       },
     });
@@ -266,9 +252,6 @@ const ContactsDetails = ({
       navigation.navigate('ContactsAdd', {
         contact,
         context: 'edit',
-        onEditComplete: (c: ContactRowProps) => {
-          setContact(c);
-        },
       });
     },
   });
@@ -326,6 +309,10 @@ const ContactsDetails = ({
   const deleteContactView = async () => {
     await sleep(500);
     dispatch(deleteContact(contact.address));
+    if (isLastContact) {
+      navigation.dispatch(StackActions.popTo('SettingsHome'));
+      return;
+    }
     navigation.goBack();
   };
 

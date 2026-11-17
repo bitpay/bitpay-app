@@ -1,5 +1,4 @@
 import {t} from 'i18next';
-import {capitalize, cloneDeep} from 'lodash';
 import {
   ThorswapProvider,
   ThorswapProviderNames,
@@ -596,7 +595,7 @@ export const getNameFromThorswapFullName = (
     const lastDashIndex = thorswapFullName.lastIndexOf('-');
     if (firstDotIndex > 0 && lastDashIndex > 0) {
       name = thorswapFullName.slice(firstDotIndex + 1, lastDashIndex);
-      name = capitalize(name);
+      name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
     }
   }
 
@@ -610,8 +609,8 @@ export const getThorswapFixedCoin = (
 ): string => {
   currency = externalServicesCoinMapping(currency);
   chain = externalServicesCoinMapping(chain);
-  const _currency = cloneDeep(currency).toUpperCase();
-  const _chain = cloneDeep(chain).toUpperCase();
+  const _currency = currency.toUpperCase();
+  const _chain = chain.toUpperCase();
   return `${_chain}.${_currency}${
     tokenAddress && tokenAddress !== '' ? '-' + tokenAddress : ''
   }`;
@@ -662,9 +661,7 @@ export const getThorswapRouteBySpenderKey = (
   if (quoteRouteData) {
     route = quoteRouteData.find(
       ({providers}) =>
-        providers[0] &&
-        cloneDeep(providers[0]).toLowerCase() ===
-          cloneDeep(spenderKey).toLowerCase(),
+        providers[0] && providers[0].toLowerCase() === spenderKey.toLowerCase(),
     );
   }
   return route;
@@ -770,7 +767,7 @@ export const getExchangeAbiByContractAddress = (
     return undefined;
   }
 
-  switch (cloneDeep(contractAddress).toLowerCase()) {
+  switch (contractAddress.toLowerCase()) {
     case '0x1111111254fb6c44bac0bed2854e76f90643097d':
       return ONE_INCH_ABI;
     case '0x7a250d5630b4cf539739df2c5dacb4c659f2488d':

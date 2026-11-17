@@ -1,4 +1,4 @@
-import React, {ReactElement, useRef, useState} from 'react';
+import React, {ReactElement, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {Badge, BaseText, H5} from '../styled/Text';
 import KeySvg from '../../../assets/img/key.svg';
@@ -32,7 +32,8 @@ import {formatCryptoAddress} from '../../utils/helper-methods';
 import Blockie from '../blockie/Blockie';
 import {IsVMChain} from '../../store/wallet/utils/currency';
 import {findWalletById} from '../../store/wallet/utils/wallet';
-import {useAppSelector} from '../../utils/hooks';
+import {getUtxoRowGrouping} from './keyWalletsRowGrouping';
+import {useAppSelector, useIsLargeFont} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -86,6 +87,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 0,
     gap: 11,
+  },
+  accountChainsContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   accountChainTitleContainer: {
     display: 'flex',
@@ -158,13 +163,14 @@ const NeedBackupText: React.FC<React.ComponentProps<typeof BaseText>> = ({
 };
 
 const AccountChainsContainer: React.FC<
-  React.ComponentProps<typeof TouchableOpacity>
-> = ({style, ...rest}) => {
+  React.ComponentProps<typeof TouchableOpacity> & {stacked?: boolean}
+> = ({stacked, style, ...rest}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
       style={[
         styles.accountChainsContainer,
+        stacked && styles.accountChainsContainerStacked,
         {borderBottomColor: theme.dark ? LightBlack : LightBlue},
         style,
       ]}
@@ -253,7 +259,14 @@ const KeyWalletsRow = ({
   hideBalance,
   supportedTransactionCurrencies,
 }: KeyWalletProps) => {
+  // React Compiler opt-out: prevValueRef is read and written while mapping the
+  // rows during render and is NOT reset between renders, so the first UTXO row
+  // of a re-render sees the last row of the previous render as `prev`. A
+  // per-render local (the compiler-safe fix) would change the isLast /
+  // isSameChain / chain-header output on re-renders, so keep it uncompiled.
+  'use no memo';
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
@@ -269,10 +282,10 @@ const KeyWalletsRow = ({
           : !showChainAssets?.[address],
     });
   };
-  const prevValueRef = useRef<WalletRowProps | null>(null);
 
   return (
     <View style={styles.outerContainer}>
+      {/* eslint-disable-next-line react-hooks/refs -- see 'use no memo' above */}
       {keyAccounts.map(key => (
         <View style={styles.keyWalletsRowContainer} key={key.key}>
           {(key.accounts?.length > 0 ||
@@ -296,6 +309,7 @@ const KeyWalletsRow = ({
                   key={account.id}
                   isLast={key?.mergedUtxoAndEvmAccounts.length === index + 1}>
                   <AccountChainsContainer
+                    stacked={stacked}
                     activeOpacity={ActiveOpacity}
                     testID={`key-wallets-evm-account-toggle-${evmAccount?.receiveAddress}`}
                     accessibilityLabel={t('{{account}} account', {
@@ -304,11 +318,15 @@ const KeyWalletsRow = ({
                     onPress={() => onHide(evmAccount?.receiveAddress)}>
                     <Blockie size={19} seed={evmAccount?.receiveAddress} />
                     <Column>
-                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                      <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
                         {evmAccount?.accountName}
                       </H5>
                     </Column>
-                    <Column style={{alignItems: 'flex-end'}}>
+                    <Column
+                      style={{
+                        alignItems: stacked ? 'flex-start' : 'flex-end',
+                        alignSelf: stacked ? 'stretch' : 'auto',
+                      }}>
                       <Row style={styles.chainAssetsContainer}>
                         <BadgeContainer>
                           <Badge>
@@ -340,7 +358,7 @@ const KeyWalletsRow = ({
                       )
                       .map(
                         ({
-                          chain,
+                          chain: assetChain,
                           chainImg,
                           chainName,
                           chainAssetsList,
@@ -350,12 +368,14 @@ const KeyWalletsRow = ({
                           chainName: string;
                           chainAssetsList: WalletRowProps[];
                         }) => (
-                          <View key={chain}>
+                          <View key={assetChain}>
                             <View style={styles.accountChainTitleContainer}>
                               <View style={styles.currencyImageContainer}>
                                 <CurrencyImage img={chainImg} size={20} />
                               </View>
-                              <H5 ellipsizeMode="tail" numberOfLines={1}>
+                              <H5
+                                ellipsizeMode="tail"
+                                numberOfLines={stacked ? 2 : 1}>
                                 {chainName}
                               </H5>
                             </View>
@@ -388,73 +408,69 @@ const KeyWalletsRow = ({
               );
             } else {
               const wallet = account as WalletRowProps;
-              const prev = prevValueRef.current;
-              prevValueRef.current = wallet;
+              const {showChainHeader, isSameChain, isLast} = getUtxoRowGrouping(
+                key.mergedUtxoAndEvmAccounts,
+                index,
+              );
               const showAssets =
                 showChainAssets?.[`${wallet.chain}-${key.key}`] !== false;
-              const chainWalletslength = Object.values(
-                key.mergedUtxoAndEvmAccounts,
-              )
-                .flat()
-                .filter(
-                  wallet => wallet?.chain && wallet.chain === chain,
-                ).length;
               return (
                 <UtxoAccountContainer
                   key={wallet.id}
-                  isLast={
-                    key?.mergedUtxoAndEvmAccounts.length === index + 1 ||
-                    !prev ||
-                    (prev.chain !== wallet.chain &&
-                      chainWalletslength === index + 1)
-                  }
-                  isSameChain={!prev || prev.chain === wallet.chain}>
-                  {!prev ||
-                    (prev.chain !== wallet.chain && (
-                      <AccountChainsContainer
-                        activeOpacity={ActiveOpacity}
-                        testID={`key-wallets-utxo-chain-toggle-${wallet?.chain}-${key.key}`}
-                        accessibilityLabel={t('{{chain}} chain', {
-                          chain:
-                            BitpaySupportedCoins[
-                              wallet?.currencyAbbreviation?.toLowerCase() as keyof typeof BitpaySupportedCoins
-                            ]?.name ?? wallet?.chain,
-                        })}
-                        onPress={() =>
-                          wallet?.chain && onHide(`${wallet.chain}-${key.key}`)
-                        }>
-                        <CurrencyImage img={wallet?.img} size={20} />
-                        <Column>
-                          <H5 ellipsizeMode="tail" numberOfLines={1}>
-                            {BitpaySupportedCoins[
-                              // @ts-ignore
-                              wallet?.currencyAbbreviation?.toLowerCase()
-                            ]?.name ?? ''}
-                          </H5>
-                        </Column>
-                        <Column style={{alignItems: 'flex-end'}}>
-                          <Row style={styles.chainAssetsContainer}>
-                            <ChevronContainer>
-                              {theme.dark ? (
-                                showChainAssets?.[
-                                  `${wallet?.chain}-${key.key}`
-                                ] !== false ? (
-                                  <ChevronDownSvgDark width={10} height={6} />
-                                ) : (
-                                  <ChevronUpSvgDark width={10} height={6} />
-                                )
-                              ) : showChainAssets?.[
-                                  `${wallet?.chain}-${key.key}`
-                                ] !== false ? (
-                                <ChevronDownSvgLight width={10} height={6} />
+                  isLast={isLast}
+                  isSameChain={isSameChain}>
+                  {showChainHeader && (
+                    <AccountChainsContainer
+                      stacked={stacked}
+                      activeOpacity={ActiveOpacity}
+                      testID={`key-wallets-utxo-chain-toggle-${wallet?.chain}-${key.key}`}
+                      accessibilityLabel={t('{{chain}} chain', {
+                        chain:
+                          BitpaySupportedCoins[
+                            wallet?.currencyAbbreviation?.toLowerCase() as keyof typeof BitpaySupportedCoins
+                          ]?.name ?? wallet?.chain,
+                      })}
+                      onPress={() =>
+                        wallet?.chain && onHide(`${wallet.chain}-${key.key}`)
+                      }>
+                      <CurrencyImage img={wallet?.img} size={20} />
+                      <Column>
+                        <H5
+                          ellipsizeMode="tail"
+                          numberOfLines={stacked ? 2 : 1}>
+                          {BitpaySupportedCoins[
+                            // @ts-ignore
+                            wallet?.currencyAbbreviation?.toLowerCase()
+                          ]?.name ?? ''}
+                        </H5>
+                      </Column>
+                      <Column
+                        style={{
+                          alignItems: stacked ? 'flex-start' : 'flex-end',
+                          alignSelf: stacked ? 'stretch' : 'auto',
+                        }}>
+                        <Row style={styles.chainAssetsContainer}>
+                          <ChevronContainer>
+                            {theme.dark ? (
+                              showChainAssets?.[
+                                `${wallet?.chain}-${key.key}`
+                              ] !== false ? (
+                                <ChevronDownSvgDark width={10} height={6} />
                               ) : (
-                                <ChevronUpSvgLight width={10} height={6} />
-                              )}
-                            </ChevronContainer>
-                          </Row>
-                        </Column>
-                      </AccountChainsContainer>
-                    ))}
+                                <ChevronUpSvgDark width={10} height={6} />
+                              )
+                            ) : showChainAssets?.[
+                                `${wallet?.chain}-${key.key}`
+                              ] !== false ? (
+                              <ChevronDownSvgLight width={10} height={6} />
+                            ) : (
+                              <ChevronUpSvgLight width={10} height={6} />
+                            )}
+                          </ChevronContainer>
+                        </Row>
+                      </Column>
+                    </AccountChainsContainer>
+                  )}
                   {showAssets && (
                     <View style={{marginLeft: -10}} key={wallet.id}>
                       <WalletRow

@@ -54,9 +54,15 @@ const EnterBuyerProvidedEmail: React.FC = () => {
       Keyboard.dismiss();
       try {
         setButtonState('loading');
-        await dispatch(setBuyerProvidedEmail(route.params.data, email));
+        await dispatch(
+          setBuyerProvidedEmail(
+            route.params.data,
+            email,
+            route.params.selectedAccountAddress,
+          ),
+        );
         setButtonState('success');
-      } catch (e) {
+      } catch {
         setButtonState('failed');
 
         dispatch(

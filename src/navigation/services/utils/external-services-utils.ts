@@ -1,4 +1,3 @@
-import cloneDeep from 'lodash.clonedeep';
 import {getFeeRatePerKb} from '../../../store/wallet/effects/fee/fee';
 import {getSendMaxInfo} from '../../../store/wallet/effects/send/send';
 import {SendMaxInfo, Wallet} from '../../../store/wallet/wallet.models';
@@ -25,8 +24,8 @@ export const getExternalServiceSymbol = (
   coin: string,
   chain: string,
 ): string => {
-  const _coin = cloneDeep(coin).toLowerCase();
-  const _chain = cloneDeep(chain).toLowerCase();
+  const _coin = coin.toLowerCase();
+  const _chain = chain.toLowerCase();
   let symbol: string = _coin;
 
   if (_coin === 'eth' && ['arb', 'base', 'op'].includes(_chain)) {
@@ -75,7 +74,7 @@ export const externalServicesCoinMapping = (coin: string): string => {
     return 'POL';
   }
 
-  const _coin = cloneDeep(coin).toLowerCase();
+  const _coin = coin.toLowerCase();
   if (_coin === 'matic') {
     return 'pol';
   }

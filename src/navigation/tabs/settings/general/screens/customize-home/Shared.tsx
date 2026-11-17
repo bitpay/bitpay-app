@@ -8,7 +8,7 @@ import {H7} from '../../../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {Key, Wallet} from '../../../../../../store/wallet/wallet.models';
 import {HomeCarouselConfig} from '../../../../../../store/app/app.models';
-import _ from 'lodash';
+import {orderBy} from '../../../../../../utils/array';
 import {
   HeaderImg,
   Img,
@@ -269,7 +269,7 @@ export const createCustomizeCardList = ({
   }
 
   const order = homeCarouselConfig.map(item => item.id);
-  list = _.sortBy(list, item => _.indexOf(order, item.key));
+  list = orderBy(list, item => order.indexOf(item.key));
 
   return [list.filter(i => i.show), list.filter(i => !i.show)];
 };

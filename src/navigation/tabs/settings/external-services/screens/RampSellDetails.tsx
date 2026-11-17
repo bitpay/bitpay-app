@@ -76,6 +76,7 @@ const RampSellDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     logger.debug('Sell order details: ' + JSON.stringify(sellOrder));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sets the initial status and logs the sell order once on mount
   }, []);
 
   useEffect(() => {

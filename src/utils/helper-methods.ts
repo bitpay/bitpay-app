@@ -11,7 +11,6 @@ import {
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {BASE_BITCORE_URL, PROTOCOL_NAME} from '../constants/config';
-import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
@@ -594,11 +593,11 @@ export const getProtocolName = (
 export const getProtocolsName = (chain: string): string | undefined => {
   if (IsSVMChain(chain)) {
     return SUPPORTED_SVM_COINS.map(
-      chain => PROTOCOL_NAME[chain][Network.mainnet],
+      supportedChain => PROTOCOL_NAME[supportedChain][Network.mainnet],
     ).join(', ');
   } else {
     return SUPPORTED_EVM_COINS.map(
-      chain => PROTOCOL_NAME[chain][Network.mainnet],
+      supportedChain => PROTOCOL_NAME[supportedChain][Network.mainnet],
     ).join(', ');
   }
 };
@@ -662,77 +661,6 @@ export const getChainUsingSuffix = (symbol: string) => {
 
 export const isL2NoSideChainNetwork = (chain: string) => {
   return ['arb', 'base', 'op'].includes(chain.toLowerCase());
-};
-
-export const transformAmount = (
-  satoshis: number,
-  opts: {
-    fullPrecision: string;
-    decimals: {
-      full: {
-        maxDecimals: number;
-        minDecimals: number;
-      };
-      short: {
-        maxDecimals: number;
-        minDecimals: number;
-      };
-    };
-    toSatoshis: number;
-    thousandsSeparator?: string;
-    decimalSeparator?: string;
-  },
-) => {
-  const MAX_DECIMAL_ANY_CHAIN = 18; // more that 14 gives rounding errors
-
-  const clipDecimals = (number: number, decimals: number) => {
-    let str = number.toString();
-    if (str.indexOf('e') >= 0) {
-      // fixes eth small balances
-      str = number.toFixed(MAX_DECIMAL_ANY_CHAIN);
-    }
-    var x = str.split('.');
-
-    var d = (x[1] || '0').substring(0, decimals);
-    const ret = parseFloat(x[0] + '.' + d);
-    return ret;
-  };
-
-  const addSeparators = (
-    nStr: string,
-    thousands: string,
-    decimal: string,
-    minDecimals: number,
-  ) => {
-    nStr = nStr.replace('.', decimal);
-    var x = nStr.split(decimal);
-    var x0 = x[0];
-    var x1 = x[1];
-
-    x1 = _.dropRightWhile(x1, (n, i) => {
-      return n == '0' && i >= minDecimals;
-    }).join('');
-    var x2 = x.length > 1 ? decimal + x1 : '';
-
-    x0 = x0.replace(/\B(?=(\d{3})+(?!\d))/g, thousands);
-    return x0 + x2;
-  };
-
-  const precision: keyof typeof opts.decimals = opts.fullPrecision
-    ? 'full'
-    : 'short';
-  const decimals = opts.decimals[precision];
-  const toSatoshis = opts.toSatoshis;
-  const amount = clipDecimals(
-    satoshis / toSatoshis,
-    decimals.maxDecimals,
-  ).toFixed(decimals.maxDecimals);
-  return addSeparators(
-    amount,
-    opts.thousandsSeparator || ',',
-    opts.decimalSeparator || '.',
-    decimals.minDecimals,
-  );
 };
 
 export const toggleThenUntoggle = async (
@@ -1011,9 +939,9 @@ export const processOtherMethodsRequest =
     try {
       const wallet = Object.values(keys as Keys).flatMap(key =>
         key.wallets.filter(
-          wallet =>
-            isSameAddress(wallet.receiveAddress, senderAddress) &&
-            wallet.chain === swapFromChain,
+          w =>
+            isSameAddress(w.receiveAddress, senderAddress) &&
+            w.chain === swapFromChain,
         ),
       )[0];
 
@@ -1319,7 +1247,7 @@ export const processSwapRequest =
     const {chainId} = params;
     const {method} = params.request;
 
-    const {to, data, from, value} = params.request.params[0];
+    const {data, from, value} = params.request.params[0];
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
 
     if (data === '0x') {
@@ -1413,13 +1341,16 @@ export const processSwapRequest =
     }
   };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- currently unreferenced; removing it would also drop the only EtherscanAPI import, left for a dedicated dead-code cleanup
 const fetchContractAbi = async (
   dispatch: any,
   chainId: string,
   address: string,
 ) => {
-  const getAbiFromAddress = async (address: string): Promise<any> => {
-    const abi = await dispatch(EtherscanAPI.getContractAbi(chainId, address));
+  const getAbiFromAddress = async (contractAddress: string): Promise<any> => {
+    const abi = await dispatch(
+      EtherscanAPI.getContractAbi(chainId, contractAddress),
+    );
     if (!abi || abi === 'Contract source code not verified') {
       throw new Error('No ABI found');
     }
@@ -1483,9 +1414,7 @@ const handleDefaultTransaction = async (
   logManager.debug(`processing ${transactionDataName} transaction`);
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
-      wallet =>
-        isSameAddress(wallet.receiveAddress, senderAddress) &&
-        wallet.chain === chain,
+      w => isSameAddress(w.receiveAddress, senderAddress) && w.chain === chain,
     ),
   )[0];
   const {currencyAbbreviation} = wallet; // this is the "gas" wallet
@@ -1512,17 +1441,7 @@ const handlePayTransaction = async (
 ) => {
   logManager.debug('processing pay transaction');
 
-  const [
-    valueBN,
-    gasPriceBN,
-    expirationBN,
-    payload,
-    hash,
-    v,
-    r,
-    s,
-    tokenContract,
-  ] = transactionData.args;
+  const [valueBN, , , , , , , , tokenContract] = transactionData.args;
 
   const swapAmount = valueBN.toString();
   const senderContractAddress = tokenContract;
@@ -1556,7 +1475,7 @@ const handlePayTransaction = async (
       swapFromCurrencyAbbreviation,
       chain,
       isMainChainAddress ? undefined : senderContractAddress,
-      Number(swapAmount),
+      swapAmount,
     ),
   );
 
@@ -1632,7 +1551,7 @@ const handleExecuteTransaction = async (
       swapFromCurrencyAbbreviation,
       chain,
       senderContractAddress,
-      Number(swapAmount),
+      swapAmount,
     ),
   );
 
@@ -1690,7 +1609,7 @@ export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
 };
 
 export const isAndroidStoragePermissionGranted = (
-  dispatch: AppDispatch,
+  _dispatch: AppDispatch,
 ): Promise<boolean> => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1780,7 +1699,7 @@ export async function sendSolanaTx(
   const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/tx/send`;
   const payload = {
     rawTx,
-    network: 'mainnet',
+    network: _network,
     chain: 'SOL',
   };
 

@@ -34,12 +34,14 @@ const styles = StyleSheet.create({
   },
   timeframeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 8,
     justifyContent: 'space-between',
     alignSelf: 'center',
     width: '100%',
   },
   timeframePill: {
-    height: 34,
+    minHeight: 34,
     minWidth: 44,
     paddingHorizontal: 12,
     borderRadius: 18,

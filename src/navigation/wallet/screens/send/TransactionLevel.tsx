@@ -12,7 +12,7 @@ import {
   GetFeeOptions,
 } from '../../../../store/wallet/effects/fee/fee';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import * as _ from 'lodash';
+import {minBy} from '../../../../utils/array';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {
   CustomErrorMessage,
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   feeLevelStep: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
+    minHeight: 40,
   },
   feeLevelStepCircleBase: {
     borderColor: White,
@@ -355,7 +355,7 @@ const TransactionLevel = ({
       );
       _speedUpMinFeePerKb = feeLevelsAllowed.length
         ? // @ts-ignore
-          _.minBy(feeLevelsAllowed, 'feePerKb').feePerKb
+          minBy(feeLevelsAllowed, 'feePerKb').feePerKb
         : customFeePerKB;
       setSpeedUpMinFeePerKb(_speedUpMinFeePerKb);
     } else {
@@ -367,6 +367,32 @@ const TransactionLevel = ({
       }
     }
     return _speedUpMinFeePerKb;
+  };
+
+  const setFeesRecommended = (_feeLevels: Fee[]): void => {
+    let {minValue, maxValue} = getRecommendedFees(_feeLevels);
+    setMaxFeeRecommended(maxValue);
+    setMinFeeRecommended(minValue);
+    setMaxFeeAllowed(maxValue * FEE_MULTIPLIER);
+  };
+
+  const getRecommendedFees = (
+    _feeLevels: Fee[],
+  ): {minValue: number; maxValue: number} => {
+    const value = _feeLevels.map(({feePerKb}: Fee) => feePerKb);
+    const maxValue = Math.max(...value);
+
+    let minValue;
+    if (isSpeedUpTx && speedUpMinFeePerKb) {
+      minValue = speedUpMinFeePerKb;
+    } else {
+      minValue = Math.min(...value);
+    }
+
+    return {
+      maxValue: parseInt((maxValue / feeUnitAmount).toFixed(), 10),
+      minValue: parseInt((minValue / feeUnitAmount).toFixed(), 10),
+    };
   };
 
   const setFeeRate = (_feeLevels: Fee[]) => {
@@ -433,7 +459,7 @@ const TransactionLevel = ({
         network,
       });
 
-      if (_.isEmpty(_feeLevels)) {
+      if (!_feeLevels?.length) {
         dispatch(
           showBottomNotificationModal(
             CustomErrorMessage({errMsg: t('Could not get fee levels')}),
@@ -447,7 +473,7 @@ const TransactionLevel = ({
       if (customFeePerKB) {
         setCustomSatsPerByte((customFeePerKB / feeUnitAmount).toFixed());
       }
-    } catch (e) {}
+    } catch {}
   };
 
   const checkFees = (
@@ -501,7 +527,9 @@ const TransactionLevel = ({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- init() recomputes fee-level state from the wallet; refactoring to render-time derivation would change when fees load
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when wallet changes; init reads the current fee settings
   }, [wallet]);
 
   const onClose = () => {
@@ -529,32 +557,6 @@ const TransactionLevel = ({
     } else {
       onCloseModal(selectedLevel);
     }
-  };
-
-  const setFeesRecommended = (_feeLevels: Fee[]): void => {
-    let {minValue, maxValue} = getRecommendedFees(_feeLevels);
-    setMaxFeeRecommended(maxValue);
-    setMinFeeRecommended(minValue);
-    setMaxFeeAllowed(maxValue * FEE_MULTIPLIER);
-  };
-
-  const getRecommendedFees = (
-    _feeLevels: Fee[],
-  ): {minValue: number; maxValue: number} => {
-    const value = _feeLevels.map(({feePerKb}: Fee) => feePerKb);
-    const maxValue = Math.max(...value);
-
-    let minValue;
-    if (isSpeedUpTx && speedUpMinFeePerKb) {
-      minValue = speedUpMinFeePerKb;
-    } else {
-      minValue = Math.min(...value);
-    }
-
-    return {
-      maxValue: parseInt((maxValue / feeUnitAmount).toFixed(), 10),
-      minValue: parseInt((minValue / feeUnitAmount).toFixed(), 10),
-    };
   };
 
   const onSelectCustomFee = () => {

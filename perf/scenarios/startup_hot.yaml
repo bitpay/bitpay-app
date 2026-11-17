@@ -1,0 +1,7 @@
+appId: com.bitpay.wallet
+---
+# No `launchApp` — the harness resumes the app from background itself.
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 30000

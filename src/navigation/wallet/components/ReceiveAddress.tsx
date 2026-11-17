@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     borderColor: '#9ba3ae',
     borderRadius: 4,
     paddingHorizontal: 10,
-    height: 55,
+    minHeight: 55,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -292,6 +292,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   const shouldInit = isVisible && !wasInit ? init : null;
   useEffect(() => {
     if (shouldInit) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot guard set alongside kicking off async address creation
       setWasInit(true);
       shouldInit();
     }

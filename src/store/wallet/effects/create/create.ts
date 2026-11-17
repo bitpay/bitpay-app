@@ -1,6 +1,8 @@
 import {
   BitpaySupportedCoins,
+  getBaseEVMAccountCreationCoinsAndTokens,
   getBaseKeyCreationCoinsAndTokens,
+  getBaseSVMAccountCreationCoinsAndTokens,
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
@@ -8,7 +10,7 @@ import {mapWithConcurrency} from '../../../../utils/concurrency';
 import {WALLET_REQUEST_CONCURRENCY} from '../../../../constants/wallet';
 import {Credentials} from '@bitpay-labs/bitcore-wallet-client';
 import {BwcProvider} from '../../../../lib/bwc';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {
   buildKeyObj,
   buildWalletObj,
@@ -41,17 +43,16 @@ import {
   checkEncryptedKeysForEddsaMigration,
   getAccount,
   isL2NoSideChainNetwork,
-  sleep,
 } from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {
   IsERCToken,
+  IsEVMChain,
   IsSegwitCoin,
   IsSVMChain,
   IsVMChain,
 } from '../../utils/currency';
 import {createWalletAddress} from '../address/address';
-import cloneDeep from 'lodash.clonedeep';
 import {
   MoralisErc20TokenBalanceByWalletData,
   MoralisSVMTokenBalanceByWalletData,
@@ -60,9 +61,13 @@ import {
   getERC20TokenBalanceByWallet,
   getSVMTokenBalanceByWallet,
 } from '../../../moralis/moralis.effects';
-import {getTokenContractInfo, startUpdateWalletStatus} from '../status/status';
+import {
+  getTokenContractInfo,
+  startUpdateAllWalletStatusForKey,
+  startUpdateWalletStatus,
+} from '../status/status';
+import {isTestnetWallet} from '../../utils/testnet';
 import {addCustomTokenOption} from '../currencies/currencies';
-import {uniq} from 'lodash';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import {Analytics} from '../../../analytics/analytics.effects';
@@ -218,7 +223,6 @@ export const addWallet =
           !key?.properties?.xPrivKeyEDDSAEncrypted
         ) {
           try {
-            await sleep(500);
             key.methods.addKeyByAlgorithm('EDDSA', {password});
             key.properties = key.methods.toObj();
           } catch (err) {
@@ -271,7 +275,7 @@ export const addWallet =
             logManager.debug(
               `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
             );
-            const tokenChain = cloneDeep(currency.chain).toLowerCase();
+            const tokenChain = currency.chain.toLowerCase();
             const tokenAdressWithChain = addTokenChainSuffix(
               currency.tokenAddress,
               tokenChain,
@@ -289,7 +293,7 @@ export const addWallet =
               );
               if (enableCustomTokens) {
                 const opts = {
-                  tokenAddress: cloneDeep(currency.tokenAddress),
+                  tokenAddress: currency.tokenAddress,
                   chain: tokenChain,
                 };
 
@@ -299,7 +303,7 @@ export const addWallet =
                     associatedWallet,
                     opts,
                   );
-                } catch (err) {
+                } catch {
                   logManager.debug(
                     `Error in getTokenContractInfo for opts: ${JSON.stringify(
                       opts,
@@ -310,16 +314,16 @@ export const addWallet =
                 const customToken: Token = {
                   symbol: tokenContractInfo?.symbol
                     ? tokenContractInfo.symbol.toLowerCase()
-                    : cloneDeep(currency.currencyAbbreviation).toLowerCase(),
+                    : currency.currencyAbbreviation.toLowerCase(),
                   name:
                     tokenContractInfo?.name ??
-                    cloneDeep(currency.currencyAbbreviation).toUpperCase(),
+                    currency.currencyAbbreviation.toUpperCase(),
                   decimals: tokenContractInfo?.decimals
                     ? Number(tokenContractInfo.decimals)
-                    : cloneDeep(Number(currency.decimals)),
+                    : Number(currency.decimals),
                   address: IsSVMChain(tokenChain)
-                    ? cloneDeep(currency.tokenAddress)
-                    : cloneDeep(currency.tokenAddress)?.toLowerCase(), // Solana addresses are case sensitive
+                    ? currency.tokenAddress
+                    : currency.tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
                 };
 
                 tokenOptsByAddress[tokenAdressWithChain] = customToken;
@@ -339,8 +343,8 @@ export const addWallet =
           newWallet.receiveAddress = associatedWallet?.receiveAddress;
           newWallet.tokenAddress =
             currency.chain && IsSVMChain(currency.chain)
-              ? cloneDeep(currency.tokenAddress)
-              : cloneDeep(currency.tokenAddress)?.toLowerCase();
+              ? currency.tokenAddress
+              : currency.tokenAddress?.toLowerCase();
         } else {
           newWallet = (await dispatch(
             createWallet({
@@ -557,6 +561,89 @@ export const createMultipleWallets =
 
 /////////////////////////////////////////////////////////////
 
+/**
+ * Base coins of an EVM or Solana account that have no testnet wallet yet.
+ * Testnet wallets reuse the account number, so they share the account's
+ * address and are listed inside the same account.
+ */
+export const getMissingTestnetAccountCurrencies = (
+  key: Key,
+  receiveAddress: string | undefined,
+  isSvmAccount: boolean,
+) => {
+  const testnetChains = new Set(
+    key.wallets
+      .filter(
+        w =>
+          w.receiveAddress === receiveAddress &&
+          isTestnetWallet(w) &&
+          !IsERCToken(w.currencyAbbreviation, w.chain),
+      )
+      .map(w => w.chain),
+  );
+  const baseCurrencies = isSvmAccount
+    ? getBaseSVMAccountCreationCoinsAndTokens()
+    : getBaseEVMAccountCreationCoinsAndTokens();
+  return baseCurrencies.filter(({chain}) => !testnetChains.has(chain));
+};
+
+export const addTestnetWalletsToAccount =
+  ({
+    key,
+    accountNumber,
+    receiveAddress,
+    isSvmAccount,
+    password,
+  }: {
+    key: Key;
+    accountNumber: number;
+    receiveAddress: string;
+    isSvmAccount: boolean;
+    password?: string;
+  }): Effect<Promise<Wallet[]>> =>
+  async dispatch => {
+    const currencies = getMissingTestnetAccountCurrencies(
+      key,
+      receiveAddress,
+      isSvmAccount,
+    );
+    if (!currencies.length) {
+      return [];
+    }
+    const wallets = await dispatch(
+      createMultipleWallets({
+        key: key.methods as KeyMethods,
+        currencies,
+        options: {
+          network: Network.testnet,
+          password,
+          account: accountNumber,
+          customAccount: true,
+        },
+      }),
+    );
+    if (!wallets.length) {
+      return [];
+    }
+    const updatedKey = {...key, wallets: [...key.wallets, ...wallets]};
+    dispatch(successAddWallet({key: updatedKey}));
+    logManager.info(
+      `Added ${wallets.length} testnet wallets to account ${accountNumber}`,
+    );
+    dispatch(
+      startUpdateAllWalletStatusForKey({key: updatedKey, force: true}),
+    ).catch(err =>
+      logManager.warn(
+        `Testnet wallet status update failed: ${
+          err instanceof Error ? err.message : JSON.stringify(err)
+        }`,
+      ),
+    );
+    return wallets;
+  };
+
+/////////////////////////////////////////////////////////////
+
 const DEFAULT_CREATION_OPTIONS: CreateOptions = {
   network: Network.mainnet,
   account: 0,
@@ -628,8 +715,8 @@ const createWallet =
                   return reject(err);
                 }
 
-                const account = options.account || 0;
-                if (account >= 20) {
+                const currentAccount = options.account || 0;
+                if (currentAccount >= 20) {
                   return reject(
                     new Error(
                       t(
@@ -645,7 +732,7 @@ const createWallet =
                       key,
                       coin,
                       chain,
-                      options: {...options, account: account + 1},
+                      options: {...options, account: currentAccount + 1},
                     }),
                   ),
                 );
@@ -671,7 +758,7 @@ const createTokenWallet =
     tokenAddress: string,
     tokenOptsByAddress: {[key in string]: Token},
   ): Effect<Promise<API>> =>
-  async (dispatch): Promise<API> => {
+  async (): Promise<API> => {
     return new Promise((resolve, reject) => {
       try {
         const bwcClient = BWC.getClient();
@@ -771,7 +858,7 @@ const createTokenWallet =
 
 export const startCreateKeyWithOpts =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  async (dispatch): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
         const _key = BWC.createKey({
@@ -888,7 +975,6 @@ export const getDecryptPassword =
         showDecryptPasswordModal({
           onSubmitHandler: async (_password: string) => {
             dispatch(dismissDecryptPasswordModal());
-            await sleep(500);
             if (checkEncryptPassword(key, _password)) {
               dispatch(checkEncryptedKeysForEddsaMigration(key, _password));
               return resolve(_password);
@@ -904,7 +990,6 @@ export const getDecryptPassword =
 export const detectAndCreateTokensForEachEvmWallet =
   ({
     key,
-    force,
     chain,
     tokenAddress,
   }: {
@@ -929,9 +1014,20 @@ export const detectAndCreateTokensForEachEvmWallet =
           !findByTokenWalletId(
             w.tokens,
             buildTokenWalletId(w.id, tokenAddress),
-            t => t,
+            item => item,
           );
-        return _IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
+        // EVM token detection only reads mainnet balances, and a testnet
+        // wallet shares its address with mainnet, so it would copy the
+        // account's mainnet tokens onto the testnet wallet. Solana detection
+        // queries devnet and stays on.
+        const isEvmTestnet = IsEVMChain(w.chain) && isTestnetWallet(w);
+        return (
+          _IsVMChain &&
+          isNotERCToken &&
+          matchesChain &&
+          notAlreadyCreated &&
+          !isEvmTestnet
+        );
       });
 
       logManager.debug(
@@ -1034,7 +1130,7 @@ export const detectAndCreateTokensForEachEvmWallet =
             );
 
             (w.tokens || []).push(existingTokenWallet.id);
-            w.tokens = uniq(w.tokens);
+            w.tokens = Array.from(new Set(w.tokens));
 
             await dispatch(
               successUpdateKey({
@@ -1054,7 +1150,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                   decimals: tokenToAdd.decimals,
                 },
                 options: {
-                  network: Network.mainnet,
+                  network: w.network,
                   ...(account !== undefined && {
                     account,
                     customAccount,
@@ -1071,7 +1167,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                   }),
                 );
               }
-            } catch (err) {
+            } catch {
               logManager.debug(
                 `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
               );

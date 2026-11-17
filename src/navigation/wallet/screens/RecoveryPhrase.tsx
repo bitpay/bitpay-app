@@ -201,7 +201,9 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
     );
   };
   const onPressHeaderCancelRef = useRef(onPressHeaderCancel);
-  onPressHeaderCancelRef.current = onPressHeaderCancel;
+  useLayoutEffect(() => {
+    onPressHeaderCancelRef.current = onPressHeaderCancel;
+  });
 
   const headerTitle = useMemo(() => {
     return () => <HeaderTitle>{t('Recovery Phrase')}</HeaderTitle>;

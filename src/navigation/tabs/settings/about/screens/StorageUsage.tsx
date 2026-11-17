@@ -24,6 +24,7 @@ import {
 import {fontFamily} from '../../../../../components/styled/Text';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {storage} from '../../../../../store';
+import {backupFileSize} from '../../../../../store/backup/fs-backup';
 import {logManager} from '../../../../../managers/LogManager';
 import {getPortfolioRuntimeClient} from '../../../../../portfolio/runtime/portfolioRuntime';
 import {AboutScreens} from '../AboutGroup';
@@ -420,21 +421,7 @@ const StorageUsage: React.FC = () => {
       }
 
       try {
-        const baseDir = RNFS.CachesDirectoryPath + '/bitpay/redux';
-        const finalFile = baseDir + '/persist-root.json';
-        const bakFile = finalFile + '.bak';
-        let bytes = 0;
-        const finalExists = await RNFS.exists(finalFile);
-        if (finalExists) {
-          const stat = await RNFS.stat(finalFile);
-          bytes = Number(stat.size) || 0;
-        } else {
-          const bakExists = await RNFS.exists(bakFile);
-          if (bakExists) {
-            const stat = await RNFS.stat(bakFile);
-            bytes = Number(stat.size) || 0;
-          }
-        }
+        const bytes = await backupFileSize();
         nextMetrics.backupStorage = formatBytes(bytes);
       } catch (err) {
         nextMetrics.backupStorage = '0 Bytes';

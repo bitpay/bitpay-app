@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginBottom: -1,
     borderBottomWidth: 1,
-    height: 60,
+    minHeight: 60,
   },
   bchHeaderActionText: {
     fontSize: 16,

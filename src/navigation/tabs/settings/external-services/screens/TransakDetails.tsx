@@ -59,7 +59,7 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../../../utils/object';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 import {RootState} from '../../../../../store';
 
@@ -119,16 +119,25 @@ const TransakDetails: React.FC = () => {
     const walletIsSupported = (wallet: Wallet): boolean =>
       !!(wallet.credentials && wallet.isComplete());
 
-    const selectedWallet = Object.values(allKeys)
-      .filter(key => key.backupComplete)
-      .flatMap(key => key.wallets ?? [])
-      .find(walletIsSupported);
+    // BWS only returns an order to the wallet that bought it (saved as user_id).
+    const selectedWallet =
+      Object.values(allKeys)
+        .flatMap(key => key.wallets ?? [])
+        .find(
+          wallet =>
+            wallet.id === paymentRequest.user_id && walletIsSupported(wallet),
+        ) ??
+      Object.values(allKeys)
+        .filter(key => key.backupComplete)
+        .flatMap(key => key.wallets ?? [])
+        .find(walletIsSupported);
 
     if (!selectedWallet) {
       logger.error('No supported wallet found for Transak order details');
       return;
     }
 
+    // eslint-disable-next-line no-bitwise -- `| 0` truncates the seconds timestamp to an integer
     const nowTimestamp = (Date.now() / 1000) | 0;
     let _accessToken = accessTokenTransak?.accessToken;
     let _expiresAt = accessTokenTransak?.expiresAt;
@@ -217,7 +226,7 @@ const TransakDetails: React.FC = () => {
           `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiatAmount}`,
         );
         paymentRequest.fiat_total_amount = orderData.fiatAmount;
-        let fiatBaseAmount: number = cloneDeep(paymentRequest.fiat_base_amount);
+        let fiatBaseAmount: number = paymentRequest.fiat_base_amount;
         if (
           orderData.totalFeeInFiat &&
           typeof orderData.totalFeeInFiat === 'number' &&
@@ -328,6 +337,7 @@ const TransakDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getOrderDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest order details; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

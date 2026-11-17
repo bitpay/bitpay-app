@@ -33,15 +33,14 @@ const tokenExpired = (token: ZenledgerTokenProps): boolean => {
   return nowDate - tokenCreatedDate > expiresIn;
 };
 
-export const zenledgerInitialize =
-  (): Effect<Promise<any>> => async dispatch => {
-    logManager.info('zenledgerInitialize: starting...');
-    if (!checkCredentials()) {
-      logManager.error('zenledgerInitialize: credentials not found');
-      return;
-    }
-    logManager.info('zenledgerInitialize: success');
-  };
+export const zenledgerInitialize = (): Effect<Promise<any>> => async () => {
+  logManager.info('zenledgerInitialize: starting...');
+  if (!checkCredentials()) {
+    logManager.error('zenledgerInitialize: credentials not found');
+    return;
+  }
+  logManager.info('zenledgerInitialize: success');
+};
 
 export const getZenLedgerToken = (): Effect<Promise<any>> => async dispatch => {
   try {

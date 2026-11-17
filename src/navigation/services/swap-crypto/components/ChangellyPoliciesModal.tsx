@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalHeader: {
-    height: 50,
+    minHeight: 50,
     marginRight: 10,
   },
   closeModalButton: {

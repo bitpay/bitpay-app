@@ -7,7 +7,7 @@ import {
 import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
-import uniqBy from 'lodash.uniqby';
+import {partition, uniqBy} from '../../../../utils/array';
 import {SAFE_CONFIRMATIONS} from '../../../../constants/wallet';
 import {
   IsCustomERCToken,
@@ -22,7 +22,7 @@ import {
   WithinSameMonth,
 } from '../../utils/time';
 import moment, {MomentInput} from 'moment';
-import 'moment/min/locales';
+import '../../../../utils/momentLocales';
 import i18n from 'i18next';
 import {Effect} from '../../../index';
 import {getHistoricFiatRate, startGetRates} from '../rates/rates';
@@ -39,7 +39,6 @@ import {
 } from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
-import {partition} from 'lodash';
 import {
   BitpaySupportedCoins,
   SUPPORTED_VM_TOKENS,
@@ -236,7 +235,7 @@ const ProcessTx =
                   tokenSymbol || coin,
                   chain,
                   tokenAddress,
-                  Number(o.amount),
+                  o.amount,
                 ),
               );
               return total + BigInt(o.amount);
@@ -281,12 +280,7 @@ const ProcessTx =
 
     if (tx.coin === wallet.currencyAbbreviation) {
       tx.amountStr = dispatch(
-        FormatAmountStr(
-          tokenSymbol || coin,
-          chain,
-          tokenAddress,
-          Number(tx.amount),
-        ),
+        FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
       );
     }
 
@@ -418,7 +412,7 @@ const ProcessNewTxs =
 
         // Scam transactions
         const isERCToken = IsERCToken(tx.coin, tx.chain);
-        if (isERCToken && tx.amount === 0) {
+        if (isERCToken && Number(tx.amount) === 0) {
           continue;
         }
 
@@ -605,8 +599,8 @@ export const GroupTransactionHistory = (history: any[]) => {
   // workaround to show pending transactions first even if it was broadcasted earlier that the confirmed ones
   const [_pendingTransactions, _confirmedTransactions] = partition(
     history.sort((x, y) => y.time - x.time),
-    t => {
-      return t.confirmations === 0;
+    tx => {
+      return tx.confirmations === 0;
     },
   );
   const pendingTransactionsGroup =
@@ -689,7 +683,7 @@ export const GetAccountTransactionHistory =
     };
     sortedCompleteHistory: any[];
   }> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       let allTransactions = [] as any[];
       const transactionPromises = wallets.map(async wallet => {
         try {
@@ -889,7 +883,7 @@ export const GetTransactionHistory =
         }
         if (!skip) {
           fetchedAt = Date.now();
-          let transactionHistory;
+          let pendingCheckHistory;
           let derivedAt: number | undefined;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
@@ -899,16 +893,17 @@ export const GetTransactionHistory =
             const linkedWallet = key.wallets.find(({tokens}: any) =>
               tokens?.includes(walletId),
             );
-            transactionHistory = linkedWallet?.transactionHistory?.transactions;
+            pendingCheckHistory =
+              linkedWallet?.transactionHistory?.transactions;
             derivedAt = linkedWallet?.transactionHistory?.fetchedAt;
           } else {
-            transactionHistory = newHistory;
+            pendingCheckHistory = newHistory;
             derivedAt = Date.now();
           }
 
           // look for sent or moved unconfirmed until find a confirmed
-          if (transactionHistory && transactionHistory[0]) {
-            for (let tx of transactionHistory) {
+          if (pendingCheckHistory && pendingCheckHistory[0]) {
+            for (let tx of pendingCheckHistory) {
               if (tx.action === 'sent' || tx.action === 'moved') {
                 if (tx.confirmations === 0) {
                   hasConfirmingTxs = true;
@@ -1016,8 +1011,11 @@ export const IsInvalid = (action: string | undefined): boolean => {
   return action === 'invalid';
 };
 
-export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
-  return amount === 0 && SUPPORTED_VM_TOKENS.includes(chain);
+export const IsZeroAmountEVM = (
+  amount: number | string,
+  chain: string,
+): boolean => {
+  return Number(amount) === 0 && SUPPORTED_VM_TOKENS.includes(chain);
 };
 
 export const TxForPaymentFeeEVM = (
@@ -1375,6 +1373,34 @@ export const buildTransactionDetails =
             ? fees
             : fee;
 
+        const amountTokenAddress = tokenSymbol
+          ? tokenAddress
+          : wallet.tokenAddress;
+
+        if (transaction.amountStr) {
+          _transaction.amountStr = dispatch(
+            FormatAmountStr(
+              tokenSymbol || coin,
+              chain,
+              amountTokenAddress,
+              amount,
+              true,
+            ),
+          );
+        }
+
+        if (_fee != null) {
+          _transaction.feeStr = dispatch(
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              undefined,
+              _fee,
+              true,
+            ),
+          );
+        }
+
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 
         const rates = await dispatch(startGetRates({}));
@@ -1389,6 +1415,15 @@ export const buildTransactionDetails =
         if (hasMultiplesOutputs) {
           if (action !== 'received') {
             _transaction.outputs = _transaction.outputs.map((o: any) => {
+              o.amountStr = dispatch(
+                FormatAmountStr(
+                  tokenSymbol || coin,
+                  chain,
+                  amountTokenAddress,
+                  o.amount,
+                  true,
+                ),
+              );
               o.alternativeAmountStr = formatFiatAmount(
                 dispatch(
                   toFiat(
@@ -1531,12 +1566,12 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
     by: creatorName,
   });
 
-  actions.forEach((action: any) => {
+  actions.forEach((actionItem: any) => {
     actionList.push({
-      type: action.type,
-      time: action.createdOn,
-      description: actionDescriptions[action.type],
-      by: action.copayerName,
+      type: actionItem.type,
+      time: actionItem.createdOn,
+      description: actionDescriptions[actionItem.type],
+      by: actionItem.copayerName,
     });
   });
 
@@ -1581,7 +1616,7 @@ export const GetInput = async (wallet: Wallet, txid: string) => {
       }
     });
     return input;
-  } catch (err) {
+  } catch {
     return;
   }
 };

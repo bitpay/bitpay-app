@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
   },
   filtersRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
   },
   searchInputContainer: {
     flex: 1,
+    minWidth: 160,
     borderRadius: 50,
     flexDirection: 'row',
     alignItems: 'center',
@@ -199,6 +201,7 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
   }, [legacyAssetRowsEnabled, visibleWallets]);
   const legacyAssetBaselineTimestampMs = useMemo(
     () => getLastDayTimestampStartOfHourMs(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- quoteCurrency is an intentional trigger to recompute the baseline timestamp when the quote currency changes
     [quoteCurrency],
   );
   const {cache: legacyAssetFiatRateSeriesCache} = useRuntimeFiatRateSeriesCache(

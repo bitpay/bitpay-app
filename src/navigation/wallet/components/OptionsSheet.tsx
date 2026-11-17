@@ -5,8 +5,10 @@ import {
   Image,
   ImageSourcePropType,
   Platform,
+  ScrollView,
   StyleProp,
   StyleSheet,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -22,11 +24,8 @@ import {
   Slate30,
   White,
   SlateDark,
-  Caution,
   Feather,
   LightBlack,
-  Warning,
-  Warning25,
 } from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {
@@ -35,11 +34,11 @@ import {
 } from '@components/base/TouchableOpacity';
 import Back from '../../../components/back/Back';
 import AngleRight from '../../../../assets/img/angle-right.svg';
-import ClockOutlineIcon from '../../../../assets/img/icon-clock-outline.svg';
-import AlertTriangleIcon from '../../../../assets/img/icon-alert-triangle.svg';
-import InfoIcon from '../../../components/icons/info/Info';
 
 const styles = StyleSheet.create({
+  optionsScroll: {
+    flexGrow: 0,
+  },
   optionsHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,47 +113,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
-  subDescriptionContainer: {
-    width: '100%',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-  },
-  subDescriptionRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  subDescriptionRowSpacer: {
-    height: 4,
-  },
-  subDescriptionIconContainer: {
-    marginRight: 4,
-  },
-  optionSubDescriptionText: {
-    fontStyle: 'normal',
-    fontWeight: '400',
-    fontSize: 13,
-    lineHeight: 20,
-    flex: 1,
-  },
-  optionBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: Warning25,
-    borderRadius: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginBottom: 8,
-  },
-  optionBadgeText: {
-    fontStyle: 'normal',
-    fontWeight: '400',
-    fontSize: 13,
-    lineHeight: 20,
-    color: Warning,
-  },
 });
 
 const OptionContainer: React.FC<
@@ -182,22 +140,9 @@ const OptionContainer: React.FC<
   />
 );
 
-export interface SubDescriptionItem {
-  icon: 'clock' | 'warning' | 'info';
-  text: string;
-}
-
-const subDescriptionIcons = {
-  clock: ClockOutlineIcon,
-  warning: AlertTriangleIcon,
-  info: InfoIcon,
-};
-
 export interface Option {
   img?: ReactElement;
   imgSrc?: ImageSourcePropType;
-  badge?: string;
-  subDescriptionItems?: SubDescriptionItem[];
   cardStyle?: boolean;
   title?: string;
   description?: string;
@@ -212,6 +157,7 @@ interface Props extends SheetParams {
   isVisible: boolean;
   closeModal: () => void;
   title?: string;
+  titleStyle?: StyleProp<TextStyle>;
   onBack?: () => void;
   options: Array<Option>;
   placement?: SheetPlacement;
@@ -222,6 +168,7 @@ const OptionsSheet = ({
   isVisible,
   closeModal,
   title,
+  titleStyle,
   onBack,
   options,
   paddingHorizontal,
@@ -260,157 +207,98 @@ const OptionsSheet = ({
               style={styles.optionsHeaderTitleContainer}
               pointerEvents="none">
               <TextAlign align={'center'}>
-                <H4>{title}</H4>
+                <H4 style={titleStyle}>{title}</H4>
               </TextAlign>
             </View>
             <View style={styles.optionsHeaderPlaceholder} />
           </View>
         ) : null}
-        {options.map(
-          (
-            {
-              img,
-              imgSrc,
-              title: optionTitle,
-              description,
-              badge,
-              subDescriptionItems,
-              cardStyle,
-              onPress,
-              optionElement,
-              showChevron,
-            },
-            index,
-          ) => {
-            return (
-              <OptionContainer
-                style={index === 0 && sheetPlacement === 'top' && topStyles}
-                placement={sheetPlacement}
-                cardStyle={cardStyle}
-                dark={theme.dark}
-                key={index}
-                activeOpacity={ActiveOpacity}
-                onPress={async () => {
-                  closeModal();
-                  await sleep(500);
-                  onPress();
-                }}>
-                {optionElement ? (
-                  <>{optionElement()}</>
-                ) : (
-                  <>
-                    {img && (
-                      <View style={styles.optionIconContainer}>{img}</View>
-                    )}
-                    {imgSrc && (
-                      <View style={styles.optionIconContainer}>
-                        <Image source={imgSrc} />
-                      </View>
-                    )}
-                    <View
-                      style={[
-                        styles.optionTextContainer,
-                        cardStyle
-                          ? styles.optionTextContainerCard
-                          : styles.optionTextContainerDefault,
-                      ]}>
-                      {badge ? (
-                        <View style={styles.optionBadgeContainer}>
-                          <BaseText style={styles.optionBadgeText}>
-                            {badge}
-                          </BaseText>
+        <ScrollView style={styles.optionsScroll}>
+          {options.map(
+            (
+              {
+                img,
+                imgSrc,
+                title: optionTitle,
+                description,
+                cardStyle,
+                onPress,
+                optionElement,
+                showChevron,
+              },
+              index,
+            ) => {
+              return (
+                <OptionContainer
+                  style={index === 0 && sheetPlacement === 'top' && topStyles}
+                  placement={sheetPlacement}
+                  cardStyle={cardStyle}
+                  dark={theme.dark}
+                  key={index}
+                  activeOpacity={ActiveOpacity}
+                  onPress={async () => {
+                    closeModal();
+                    await sleep(500);
+                    onPress();
+                  }}>
+                  {optionElement ? (
+                    <>{optionElement()}</>
+                  ) : (
+                    <>
+                      {img && (
+                        <View style={styles.optionIconContainer}>{img}</View>
+                      )}
+                      {imgSrc && (
+                        <View style={styles.optionIconContainer}>
+                          <Image source={imgSrc} />
                         </View>
-                      ) : null}
-                      {optionTitle ? (
+                      )}
+                      <View
+                        style={[
+                          styles.optionTextContainer,
+                          cardStyle
+                            ? styles.optionTextContainerCard
+                            : styles.optionTextContainerDefault,
+                        ]}>
+                        {optionTitle ? (
+                          <BaseText
+                            style={[
+                              styles.optionTitleText,
+                              cardStyle && styles.optionTitleTextCard,
+                              {color: theme.dark ? White : Black},
+                            ]}>
+                            {optionTitle}
+                          </BaseText>
+                        ) : null}
                         <BaseText
                           style={[
-                            styles.optionTitleText,
-                            cardStyle && styles.optionTitleTextCard,
-                            {color: theme.dark ? White : Black},
+                            styles.optionDescriptionText,
+                            cardStyle && styles.optionDescriptionTextCard,
+                            {
+                              color: cardStyle
+                                ? theme.dark
+                                  ? Slate30
+                                  : SlateDark
+                                : theme.dark
+                                ? Slate
+                                : Black,
+                            },
                           ]}>
-                          {optionTitle}
+                          {description}
                         </BaseText>
-                      ) : null}
-                      <BaseText
-                        style={[
-                          styles.optionDescriptionText,
-                          cardStyle && styles.optionDescriptionTextCard,
-                          {
-                            color: cardStyle
-                              ? theme.dark
-                                ? Slate30
-                                : SlateDark
-                              : theme.dark
-                              ? Slate
-                              : Black,
-                          },
-                        ]}>
-                        {description}
-                      </BaseText>
-                      {subDescriptionItems &&
-                        subDescriptionItems.length > 0 && (
-                          <View
-                            style={[
-                              styles.subDescriptionContainer,
-                              {
-                                backgroundColor: theme.dark ? Black : White,
-                              },
-                            ]}>
-                            {subDescriptionItems.map((item, itemIndex) => {
-                              const ItemIcon = subDescriptionIcons[item.icon];
-                              return (
-                                <React.Fragment key={itemIndex}>
-                                  {itemIndex > 0 && (
-                                    <View
-                                      style={styles.subDescriptionRowSpacer}
-                                    />
-                                  )}
-                                  <View style={styles.subDescriptionRow}>
-                                    <View
-                                      style={
-                                        styles.subDescriptionIconContainer
-                                      }>
-                                      <ItemIcon
-                                        width={16}
-                                        height={16}
-                                        size={16}
-                                        bgColor={theme.dark ? White : SlateDark}
-                                        color={
-                                          item.icon === 'warning'
-                                            ? Caution
-                                            : theme.dark
-                                            ? White
-                                            : SlateDark
-                                        }
-                                      />
-                                    </View>
-                                    <BaseText
-                                      style={[
-                                        styles.optionSubDescriptionText,
-                                        {
-                                          color: theme.dark ? White : SlateDark,
-                                        },
-                                      ]}>
-                                      {item.text}
-                                    </BaseText>
-                                  </View>
-                                </React.Fragment>
-                              );
-                            })}
-                          </View>
-                        )}
-                    </View>
-                    {showChevron && (
-                      <View style={styles.optionIconContainer}>
-                        <AngleRight />
                       </View>
-                    )}
-                  </>
-                )}
-              </OptionContainer>
-            );
-          },
-        )}
+                      {showChevron && (
+                        <View style={styles.optionIconContainer}>
+                          <AngleRight />
+                        </View>
+                      )}
+                    </>
+                  )}
+                </OptionContainer>
+              );
+            },
+          )}
+        </ScrollView>
       </SheetContainer>
     </SheetModal>
   );

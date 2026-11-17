@@ -406,7 +406,7 @@ const ExportTSSWallet = () => {
 
       const rootPath = RNFS.TemporaryDirectoryPath;
 
-      filePath = `${rootPath}/${filename}`;
+      filePath = `${rootPath}/${filename.replace(/[/:#?%]/g, '_')}`;
 
       const txt = t(
         'Here is the encrypted keyshare backup for wallet: {{name}}\n\n{{keyshare}}\n\nTo import this backup, copy all text between {...}, including the symbols {}',

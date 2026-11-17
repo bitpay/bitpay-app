@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalHeader: {
-    height: 50,
+    minHeight: 50,
     marginRight: 10,
     marginLeft: 10,
     display: 'flex',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
     width: 25,
-    height: 25,
+    minHeight: 25,
   },
   offerDataInfoLabel: {
     marginRight: 10,
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletSelector: {
-    height: 36,
+    minHeight: 36,
     borderRadius: 27.5,
     display: 'flex',
     flexDirection: 'row',
@@ -546,8 +546,6 @@ const SwapCryptoOfferSelectorModal: React.FC<
   amountFrom,
   showOffersLoading,
   selectedOffer,
-  country,
-  preSetPartner,
   offerSelectorOnDismiss,
 }) => {
   const {t} = useTranslation();
@@ -556,7 +554,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
   const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>(
     {},
   );
-  const [forceRerender, setForceRerender] = useState(0);
+  const [, setForceRerender] = useState(0);
   useEffect(() => {
     setForceRerender(f => f + 1);
   }, [amountFrom, selectedOffer?.amountReceiving]);

@@ -1,6 +1,7 @@
 export * from './useAppDispatch';
 export * from './useAppSelector';
 export * from './useDeeplinks';
+export * from './useFontScale';
 export * from './useLogger';
 export * from './useLatestCallback';
 export * from './useMount';

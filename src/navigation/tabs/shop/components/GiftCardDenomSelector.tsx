@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   changeDenomButton: {
-    height: 39,
+    minHeight: 39,
     width: 39,
     alignItems: 'center',
     justifyContent: 'center',

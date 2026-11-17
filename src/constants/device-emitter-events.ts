@@ -29,10 +29,6 @@ export enum DeviceEmitterEvents {
    */
   APP_READY_FOR_DEEPLINKS = 'APP_READY_FOR_DEEPLINKS',
 
-  /**
-   * Triggered when Dosh SDK has finished initialization.
-   */
-  DOSH_INITIALIZED = 'DOSH_INITIALIZED',
   GIFT_CARD_REDEEMED = 'GIFT_CARD_REDEEMED',
   WALLET_LOAD_HISTORY = 'WALLET_LOAD_HISTORY',
   SET_REFRESHING = 'SET_REFRESHING',

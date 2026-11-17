@@ -58,7 +58,7 @@ const PayProConfirmTwoFactor = ({
     Keyboard.dismiss();
     try {
       await onSubmit(code);
-    } catch (err) {
+    } catch {
       setSubmitDisabled(false);
     }
   };

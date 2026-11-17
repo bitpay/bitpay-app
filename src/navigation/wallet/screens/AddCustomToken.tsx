@@ -53,12 +53,12 @@ import {
   formatCryptoAddress,
   getAccount,
   getCurrencyAbbreviation,
+  getProtocolName,
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Icons from '../components/WalletIcons';
-import {Network} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {
@@ -75,12 +75,16 @@ import {useTranslation} from 'react-i18next';
 import i18next from 'i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {IsERCToken, IsSVMChain} from '../../../store/wallet/utils/currency';
+import {
+  filterTestnetWallets,
+  selectShowTestnetWallets,
+} from '../../../store/wallet/utils/testnet';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {RootStacks, getNavigationTabName} from '../../../Root';
+import {RootStacks} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
@@ -90,7 +94,6 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from '@components/base/TouchableOpacity';
-import cloneDeep from 'lodash.clonedeep';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
@@ -119,14 +122,14 @@ const styles = StyleSheet.create({
   },
   associatedWallet: {
     paddingHorizontal: 20,
-    height: 55,
+    minHeight: 55,
     borderWidth: 0.75,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
   },
   associatedAccountNoTouchable: {
     paddingHorizontal: 10,
-    height: 64,
+    minHeight: 64,
     borderWidth: 0.75,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
@@ -303,9 +306,8 @@ const AddCustomToken = ({
   ) as {[key in string]: Token};
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = keys[_key.id];
-  const [isTestnet, setIsTestnet] = useState(false);
-  const [isRegtest, setIsRegtest] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
+  const showTestnetWallets = useAppSelector(selectShowTestnetWallets);
   const [chain, setChain] = useState(selectedChain);
   const SupportedChainCurrencyOptions = IsSVMChain(selectedChain)
     ? SupportedSvmCurrencyOptions
@@ -330,17 +332,39 @@ const AddCustomToken = ({
     op: t('TokensOnOpNetworkDescription'),
   };
 
+  // Mainnet and testnet wallets of an account share its address, so the
+  // account can have one parent wallet per network for this chain.
+  const parentWalletOptions = useMemo(
+    () =>
+      filterTestnetWallets(
+        key.wallets.filter(
+          ({
+            chain: _chain,
+            currencyAbbreviation: abbreviation,
+            receiveAddress,
+          }) =>
+            _chain === chain &&
+            !IsERCToken(abbreviation, _chain) &&
+            receiveAddress === selectedAccountAddress,
+        ),
+        showTestnetWallets,
+      ),
+    [key.wallets, chain, selectedAccountAddress, showTestnetWallets],
+  );
+
   useEffect(() => {
-    const _associatedWallet = key.wallets.find(
-      ({chain: _chain, currencyAbbreviation, receiveAddress}) =>
-        _chain === chain &&
-        !IsERCToken(currencyAbbreviation, _chain) &&
-        receiveAddress === selectedAccountAddress,
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-picks the parent wallet only when the chain changes
+    setAssociatedWallet(
+      parentWalletOptions.find(w => w.network === network) ??
+        parentWalletOptions[0],
     );
-    setAssociatedWallet(_associatedWallet);
+    // Re-pick only when the chain changes; a network the user chose stays.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [chain]);
 
+  const parentNetwork = associatedWallet?.network ?? network;
   const [chainModalVisible, setChainModalVisible] = useState(false);
+  const [networkModalVisible, setNetworkModalVisible] = useState(false);
   const withinReceiveSettings = isWithinReceiveSettings(navigation.getParent());
 
   useLayoutEffect(() => {
@@ -372,6 +396,7 @@ const AddCustomToken = ({
     if (currencyName) {
       reset({walletName: currencyName});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resets the form only when the fetched token name changes
   }, [currencyName]);
 
   const _addWallet = async (): Promise<Wallet> => {
@@ -406,11 +431,7 @@ const AddCustomToken = ({
             },
             options: {
               password,
-              network: isTestnet
-                ? Network.testnet
-                : isRegtest
-                ? Network.regtest
-                : network,
+              network: parentNetwork,
               walletName: walletNameValue,
               ...(account !== undefined && {
                 account,
@@ -435,7 +456,7 @@ const AddCustomToken = ({
           await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
           await sleep(1000);
           dispatch(updatePortfolioBalance());
-        } catch (error) {
+        } catch {
           // ignore error
         }
 
@@ -460,13 +481,11 @@ const AddCustomToken = ({
         // check tokens within associated wallet and see if token already exist
         const {tokens} = associatedWallet;
 
-        const _tokenAddress = cloneDeep(tokenAddress); // Necessary to avoid saving tokenAddress in lowercase
-
         for (const token of tokens) {
           if (
             key?.wallets
               .find(wallet => wallet.id === token)
-              ?.tokenAddress?.toLowerCase() === _tokenAddress?.toLowerCase()
+              ?.tokenAddress?.toLowerCase() === tokenAddress?.toLowerCase()
           ) {
             dispatch(
               showBottomNotificationModal({
@@ -541,13 +560,13 @@ const AddCustomToken = ({
     }
   });
 
-  const showMissingWalletMsg = async (chain: string) => {
+  const showMissingWalletMsg = async (missingChain: string) => {
     await sleep(500);
     dispatch(
       showBottomNotificationModal({
         type: 'info',
         title: t('Missing wallet'),
-        message: DESCRIPTIONS[chain],
+        message: DESCRIPTIONS[missingChain],
         actions: [
           {
             text: t('OK'),
@@ -582,34 +601,50 @@ const AddCustomToken = ({
     ({item}: {item: SupportedCurrencyOption}) => (
       <ChainSelectionRow
         chainObj={BitpaySupportedCoins[item.chain]}
-        onToggle={async (currencyAbbreviation, chain) => {
+        onToggle={async (_currencyAbbreviation, toggledChain) => {
           haptic('soft');
           setChainModalVisible(false);
           await sleep(1000);
-          const hasAssociatedWallet = key.wallets.find(
-            ({chain: _chain}) => _chain === chain,
-          );
+          const hasAssociatedWallet = filterTestnetWallets(
+            key.wallets,
+            showTestnetWallets,
+          ).find(({chain: _chain}) => _chain === toggledChain);
           if (!hasAssociatedWallet) {
-            showMissingWalletMsg(chain);
+            showMissingWalletMsg(toggledChain);
           } else {
-            setChain(chain);
+            setChain(toggledChain);
           }
         }}
         key={item.id}
       />
     ),
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only key.wallets and showTestnetWallets change what a row does
+    [key.wallets, showTestnetWallets],
   );
 
-  const setTokenInfo = async (tokenAddress: string | undefined) => {
+  const selectParentWallet = async (wallet: Wallet) => {
+    haptic('soft');
+    setNetworkModalVisible(false);
+    if (wallet.id === associatedWallet?.id) {
+      return;
+    }
+    setAssociatedWallet(wallet);
+    // Contract info depends on the network, so look the address up again.
+    setTokenAddress(undefined);
+    setCurrencyAbbreviation(undefined);
+    setCurrencyName(undefined);
+    setInvalidTokenAddress(false);
+  };
+
+  const setTokenInfo = async (newTokenAddress: string | undefined) => {
     try {
-      if (!tokenAddress) {
+      if (!newTokenAddress) {
         return;
       }
-      setTokenAddress(tokenAddress);
-      const addrData = GetCoinAndNetwork(tokenAddress, network, chain);
+      setTokenAddress(newTokenAddress);
+      const addrData = GetCoinAndNetwork(newTokenAddress, parentNetwork, chain);
       const isValid =
-        addrData?.coin.toLowerCase() && network === addrData?.network;
+        addrData?.coin.toLowerCase() && parentNetwork === addrData?.network;
 
       if (!isValid) {
         setInvalidTokenAddress(true);
@@ -617,8 +652,13 @@ const AddCustomToken = ({
       }
       setInvalidTokenAddress(false);
 
-      let tokenContractInfo =
-        tokenOptionsByAddress?.[getCurrencyAbbreviation(tokenAddress, chain)];
+      // The known-token lists are mainnet contracts; testnet always asks BWS.
+      let tokenContractInfo: Token | undefined =
+        parentNetwork === 'livenet'
+          ? tokenOptionsByAddress?.[
+              getCurrencyAbbreviation(newTokenAddress, chain)
+            ]
+          : undefined;
       if (!tokenContractInfo) {
         logManager.debug(
           '[AddCustomToken] contract info not present in token options - consulting bws',
@@ -626,24 +666,24 @@ const AddCustomToken = ({
         const fullWalletObj = key.wallets.find(
           ({id}) => id === associatedWallet?.id,
         )!;
-        tokenContractInfo = await getTokenContractInfo(fullWalletObj, {
-          tokenAddress,
+        tokenContractInfo = (await getTokenContractInfo(fullWalletObj, {
+          tokenAddress: newTokenAddress,
           chain,
-        });
+        })) as Token;
         let customToken: Token = {
           name: tokenContractInfo.name,
           symbol: tokenContractInfo.symbol?.toLowerCase(),
           decimals: Number(tokenContractInfo.decimals),
           address: IsSVMChain(chain)
-            ? tokenAddress
-            : tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
+            ? newTokenAddress
+            : newTokenAddress?.toLowerCase(), // Solana addresses are case sensitive
         };
         dispatch(addCustomTokenOption(customToken, chain));
       }
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
       Keyboard.dismiss();
-    } catch (error) {
+    } catch {
       Keyboard.dismiss();
       setTokenAddress(undefined);
       await sleep(200);
@@ -702,6 +742,27 @@ const AddCustomToken = ({
             </Row>
           </AssociatedWallet>
         </View>
+
+        {parentWalletOptions.length > 1 && associatedWallet ? (
+          <View style={styles.associatedAccountContainer}>
+            <Label>{t('NETWORK')}</Label>
+            <AssociatedWallet
+              testID="add-custom-token-network"
+              activeOpacity={ActiveOpacity}
+              onPress={() => setNetworkModalVisible(true)}>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <AssociateWalletName>
+                  {getProtocolName(chain, associatedWallet.network)}
+                </AssociateWalletName>
+                <Icons.DownToggle />
+              </Row>
+            </AssociatedWallet>
+          </View>
+        ) : null}
 
         {associatedWallet && associatedWallet.receiveAddress ? (
           <View style={styles.associatedAccountContainer}>
@@ -769,6 +830,30 @@ const AddCustomToken = ({
               keyExtractor={keyExtractor}
               renderItem={renderChain}
             />
+          </AssociatedAccountSelectionModalContainer>
+        </SheetModal>
+
+        <SheetModal
+          isVisible={networkModalVisible}
+          onBackdropPress={() => setNetworkModalVisible(false)}>
+          <AssociatedAccountSelectionModalContainer>
+            <TextAlign align={'center'}>
+              <H4>{t('Select a Network')}</H4>
+            </TextAlign>
+            {parentWalletOptions.map(wallet => (
+              <View key={wallet.id} style={styles.associatedAccountContainer}>
+                <AssociatedWallet
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => selectParentWallet(wallet)}>
+                  <Row style={{alignItems: 'center'}}>
+                    <CurrencyImage img={CurrencyListIcons[chain]} size={30} />
+                    <AssociateWalletName>
+                      {getProtocolName(chain, wallet.network)}
+                    </AssociateWalletName>
+                  </Row>
+                </AssociatedWallet>
+              </View>
+            ))}
           </AssociatedAccountSelectionModalContainer>
         </SheetModal>
 

@@ -10,9 +10,8 @@ import {
 } from '../../../../store/wallet/effects/transactions/transactions';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {WalletGroupParamList} from '../../WalletGroup';
-import _ from 'lodash';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {GetPrecision} from '../../../../store/wallet/utils/currency';
+import {FromBaseUnits} from '../../../../store/wallet/effects/amount/amount';
 import RNFS from 'react-native-fs';
 import {
   Platform,
@@ -109,7 +108,7 @@ const ExportTransactionHistory = () => {
       }
       const transactions = acc;
 
-      if (_.isEmpty(transactions)) {
+      if (!transactions?.length) {
         logManager.warn(
           '[buildCVSFile]: Failed to generate CSV: no transactions',
         );
@@ -120,12 +119,6 @@ const ExportTransactionHistory = () => {
       logManager.debug(
         `[buildCVSFile]: Wallet Transaction History Length: ${transactions.length}`,
       );
-
-      // @ts-ignore
-      const {unitToSatoshi} = dispatch(
-        GetPrecision(currencyAbbreviation, chain, tokenAddress),
-      );
-      const satToUnit = 1 / unitToSatoshi;
 
       let _amount, _note, _copayers, _creator, _comment;
       const csvContent: any[] = [];
@@ -148,12 +141,24 @@ const ExportTransactionHistory = () => {
           _creator = tx.creatorName ? tx.creatorName : '';
         }
         _amount =
-          (tx.action == 'sent' ? '-' : '') + (amount * satToUnit).toFixed(8);
+          (tx.action == 'sent' ? '-' : '') +
+          dispatch(
+            FromBaseUnits(amount, currencyAbbreviation, chain, tokenAddress),
+          );
         _note = tx.message || '';
         _comment = tx.note ? tx.note.body : '';
 
         if (tx.action == 'moved') {
-          _note += ' Sent to self:' + (tx.amount * satToUnit).toFixed(8);
+          _note +=
+            ' Sent to self:' +
+            dispatch(
+              FromBaseUnits(
+                tx.amount,
+                currencyAbbreviation,
+                chain,
+                tokenAddress,
+              ),
+            );
         }
 
         csvContent.push({
@@ -169,7 +174,9 @@ const ExportTransactionHistory = () => {
         });
 
         if (tx.fees && (tx.action == 'moved' || tx.action == 'sent')) {
-          const _fee = (tx.fees * satToUnit).toFixed(8);
+          const _fee = dispatch(
+            FromBaseUnits(tx.fees, chain, chain, undefined),
+          );
           csvContent.push({
             Date: formatDate(tx.time * 1000),
             Destination: `${chain.toUpperCase()} Network Fees`,

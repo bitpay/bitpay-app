@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   linkButton: {
-    height: 40,
-    width: 50,
+    minHeight: 40,
+    minWidth: 50,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',

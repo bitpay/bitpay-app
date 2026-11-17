@@ -20,7 +20,7 @@ import {
   Action,
 } from '../../styles/colors';
 import {BaseText} from '../styled/Text';
-import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
+import {ActionContainer, ActiveOpacity} from '../styled/Containers';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {SvgProps} from 'react-native-svg';
 
@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   description: {
@@ -42,6 +41,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -135,7 +135,7 @@ const Banner = ({
           minHeight: height || BANNER_HEIGHT,
         },
       ]}>
-      <Row style={styles.bannerRow}>
+      <View style={styles.bannerRow}>
         {icon ? React.createElement(icon) : <Info bgColor={bgColor} />}
         <View style={styles.description}>
           {title ? (
@@ -192,7 +192,7 @@ const Banner = ({
             </ActionContainer>
           ) : null}
         </View>
-      </Row>
+      </View>
     </View>
   );
 };

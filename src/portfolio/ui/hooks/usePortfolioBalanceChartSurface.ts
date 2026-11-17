@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import type {Wallet} from '../../../store/wallet/wallet.models';
+import {compareCodeUnits} from '../../../utils/compareCodeUnits';
 
 export type PortfolioBalanceChartSurfaceChangeRowData = {
   percent: number;
@@ -45,7 +46,7 @@ export function usePortfolioBalanceChartSurface(args: {
     return (args.wallets || [])
       .map(wallet => String(wallet?.id || ''))
       .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b))
+      .sort(compareCodeUnits)
       .join('|');
   }, [args.wallets]);
 
@@ -56,15 +57,12 @@ export function usePortfolioBalanceChartSurface(args: {
     setChangeRowData(undefined);
   }, []);
 
-  useEffect(() => {
+  const resetSignature = `${args.quoteCurrency}|${args.resetKey}|${enabled}|${walletIdsSignature}`;
+  const [prevResetSignature, setPrevResetSignature] = useState(resetSignature);
+  if (prevResetSignature !== resetSignature) {
+    setPrevResetSignature(resetSignature);
     clearChartDrivenState();
-  }, [
-    args.quoteCurrency,
-    args.resetKey,
-    clearChartDrivenState,
-    enabled,
-    walletIdsSignature,
-  ]);
+  }
 
   useEffect(() => {
     if (

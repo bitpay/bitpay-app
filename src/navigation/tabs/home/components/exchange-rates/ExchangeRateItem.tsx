@@ -18,6 +18,7 @@ import {NeutralSlate, Slate30, SlateDark} from '../../../../../styles/colors';
 import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Percentage from '../../../../../components/percentage/Percentage';
+import {useIsLargeFont} from '../../../../../utils/hooks/useFontScale';
 
 const styles = StyleSheet.create({
   rowContainer: {
@@ -48,15 +49,31 @@ const styles = StyleSheet.create({
   },
 });
 
-const RowContainer: React.FC<React.ComponentProps<typeof TouchableOpacity>> = ({
-  style,
-  ...rest
-}) => <TouchableOpacity style={[styles.rowContainer, style]} {...rest} />;
+const RowContainer: React.FC<
+  React.ComponentProps<typeof TouchableOpacity> & {stacked?: boolean}
+> = ({style, stacked, ...rest}) => (
+  <TouchableOpacity
+    style={[
+      styles.rowContainer,
+      stacked && {flexDirection: 'column', alignItems: 'flex-start'},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
-const NoteContainer: React.FC<React.ComponentProps<typeof Column>> = ({
-  style,
-  ...rest
-}) => <Column style={[styles.noteContainer, style]} {...rest} />;
+const NoteContainer: React.FC<
+  React.ComponentProps<typeof Column> & {stacked?: boolean}
+> = ({style, stacked, ...rest}) => (
+  <Column
+    style={[
+      styles.noteContainer,
+      stacked && {alignItems: 'flex-start', alignSelf: 'stretch', marginTop: 6},
+      style,
+    ]}
+    {...rest}
+  />
+);
 
 const SubTextContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
@@ -107,6 +124,7 @@ const ExchangeRateItem = ({
   defaultAltCurrencyIsoCode: string;
 }) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   const {img, currencyName, currentPrice, average, currencyAbbreviation} = item;
 
   const {amount, code} = formatFiatAmountObj(
@@ -120,6 +138,7 @@ const ExchangeRateItem = ({
 
   return (
     <RowContainer
+      stacked={stacked}
       activeOpacity={ActiveOpacity}
       testID={`home-exchange-rate-item-${item.id}`}
       accessibilityLabel={t('{{currency}} exchange rate', {
@@ -130,7 +149,7 @@ const ExchangeRateItem = ({
         <CurrencyImage img={img} size={40} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <ExchangeRateText ellipsizeMode="tail" numberOfLines={1}>
+        <ExchangeRateText ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
           {currencyName}
         </ExchangeRateText>
         {currencyAbbreviation ? (
@@ -139,7 +158,7 @@ const ExchangeRateItem = ({
           </ExchangeRateSubText>
         ) : null}
       </CurrencyColumn>
-      <NoteContainer>
+      <NoteContainer stacked={stacked}>
         {currentPrice ? (
           <>
             <ExchangeRateText>

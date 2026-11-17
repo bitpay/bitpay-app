@@ -1,6 +1,6 @@
 import {Effect} from '..';
 import {check, request, RESULTS, PERMISSIONS} from 'react-native-permissions';
-import {APP_ANALYTICS_ENABLED, APP_VERSION} from '../../constants/config';
+import {APP_ANALYTICS_ENABLED} from '../../constants/config';
 import {BrazeWrapper} from '../../lib/Braze';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {AppsFlyerWrapper} from '../../utils/appsFlyer';

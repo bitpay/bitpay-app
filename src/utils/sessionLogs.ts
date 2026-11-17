@@ -7,7 +7,7 @@ export const PERSISTED_SESSION_LOGS_STORAGE_KEY = 'persist:logs';
 export const SESSION_LOGS_CLEANUP_DONE_STORAGE_KEY = 'sessionLogsCleanupDone';
 export const SESSION_LOGS_EASTER_EGG_TAP_COUNT = 5;
 
-const sessionLogsStorage = new MMKV();
+export const sessionLogsStorage = new MMKV({id: 'bitpay.session-logs.v1'});
 const sessionLogArtifactBasenames = [`${APP_NAME_UPPERCASE}-logs`, 'App-logs'];
 
 export const isSessionLogsEnabled = () =>

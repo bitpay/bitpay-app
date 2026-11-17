@@ -24,6 +24,7 @@ export type CurrencySelectionItem = Pick<
 > & {
   chain: string;
   chainName?: string;
+  description?: string;
   imgSrc?: ImageRequireSource | undefined;
   selected?: boolean;
   disabled?: boolean;
@@ -85,6 +86,7 @@ const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
     badgeUri,
     disabled,
     chain,
+    description,
   } = currency;
 
   const onPress = useCallback((): void => {
@@ -120,7 +122,7 @@ const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
             styles.currencySubTitle,
             {color: theme.dark ? LuckySevens : SlateDark},
           ]}>
-          {formatCurrencyAbbreviation(currencyAbbreviation)}
+          {description ?? formatCurrencyAbbreviation(currencyAbbreviation)}
         </BaseText>
       </View>
 

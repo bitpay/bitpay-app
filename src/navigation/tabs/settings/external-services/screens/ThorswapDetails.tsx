@@ -55,7 +55,6 @@ import {
   ThorswapGetSwapTxRequestData,
   ThorswapTrackingStatus,
 } from '../../../../../store/swap-crypto/models/thorswap.models';
-import cloneDeep from 'lodash.clonedeep';
 import {RootState} from '../../../../../store';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
@@ -156,10 +155,7 @@ const ThorswapDetails: React.FC = () => {
           swapTxData.result.legs &&
           swapTxData.result.legs.length === 1 &&
           swapTxData.result.legs[0].toAmount &&
-          !compareAmounts(
-            cloneDeep(swapTx.amountTo),
-            swapTxData.result.legs[0].toAmount,
-          )
+          !compareAmounts(swapTx.amountTo, swapTxData.result.legs[0].toAmount)
         ) {
           logger.debug(
             'Updating amountTo to: ' + swapTxData.result.legs[0].toAmount,
@@ -244,6 +240,7 @@ const ThorswapDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest swap status; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

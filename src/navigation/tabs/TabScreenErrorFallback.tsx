@@ -19,7 +19,6 @@ import {
   SettingsGroupParamList,
   SettingsScreens,
 } from './settings/SettingsGroup';
-import {CardHomeScreenProps} from '../card/screens/CardHome';
 import type {HomeScreenProps} from './home/HomeRoot';
 import {HeaderContainer, HeaderLeftContainer} from './home/components/Styled';
 import {H3, Link, Paragraph, TextAlign} from '../../components/styled/Text';
@@ -141,7 +140,6 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
 };
 
 type TabScreenProps =
-  | CardHomeScreenProps
   | HomeScreenProps
   | NativeStackScreenProps<BillGroupParamList, BillScreens.BILLS_HOME>
   | NativeStackScreenProps<ShopStackParamList, ShopScreens.HOME>

@@ -67,47 +67,47 @@ export enum GiftCardScreens {
   GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
 }
 
-const GiftCardGroup = ({GiftCard, theme}: GiftCardProps) => {
+const GiftCardGroup = ({GiftCard: GiftCardStack, theme}: GiftCardProps) => {
   const commonOptions = useStackScreenOptions(theme);
   return (
-    <GiftCard.Group screenOptions={commonOptions}>
-      <GiftCard.Screen
+    <GiftCardStack.Group screenOptions={commonOptions}>
+      <GiftCardStack.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}
         component={BuyGiftCard}
       />
-      <GiftCard.Screen
+      <GiftCardStack.Screen
         name={GiftCardScreens.ENTER_EMAIL}
         component={EnterEmail}
         options={{
           headerTitle: () => <HeaderTitle>{t('Enter Email')}</HeaderTitle>,
         }}
       />
-      <GiftCard.Screen
+      <GiftCardStack.Screen
         name={GiftCardScreens.ENTER_PHONE}
         component={EnterPhone}
         options={{
           headerTitle: () => <HeaderTitle>{t('Enter Phone')}</HeaderTitle>,
         }}
       />
-      <GiftCard.Screen
+      <GiftCardStack.Screen
         name={GiftCardScreens.GIFT_CARD_DETAILS}
         component={GiftCardDetails}
         options={{
           gestureEnabled: false,
         }}
       />
-      <GiftCard.Screen
+      <GiftCardStack.Screen
         name={GiftCardScreens.GIFT_CARD_CONFIRM}
         component={Confirm}
         options={{
           gestureEnabled: false,
         }}
       />
-      <GiftCard.Screen
+      <GiftCardStack.Screen
         name={GiftCardScreens.GIFT_CARD_DEEPLINK}
         component={GiftCardDeeplinkScreen}
       />
-      <GiftCard.Screen
+      <GiftCardStack.Screen
         name={GiftCardScreens.ARCHIVED_GIFT_CARDS}
         component={ArchivedGiftCards}
         options={{
@@ -116,7 +116,7 @@ const GiftCardGroup = ({GiftCard, theme}: GiftCardProps) => {
           ),
         }}
       />
-    </GiftCard.Group>
+    </GiftCardStack.Group>
   );
 };
 
