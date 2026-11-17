@@ -1,10 +1,10 @@
 import {DarkTheme, DefaultTheme, Theme} from '@react-navigation/native';
 import {
   Action,
-  Air,
   BitPay,
   Black,
   LinkBlue,
+  Slate30,
   SlateDark,
   White,
 } from '../styles/colors';
@@ -44,7 +44,7 @@ export const BitPayDarkTheme: BitPayTheme = {
     card: DarkTheme.colors.card,
     text: White,
     link: LinkBlue,
-    description: Air,
+    description: Slate30,
     border: DarkTheme.colors.border,
     notification: DarkTheme.colors.notification,
   },

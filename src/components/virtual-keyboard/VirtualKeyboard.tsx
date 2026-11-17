@@ -122,13 +122,16 @@ const CellValue: React.FC<
 const CellLetter: React.FC<React.ComponentProps<typeof BaseText>> = ({
   style,
   ...rest
-}) => (
-  <BaseText
-    maxFontSizeMultiplier={1.3}
-    style={[styles.cellLetter, style]}
-    {...rest}
-  />
-);
+}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      maxFontSizeMultiplier={1.3}
+      style={[styles.cellLetter, {color: theme.colors.description}, style]}
+      {...rest}
+    />
+  );
+};
 
 const SymbolContainer: React.FC<
   SymbolContainerProps & React.ComponentProps<typeof View>

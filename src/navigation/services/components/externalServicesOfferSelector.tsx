@@ -3324,7 +3324,7 @@ const ExternalServicesOfferSelector: React.FC<
         )}
         {offerWarnMsg ? null : selectedOfferLoading ? (
           <ActivityIndicatorContainer>
-            <ActivityIndicator color={SlateDark} />
+            <ActivityIndicator color={theme.colors.description} />
           </ActivityIndicatorContainer>
         ) : selectedOffer ? (
           <ArrowContainer style={{marginRight: 10}}>
