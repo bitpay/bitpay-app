@@ -365,6 +365,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        if notification.request.trigger is UNPushNotificationTrigger {
+            SilentPushEvent.emitEvent(withName: "SilentPushNotification", andPayload: notification.request.content.userInfo)
+        }
+
         if UIApplication.shared.applicationState == .active {
             completionHandler([]) // suppress banner while in foreground
         } else {
