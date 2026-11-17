@@ -1,0 +1,102 @@
+// Run only on pristine develop 6c84ecc4, copied temporarily to src/store/.
+// BIP02_CAPTURE_PATH selects the external output; no real credentials are used.
+jest.mock('@env', () => ({DISABLE_DEVELOPMENT_LOGGING: 'true'}));
+jest.mock('react-native-mmkv', () => {
+  const stores = new Map<string, Map<string, unknown>>();
+  return {
+    MMKV: jest.fn((options?: {id?: string}) => {
+      const id = options?.id ?? 'mmkv.default';
+      if (!stores.has(id)) stores.set(id, new Map());
+      const values = stores.get(id)!;
+      return {
+        getString: jest.fn(key => values.get(key)),
+        getBoolean: jest.fn(key => values.get(key)),
+        getAllKeys: jest.fn(() => [...values.keys()]),
+        set: jest.fn((key, value) => values.set(key, value)),
+        delete: jest.fn(key => values.delete(key)),
+      };
+    }),
+  };
+});
+jest.mock('react-native-keychain', () => ({
+  getGenericPassword: jest.fn(async () => ({password: 'synthetic-upstream-key'})),
+  setGenericPassword: jest.fn(),
+}));
+jest.mock('../constants/config', () => ({
+  APP_NETWORK: 'livenet',
+  APP_VERSION: 'test',
+  BASE_BITPAY_URLS: {livenet: 'https://example.test'},
+  BASE_BWS_URL: 'https://example.test',
+  BLOCKCHAIN_EXPLORERS: Object.fromEntries(
+    ['eth', 'matic', 'arb', 'base', 'op', 'sol'].map(chain => [
+      chain, {livenet: {}, testnet: {}},
+    ]),
+  ),
+}));
+jest.mock('../utils/helper-methods', () => ({getErrorString: String}));
+jest.mock('../lib/bwc', () => ({
+  BwcProvider: {getInstance: () => ({
+    createKey: ({seedData}: any) => ({toObj: () => seedData}),
+    getClient: (raw: string) => ({credentials: JSON.parse(raw)}),
+  })},
+}));
+jest.mock('./wallet/utils/wallet', () => ({
+  checkPrivateKeyEncrypted: () => false,
+  buildWalletObj: () => ({}),
+}));
+jest.mock('./portfolio', () => ({clearWalletPortfolioDataWithRuntime: jest.fn()}));
+jest.mock('../managers/LogManager', () => ({
+  logManager: {info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), addLog: jest.fn()},
+}));
+
+import getStore, {storage} from './index';
+import {flushPersistor} from './persistor';
+import {migrateWalletSecrets} from './wallet-secrets/wallet-secrets.effects';
+import {removePersistRootBackups, resumePersistRootBackups} from './backup/fs-backup';
+import {initialWalletSecretsState} from './wallet-secrets/wallet-secrets.reducer';
+
+it('captures the real first and second upstream persistence flushes', async () => {
+  const {store, persistor} = await getStore();
+  await new Promise<void>(resolve => {
+    if (persistor.getState().bootstrapped) return resolve();
+    const unsubscribe = persistor.subscribe(() => {
+      if (persistor.getState().bootstrapped) { unsubscribe(); resolve(); }
+    });
+  });
+  const key = {
+    id: 'fixture',
+    properties: {mnemonic: 'synthetic upstream mnemonic', xPrivKey: 'synthetic upstream xpriv'},
+    wallets: [{id: 'wallet-fixture', credentials: {
+      xPubKey: 'synthetic-public', requestPrivKey: 'synthetic-request-private',
+      walletPrivKey: 'synthetic-wallet-private', personalEncryptingKey: 'synthetic-personal',
+      sharedEncryptingKey: 'synthetic-shared', mnemonic: 'synthetic-credential-mnemonic',
+      mnemonicEncrypted: 'synthetic-inner-password-ciphertext', entropySource: 'synthetic-entropy',
+    }}],
+    tssSession: {id: 'tss-fixture', partyKey: {xPrivKey: 'synthetic-tss-private'}, sessionExport: 'synthetic-session-export', password: 'synthetic-ceremony-password', copayers: [{partyId: 1, joinCode: 'synthetic-join-code'}], status: 'ceremony_in_progress'},
+  };
+  const pendingJoinerSession = {sessionId: 'pending-fixture', partyKey: {xPrivKey: 'synthetic-pending-private'}, createdAt: 1};
+  store.dispatch({type: 'persist/REHYDRATE', key: 'root', payload: {
+    APP: {...store.getState().APP, migrationMMKVStorageComplete: true},
+    WALLET: {...store.getState().WALLET, keys: {fixture: key}, pendingJoinerSession, secretsMigrated: false},
+    WALLET_SECRETS: initialWalletSecretsState,
+  }});
+  const snapshots: string[] = [];
+  await store.dispatch(migrateWalletSecrets(async () => {
+    await flushPersistor();
+    snapshots.push(storage.getString('persist:root')!);
+  }, removePersistRootBackups, resumePersistRootBackups) as any);
+  expect(snapshots).toHaveLength(2);
+  for (const [i, raw] of snapshots.entries()) {
+    const root = JSON.parse(raw);
+    const wallet = JSON.parse(JSON.parse(root.WALLET));
+    expect(wallet.secretsMigrated).toBe(i === 1);
+    expect(JSON.parse(root.WALLET_SECRETS).startsWith('U2FsdGVkX1')).toBe(true);
+    expect(Boolean(wallet.keys.fixture.properties)).toBe(i === 0);
+  }
+  require('fs').writeFileSync(process.env.BIP02_CAPTURE_PATH!, JSON.stringify({
+    sourceCommit: '6c84ecc4c0bee99d599449a29f2c6447f451478a',
+    oldKey: 'synthetic-upstream-key', key, pendingJoinerSession,
+    intermediate: snapshots[0], completed: snapshots[1],
+  }, null, 2) + '\n');
+  persistor.pause();
+});

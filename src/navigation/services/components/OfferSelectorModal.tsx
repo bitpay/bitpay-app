@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   SafeAreaView as RNSafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -46,10 +45,6 @@ import {
   Small,
   TextAlign,
 } from '../../../components/styled/Text';
-import {
-  TermsContainerOffer,
-  TermsText,
-} from '../buy-crypto/styled/BuyCryptoTerms';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import PaymentMethodsModal from '../buy-crypto/components/PaymentMethodModal';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -69,7 +64,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalHeader: {
-    height: 50,
+    minHeight: 50,
     marginRight: 10,
     marginLeft: 10,
     display: 'flex',
@@ -118,7 +113,7 @@ const styles = StyleSheet.create({
   },
   paymentMethodSelectorContainer: {
     borderWidth: 1,
-    height: 48,
+    minHeight: 48,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 4,
@@ -206,7 +201,7 @@ const styles = StyleSheet.create({
   },
   bestOfferTag: {
     borderRadius: 50,
-    height: 25,
+    minHeight: 25,
     paddingVertical: 5,
     paddingHorizontal: 10,
   },
@@ -221,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
     width: 25,
-    height: 25,
+    minHeight: 25,
   },
   offerDataInfoLabel: {
     marginRight: 10,
@@ -265,7 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletSelector: {
-    height: 36,
+    minHeight: 36,
     borderRadius: 27.5,
     display: 'flex',
     flexDirection: 'row',
@@ -474,20 +469,6 @@ const OfferRowLeft: React.FC<ViewProps> = ({style, ...rest}) => (
 const BestOfferTagContainer: React.FC<ViewProps> = ({style, ...rest}) => (
   <View style={[styles.bestOfferTagContainer, style]} {...rest} />
 );
-
-const BestOfferTag: React.FC<ViewProps> = ({style, ...rest}) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.bestOfferTag,
-        {backgroundColor: theme.dark ? '#2FCFA4' : '#cbf3e8'},
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
 
 const BestOfferTagText = React.forwardRef<
   Text,
@@ -728,7 +709,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const logger = useLogger();
+  useLogger();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -736,7 +717,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
 
-  const [updateView, setUpdateView] = useState<number>(0);
+  const [, setUpdateView] = useState<number>(0);
 
   useEffect(() => {
     setUpdateView(Math.random());

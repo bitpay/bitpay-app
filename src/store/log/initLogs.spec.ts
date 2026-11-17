@@ -9,10 +9,9 @@ const mockStorage = {
 
 const mockLogManager = {addLog: jest.fn()};
 
-jest.mock('../index', () => ({
-  get storage() {
-    return mockStorage;
-  },
+let mockActive = true;
+jest.mock('../vault-storage', () => ({
+  isVaultActive: () => mockActive,
 }));
 
 jest.mock('../../managers/LogManager', () => ({
@@ -22,6 +21,9 @@ jest.mock('../../managers/LogManager', () => ({
 }));
 
 jest.mock('../../utils/sessionLogs', () => ({
+  get sessionLogsStorage() {
+    return mockStorage;
+  },
   isSessionLogsEnabled: jest.fn(),
 }));
 
@@ -42,6 +44,7 @@ const getFreshModule = () => {
 describe('initLogs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockActive = true;
     (isSessionLogsEnabled as jest.Mock).mockReturnValue(true);
     mockStorage.getString.mockReturnValue(undefined);
   });
@@ -87,6 +90,36 @@ describe('initLogs', () => {
     ]);
   });
 
+  it('redacts private keys on every line before persisting a log', () => {
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(
+        'walletPrivKey=fake-wallet-key\n{"xPrivKey":"fake-xprv"}\nsafe line\n{"XPRIVKEY":"fake-xprv-2"}\nwalletprivkey=fake-wallet-key-2',
+      ).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(JSON.parse(written)[0].message).toBe(
+      'walletPrivKey:[...]\n{"[...]\nsafe line\n{"[...]\nwalletPrivKey:[...]',
+    );
+  });
+
+  it('redacts extended private keys logged without a field name', () => {
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(
+        'xprv9s21ZrQH143KfakeKey\nderive failed for tprv8ZgxMBicQKsPfakeKey at m/0',
+      ).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(JSON.parse(written)[0].message).toBe(
+      '[...]\nderive failed for [...] at m/0',
+    );
+  });
+
   it('keeps only the newest 500 entries', () => {
     const {add, drainAndDispatch} = getFreshModule();
     drainAndDispatch(jest.fn());
@@ -129,6 +162,7 @@ describe('initLogs', () => {
 describe('persist:logs writers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockActive = true;
   });
 
   it('caps the reducer path at 500 too, so the two writers agree', () => {
@@ -155,4 +189,19 @@ describe('persist:logs writers', () => {
       entry('Backup write failed - ENOENT').payload,
     );
   });
+});
+
+it('holds direct log and drain writes until activation, then flushes only modern logs', () => {
+  mockActive = false;
+  jest.clearAllMocks();
+  const {appendPersistedLog, drainAndDispatch} = getFreshModule();
+  const dispatch = jest.fn();
+  appendPersistedLog(entry('preparing').payload);
+  drainAndDispatch(dispatch);
+  expect(mockStorage.set).not.toHaveBeenCalled();
+  expect(mockStorage.getString).not.toHaveBeenCalled();
+  expect(dispatch).not.toHaveBeenCalled();
+  mockActive = true;
+  drainAndDispatch(dispatch);
+  expect(dispatch).toHaveBeenCalledTimes(1);
 });

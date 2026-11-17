@@ -1,4 +1,4 @@
-import debounce from 'lodash.debounce';
+import {debounce} from '../../utils/debounce';
 import React, {memo, useLayoutEffect, useMemo, useRef} from 'react';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import Animated, {
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     borderWidth: 2,
-    paddingVertical: 4,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: PILL_RADIUS,
     paddingVertical: 8,
     paddingHorizontal: 15,
+    flexShrink: 1,
   },
   pillText: {
     fontSize: 15,
@@ -318,6 +319,7 @@ const ButtonContainerFlex: React.FC<
       justifyContent: hasIcon ? 'space-between' : 'center',
       paddingLeft: hasIcon ? 10 : 0,
       alignItems: 'center',
+      flexShrink: 1,
     }}>
     {children}
   </View>
@@ -339,14 +341,16 @@ const StatefulButtonContent: React.FC<
     }
 
     previousHiddenRef.current = hidden;
-    childOpacity.value = withDelay(
-      hidden ? 0 : DURATION,
-      withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+    childOpacity.set(
+      withDelay(
+        hidden ? 0 : DURATION,
+        withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+      ),
     );
   }, [childOpacity, hidden]);
 
   const childrenStyle = useAnimatedStyle(() => ({
-    opacity: childOpacity.value,
+    opacity: childOpacity.get(),
   }));
 
   return <Animated.View style={childrenStyle}>{children}</Animated.View>;
@@ -473,6 +477,7 @@ const PillText: React.FC<ButtonOptionProps> = ({
   const theme = useTheme();
   return (
     <BaseText
+      maxFontSizeMultiplier={1.4}
       style={[
         styles.pillText,
         {

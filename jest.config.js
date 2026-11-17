@@ -1,3 +1,6 @@
+// babel.config.js skips the dotenv plugin only when NODE_ENV is 'test'
+process.env.NODE_ENV = 'test';
+
 module.exports = {
   preset: '@react-native/jest-preset',
   resolver: '<rootDir>/test/reanimatedResolver.js',
@@ -8,7 +11,7 @@ module.exports = {
   ],
   transformIgnorePatterns: [
     '\\.snap$',
-    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|\@react-navigation|(react-navigation(-.*))|\@sentry|\@shopify/flash-list|uuid|victory|(victory(-.*))|lodash-es))',
+    'node_modules/(?!(@walletconnect/react-native-compat|@freakycoder|@react-native|react-native|(react-native(-.*))|@react-navigation|(react-navigation(-.*))|@sentry|@shopify/flash-list|uuid|victory|(victory(-.*))|lodash-es))',
   ],
   transform: {
     '^.+\\.svg$': 'jest-transform-stub',

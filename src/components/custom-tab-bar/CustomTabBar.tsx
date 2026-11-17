@@ -11,6 +11,7 @@ import {
   White,
 } from '../../styles/colors';
 import {BaseText} from '../styled/Text';
+import {WIDTH} from '../styled/Containers';
 
 const gutter = 5;
 const tabWidth = 150;
@@ -18,9 +19,11 @@ const tabWidth = 150;
 const styles = StyleSheet.create({
   tabBarContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'center',
     borderRadius: 50,
-    height: 56,
+    maxWidth: WIDTH - gutter * 4,
+    minHeight: 56,
   },
   tabButton: {
     display: 'flex',
@@ -28,7 +31,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    height: 44,
+    minHeight: 44,
     paddingVertical: 10,
     borderRadius: 50,
     margin: gutter,
@@ -38,6 +41,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textTransform: 'none',
     fontWeight: '500',
+    flexShrink: 1,
+    textAlign: 'center',
   },
   iconContainer: {
     alignItems: 'center',
@@ -96,6 +101,8 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({
               <View style={styles.iconContainer}>{tabBarIcon}</View>
             )}
             <BaseText
+              numberOfLines={2}
+              maxFontSizeMultiplier={1.6}
               style={[
                 styles.tabLabel,
                 {

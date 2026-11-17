@@ -6,7 +6,7 @@ import {
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../../utils/object';
 
 export const moonpaySellEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -87,7 +87,7 @@ export const moonpaySellSupportedSolanaTokens = [
 ];
 
 export const getMoonpaySellSupportedCurrencies = (
-  country?: string,
+  _country?: string,
 ): string[] => {
   const moonpaySellSupportedCurrencies = [
     ...moonpaySellSupportedCoins,

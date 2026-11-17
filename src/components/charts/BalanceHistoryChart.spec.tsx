@@ -2,6 +2,10 @@ import React from 'react';
 import {View} from 'react-native';
 import TestRenderer, {act} from 'react-test-renderer';
 import BalanceHistoryChart from './BalanceHistoryChart';
+import BalanceChartSkeleton, {
+  BalanceChartErrorCaption,
+  BalanceChartPopulateCaption,
+} from './BalanceChartSkeleton';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 import {usePortfolioBalanceChartScope} from '../../portfolio/ui/hooks/usePortfolioBalanceChartScope';
 import usePortfolioHistoricalRateDepsCache from '../../portfolio/ui/hooks/usePortfolioHistoricalRateDepsCache';
@@ -206,12 +210,12 @@ const mockEquivalentUpdatedOneDaySeries = buildEquivalentSeries(
 
 jest.mock('react-native-reanimated', () => {
   const ReactLib = require('react');
-  const {View} = require('react-native');
+  const {View: RNView} = require('react-native');
   return {
     __esModule: true,
     default: {
       View: ({children, ...props}: any) =>
-        ReactLib.createElement(View, props, children),
+        ReactLib.createElement(RNView, props, children),
     },
     // Match the native hook contract, not the web-only dependency argument.
     useAnimatedStyle: (factory: () => any, ...dependencies: unknown[]) => {
@@ -220,7 +224,8 @@ jest.mock('react-native-reanimated', () => {
     },
     useDerivedValue: (factory: () => number, ...dependencies: unknown[]) => {
       expect(dependencies).toHaveLength(0);
-      return {value: factory()};
+      const value = factory();
+      return {value, get: () => value};
     },
     withTiming: (value: number) => value,
   };
@@ -239,6 +244,17 @@ jest.mock('../../contexts', () => ({
       text: 'black',
     },
   }),
+}));
+
+jest.mock('../../store/portfolio', () => ({
+  maybePopulatePortfolioForWallets: jest.fn((args: unknown) => ({
+    type: 'mockMaybePopulatePortfolioForWallets',
+    args,
+  })),
+}));
+
+jest.mock('../../managers/LogManager', () => ({
+  logManager: {warn: jest.fn()},
 }));
 
 jest.mock('../../utils/hooks', () => ({
@@ -1559,6 +1575,35 @@ describe('BalanceHistoryChart', () => {
     });
   });
 
+  it('reports which wallets the visible series has data for', async () => {
+    const onChartedWalletIdsChange = jest.fn();
+    mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValueOnce({
+      __series: {
+        ...mockOneWeekSeries,
+        walletFiatBalanceByWalletId: {
+          'wallet-2': [60, 65],
+          'wallet-1': [40, 45],
+          'wallet-empty': [0, 0],
+        },
+      },
+    });
+
+    await act(async () => {
+      TestRenderer.create(
+        balanceHistoryChart({
+          initialSelectedTimeframe: '1W',
+          onChartedWalletIdsChange,
+          showLoaderWhenNoSnapshots: true,
+        }),
+      );
+    });
+
+    expect(onChartedWalletIdsChange).toHaveBeenLastCalledWith([
+      'wallet-1',
+      'wallet-2',
+    ]);
+  });
+
   it('preserves graph points reference after a runtime refresh with equivalent points', async () => {
     const deferred = createDeferred<{
       __series: typeof mockUpdatedOneDaySeries;
@@ -1703,5 +1748,303 @@ describe('BalanceHistoryChart', () => {
       mockUpdatedOneDaySeries.graphPoints,
     );
     expect(mockDispatch).not.toHaveBeenCalled();
+  });
+  describe('ghost line loading states', () => {
+    it('renders the drawing skeleton with populate counts in place of the chart until the first line arrives', async () => {
+      const deferred = createDeferred<{__series: typeof mockOneDaySeries}>();
+      mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
+        deferred.promise,
+      );
+
+      await act(async () => {
+        TestRenderer.create(
+          balanceHistoryChart({
+            showLoaderWhenNoSnapshots: true,
+            populateProgress: {completed: 2, total: 7},
+          }),
+        );
+      });
+
+      const placeholder = latestInteractiveLineChartProps.placeholder;
+      expect(placeholder?.type).toBe(BalanceChartSkeleton);
+      expect(placeholder.props.variant).toBe('drawing');
+      expect(placeholder.props.caption.type).toBe(BalanceChartPopulateCaption);
+      expect(placeholder.props.caption.props).toEqual({
+        completed: 2,
+        total: 7,
+      });
+      expect(latestInteractiveLineChartProps.isLoading).toBe(true);
+      expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(true);
+
+      await act(async () => {
+        deferred.resolve({__series: mockOneDaySeries});
+        await deferred.promise;
+      });
+
+      expect(latestInteractiveLineChartProps.placeholder).toBeNull();
+      expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+      expect(latestInteractiveLineChartProps.points).toBe(
+        mockOneDaySeries.graphPoints,
+      );
+    });
+
+    it('falls back to the bare skeleton when populate counts are unknown', async () => {
+      mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
+        createDeferred().promise,
+      );
+
+      await act(async () => {
+        TestRenderer.create(
+          balanceHistoryChart({showLoaderWhenNoSnapshots: true}),
+        );
+      });
+
+      const placeholder = latestInteractiveLineChartProps.placeholder;
+      expect(placeholder?.type).toBe(BalanceChartSkeleton);
+      expect(placeholder.props.caption).toBeUndefined();
+    });
+
+    it('keeps the previous line dimmed with no skeleton or overlay while a slow range switch loads', async () => {
+      jest.useFakeTimers();
+      const deferred = createDeferred<{__series: typeof mockOneWeekSeries}>();
+      mockRunPortfolioBalanceChartViewModelQuery
+        .mockResolvedValueOnce({__series: mockOneDaySeries})
+        .mockReturnValue(deferred.promise);
+
+      await act(async () => {
+        TestRenderer.create(
+          balanceHistoryChart({
+            showLoaderWhenNoSnapshots: true,
+            populateProgress: {completed: 1, total: 3},
+          }),
+        );
+      });
+      await act(async () => {
+        latestTimeframeSelectorProps.onSelect('1W');
+      });
+      await act(async () => {
+        jest.advanceTimersByTime(120);
+      });
+
+      expect(latestInteractiveLineChartProps.isLoading).toBe(true);
+      expect(latestInteractiveLineChartProps.hideLineWhileLoading).toBe(false);
+      expect(latestInteractiveLineChartProps.placeholder).toBeNull();
+      expect(latestInteractiveLineChartProps.points).toBe(
+        mockOneDaySeries.graphPoints,
+      );
+    });
+
+    it('shows the static error state with Retry instead of disappearing when the first query fails', async () => {
+      const onErrorStateChange = jest.fn();
+      mockRunPortfolioBalanceChartViewModelQuery.mockRejectedValueOnce(
+        new Error('history unavailable'),
+      );
+
+      await act(async () => {
+        TestRenderer.create(
+          // Default props: before this change the chart returned null here.
+          balanceHistoryChart({onErrorStateChange}),
+        );
+      });
+
+      const placeholder = latestInteractiveLineChartProps?.placeholder;
+      expect(placeholder?.type).toBe(BalanceChartSkeleton);
+      expect(placeholder.props.variant).toBe('static');
+      expect(placeholder.props.isLoading).toBe(false);
+      expect(placeholder.props.caption.type).toBe(BalanceChartErrorCaption);
+      expect(latestInteractiveLineChartProps.isLoading).toBe(false);
+      expect(onErrorStateChange).toHaveBeenLastCalledWith(true);
+
+      mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValue({
+        __series: mockOneDaySeries,
+      });
+      await act(async () => {
+        placeholder.props.caption.props.onRetry();
+      });
+
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'mockMaybePopulatePortfolioForWallets',
+        args: {
+          walletIds: ['wallet-1'],
+          quoteCurrency: 'USD',
+          forceRetryQuarantined: true,
+        },
+      });
+      expect(mockRunPortfolioBalanceChartViewModelQuery).toHaveBeenCalledTimes(
+        2,
+      );
+      expect(latestInteractiveLineChartProps.placeholder).toBeNull();
+      expect(latestInteractiveLineChartProps.points).toBe(
+        mockOneDaySeries.graphPoints,
+      );
+      expect(onErrorStateChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('never surfaces a stale refresh error for a new scope while its first query is pending', async () => {
+      const onErrorStateChange = jest.fn();
+      const placeholderVariants: unknown[] = [];
+      mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValueOnce({
+        __series: mockOneDaySeries,
+      });
+      let renderer!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        renderer = TestRenderer.create(
+          balanceHistoryChart({onErrorStateChange}),
+        );
+      });
+
+      // A background refresh of scope A fails while its line stays visible.
+      mockRunPortfolioBalanceChartViewModelQuery.mockRejectedValueOnce(
+        new Error('refresh failed'),
+      );
+      mockUsePortfolioBalanceChartScope.mockReturnValue(
+        mockChartScope({chartDataRevisionSig: 'chart-rev-2'}),
+      );
+      await act(async () => {
+        renderer.update(balanceHistoryChart({onErrorStateChange}));
+      });
+      expect(latestInteractiveLineChartProps.points).toBe(
+        mockOneDaySeries.graphPoints,
+      );
+
+      // Switch to scope B, which has no line yet and a pending first query.
+      mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
+        createDeferred().promise,
+      );
+      mockUsePortfolioBalanceChartScope.mockReturnValue(
+        mockChartScope({
+          scopeId: 'balance_history_chart:89|USD|0|wallet-2',
+          sortedWalletIds: ['wallet-2'],
+          storedWallets: [{summary: {walletId: 'wallet-2'}}],
+        }),
+      );
+      await act(async () => {
+        renderer.update(
+          balanceHistoryChart({
+            wallets: mockWallets('wallet-2'),
+            onErrorStateChange: (value: boolean) => {
+              placeholderVariants.push(
+                latestInteractiveLineChartProps?.placeholder?.props?.variant,
+              );
+              onErrorStateChange(value);
+            },
+          }),
+        );
+      });
+
+      expect(onErrorStateChange).not.toHaveBeenCalledWith(true);
+      expect(placeholderVariants).not.toContain('static');
+      expect(latestInteractiveLineChartProps.placeholder?.props.variant).toBe(
+        'drawing',
+      );
+    });
+
+    it('masks the error state while chart data is not ready to query', async () => {
+      const onErrorStateChange = jest.fn();
+      mockRunPortfolioBalanceChartViewModelQuery.mockRejectedValueOnce(
+        new Error('history unavailable'),
+      );
+      let renderer!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        renderer = TestRenderer.create(
+          balanceHistoryChart({onErrorStateChange}),
+        );
+      });
+      expect(
+        latestInteractiveLineChartProps.placeholder?.props.caption.type,
+      ).toBe(BalanceChartErrorCaption);
+
+      await act(async () => {
+        renderer.update(
+          balanceHistoryChart({
+            onErrorStateChange,
+            isBalanceChartDataReadyToQuery: false,
+          }),
+        );
+      });
+
+      const placeholder = latestInteractiveLineChartProps.placeholder;
+      expect(placeholder?.type).toBe(BalanceChartSkeleton);
+      expect(placeholder.props.variant).toBe('drawing');
+      expect(placeholder.props.isLoading).toBeUndefined();
+      expect(onErrorStateChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('uses a static loading skeleton when the screen asks for one', async () => {
+      mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
+        createDeferred().promise,
+      );
+
+      await act(async () => {
+        TestRenderer.create(
+          balanceHistoryChart({
+            showLoaderWhenNoSnapshots: true,
+            skeletonVariant: 'static',
+          }),
+        );
+      });
+
+      const placeholder = latestInteractiveLineChartProps.placeholder;
+      expect(placeholder?.type).toBe(BalanceChartSkeleton);
+      expect(placeholder.props.variant).toBe('static');
+      // Still a loading skeleton (announced as progress), not the error one.
+      expect(placeholder.props.isLoading).toBeUndefined();
+    });
+
+    it('hides the populate and error captions when hideSkeletonCaption is set', async () => {
+      mockRunPortfolioBalanceChartViewModelQuery.mockReturnValue(
+        createDeferred().promise,
+      );
+      let renderer!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        renderer = TestRenderer.create(
+          balanceHistoryChart({
+            showLoaderWhenNoSnapshots: true,
+            populateProgress: {completed: 1, total: 4},
+            hideSkeletonCaption: true,
+          }),
+        );
+      });
+      expect(
+        latestInteractiveLineChartProps.placeholder?.props.caption,
+      ).toBeUndefined();
+      act(() => renderer.unmount());
+      mountedRenderers.delete(renderer);
+
+      mockRunPortfolioBalanceChartViewModelQuery.mockRejectedValueOnce(
+        new Error('history unavailable'),
+      );
+      await act(async () => {
+        TestRenderer.create(balanceHistoryChart({hideSkeletonCaption: true}));
+      });
+      const placeholder = latestInteractiveLineChartProps.placeholder;
+      expect(placeholder?.props.variant).toBe('static');
+      expect(placeholder.props.caption).toBeUndefined();
+    });
+
+    it('keeps the existing line instead of the error state when a refresh fails', async () => {
+      mockRunPortfolioBalanceChartViewModelQuery.mockResolvedValueOnce({
+        __series: mockOneDaySeries,
+      });
+      let renderer!: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        renderer = TestRenderer.create(balanceHistoryChart());
+      });
+
+      mockRunPortfolioBalanceChartViewModelQuery.mockRejectedValueOnce(
+        new Error('refresh failed'),
+      );
+      mockUsePortfolioBalanceChartScope.mockReturnValue(
+        mockChartScope({chartDataRevisionSig: 'chart-rev-2'}),
+      );
+      await act(async () => {
+        renderer.update(balanceHistoryChart());
+      });
+
+      expect(latestInteractiveLineChartProps.placeholder).toBeNull();
+      expect(latestInteractiveLineChartProps.points).toBe(
+        mockOneDaySeries.graphPoints,
+      );
+    });
   });
 });

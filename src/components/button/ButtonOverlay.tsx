@@ -38,27 +38,36 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
   const isPrimary = buttonStyle === 'primary';
 
   const overlayOpacity = useSharedValue(0);
-  overlayOpacity.value = withTiming(isVisible ? 1 : 0, {
-    duration: 0,
-    easing: Easing.linear,
-  });
+  overlayOpacity.set(
+    withTiming(isVisible ? 1 : 0, {
+      duration: 0,
+      easing: Easing.linear,
+    }),
+  );
 
   const iconOpacity = useSharedValue(0);
-  iconOpacity.value = withDelay(
-    isVisible ? 0 : 0,
-    withTiming(isVisible ? 1 : 0, {duration: DURATION, easing: Easing.linear}),
+  iconOpacity.set(
+    withDelay(
+      isVisible ? 0 : 0,
+      withTiming(isVisible ? 1 : 0, {
+        duration: DURATION,
+        easing: Easing.linear,
+      }),
+    ),
   );
 
   const iconScale = useSharedValue(0.75);
-  iconScale.value = animate
-    ? withSequence(
-        withTiming(1.25, {duration: DURATION, easing: Easing.linear}),
-        withTiming(1, {duration: DURATION, easing: Easing.linear}),
-      )
-    : withTiming(1, {duration: DURATION, easing: Easing.linear});
+  iconScale.set(
+    animate
+      ? withSequence(
+          withTiming(1.25, {duration: DURATION, easing: Easing.linear}),
+          withTiming(1, {duration: DURATION, easing: Easing.linear}),
+        )
+      : withTiming(1, {duration: DURATION, easing: Easing.linear}),
+  );
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
+    opacity: overlayOpacity.get(),
     borderWidth: 2,
     borderStyle: 'solid',
     borderRadius: buttonType === 'pill' ? PILL_RADIUS : BUTTON_RADIUS,
@@ -72,8 +81,8 @@ const ButtonOverlay: React.FC<ButtonOverlayProps> = props => {
       display: 'flex',
       flexGrow: 1,
       justifyContent: 'center',
-      opacity: iconOpacity.value,
-      transform: [{scale: iconScale.value}],
+      opacity: iconOpacity.get(),
+      transform: [{scale: iconScale.get()}],
     })),
   ];
 

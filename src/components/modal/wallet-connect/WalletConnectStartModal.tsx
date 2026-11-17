@@ -89,6 +89,7 @@ import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
 import {SvgProps} from 'react-native-svg';
 import {ethers} from 'ethers';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 type AuthEvt = WalletKitTypes.EventArguments['session_authenticate'];
 type ProposalEvt = WalletKitTypes.EventArguments['session_proposal'];
@@ -724,7 +725,8 @@ const WalletConnectStartModalContentComponent = ({
         ];
         combinedChains.map(chainId => {
           const chainInfo = WALLET_CONNECT_SUPPORTED_CHAINS[chainId];
-          if (chainInfo) {
+          // Testnet chains are only offered while testnet mode is on.
+          if (chainInfo && !isHiddenByTestnetMode(chainInfo)) {
             chains.push(chainInfo);
           }
         });

@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import {Carousel, CarouselRef} from 'react-native-reanimated-carousel';
 import {useTheme} from '../../../../contexts';
 import {CardConfig, GiftCard} from '../../../../store/shop/shop.models';
 import {GiftCardScreens} from '../gift-card/GiftCardGroup';
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 50,
+    minHeight: 50,
     marginVertical: 10,
     marginHorizontal: horizontalPadding,
   },
@@ -76,7 +76,7 @@ const MyGiftCards = ({
   supportedGiftCards: CardConfig[];
 }) => {
   const {t} = useTranslation();
-  const carouselRef = useRef<ICarouselInstance>(null);
+  const carouselRef = useRef<CarouselRef>(null);
   const navigation = useNavigation();
   const [slideIndex, setSlideIndex] = useState(0);
   const allGiftCards = useAppSelector(
@@ -154,13 +154,9 @@ const MyGiftCards = ({
       <View style={{height: carouselHeight}}>
         <Carousel
           ref={carouselRef}
-          loop={false}
-          vertical={false}
-          width={WIDTH}
-          height={carouselHeight}
-          autoPlay={false}
+          style={{width: WIDTH, height: carouselHeight}}
           data={slides}
-          enabled={false}
+          scrollEnabled={false}
           renderItem={({item}: {item: GiftCard[]; index: number}) => (
             <>
               {item.length ? (

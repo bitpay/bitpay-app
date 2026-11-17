@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useState} from 'react';
+import React, {useRef, useEffect, useState, useSyncExternalStore} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {WebView, WebViewMessageEvent} from 'react-native-webview';
 import {DKLS_JS_BASE64} from './vendor/dkls-wasm-js-base64';
@@ -11,24 +11,103 @@ type Pending = {
   reject: (e: any) => void;
 };
 
+const BOOT_TIMEOUT_MS = 20000;
+const RPC_TIMEOUT_MS = 60000;
+const OBJECT_IDS_PER_WORKER = 2 ** 32;
+
 let _post: ((data: any) => void) | null = null;
 let _isReady = false;
 let _readyResolve: (() => void) | null = null;
-const _readyPromise: Promise<void> = new Promise(res => (_readyResolve = res));
+let _readyReject: ((e: Error) => void) | null = null;
+let _bootTimer: ReturnType<typeof setTimeout> | null = null;
+let _readyPromise: Promise<void>;
+const resetReadiness = () => {
+  _readyPromise = new Promise<void>((res, rej) => {
+    _readyResolve = res;
+    _readyReject = rej;
+  });
+  _readyPromise.catch(() => {});
+};
+resetReadiness();
 const _outQueue: string[] = [];
 const pendings = new Map<number, Pending>();
 let seq = 1;
+
+let _mountRequested = false;
+let _bootAttempt = 0;
+const _mountListeners = new Set<() => void>();
+
+const clearBootTimer = () => {
+  if (_bootTimer) {
+    clearTimeout(_bootTimer);
+    _bootTimer = null;
+  }
+};
+
+const failWorker = (error: Error) => {
+  clearBootTimer();
+  const reject = _readyReject;
+  _isReady = false;
+  _readyResolve = null;
+  _readyReject = null;
+  resetReadiness();
+  _outQueue.length = 0;
+  _mountRequested = false;
+  _bootAttempt++;
+  _mountListeners.forEach(listener => listener());
+  reject?.(error);
+  pendings.forEach(pending => pending.reject(error));
+  pendings.clear();
+};
+
+const failBoot = (reason: string) => {
+  if (_isReady || !_readyReject) {
+    return;
+  }
+  failWorker(new Error(`DKLS worker failed to start: ${reason}`));
+};
+
+export function requestDklsWorkerMount(): void {
+  if (_mountRequested) {
+    return;
+  }
+  _mountRequested = true;
+  _mountListeners.forEach(listener => listener());
+}
+
+const subscribeDklsMount = (listener: () => void): (() => void) => {
+  _mountListeners.add(listener);
+  return () => {
+    _mountListeners.delete(listener);
+  };
+};
+
+// A monotonic generation for useSyncExternalStore: 0 while unmounted, and a
+// fresh positive value each time a boot fails and the worker is re-requested.
+// Keying the WebView on it forces a brand-new instance even when a failed boot
+// and the next mount request land in the same render batch — a boolean snapshot
+// would read false→true as "no change" and leave the dead WebView mounted with
+// no boot timer, so the new call would never settle.
+const getDklsMountGeneration = (): number =>
+  _mountRequested ? _bootAttempt + 1 : 0;
+
+const encodeBytes = (bytes: Uint8Array): number[] | {__dklsBytes: string} =>
+  bytes.length < 128
+    ? Array.from(bytes)
+    : {
+        __dklsBytes: Buffer.from(
+          bytes.buffer,
+          bytes.byteOffset,
+          bytes.byteLength,
+        ).toString('base64'),
+      };
 
 const processArgs = (args: any): any => {
   if (!Array.isArray(args)) return args;
 
   return args.map(arg => {
     if (arg instanceof Uint8Array) {
-      console.log(
-        '[DKLS shim] processArgs: Uint8Array → Array, len=',
-        arg.length,
-      );
-      return Array.from(arg);
+      return encodeBytes(arg);
     }
     if (Array.isArray(arg)) {
       return processArgs(arg);
@@ -38,7 +117,7 @@ const processArgs = (args: any): any => {
       for (const key in arg) {
         // @ts-ignore
         processed[key] =
-          arg[key] instanceof Uint8Array ? Array.from(arg[key]) : arg[key];
+          arg[key] instanceof Uint8Array ? encodeBytes(arg[key]) : arg[key];
       }
       return processed;
     }
@@ -47,6 +126,7 @@ const processArgs = (args: any): any => {
 };
 
 export async function callWorker<T = any>(msg: any): Promise<T> {
+  requestDklsWorkerMount();
   const id = ++seq;
   const processedMsg = {
     ...msg,
@@ -68,11 +148,22 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
   if (!_isReady) {
     if (WORKER_LOGS_ENABLED) console.log('[Dkls RN] waiting _readyPromise…');
     await _readyPromise;
+    if (!_isReady) {
+      throw new Error('DKLS worker restarted');
+    }
   }
 
   return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () =>
+        failWorker(
+          new Error(`DKLS worker did not reply within ${RPC_TIMEOUT_MS}ms`),
+        ),
+      RPC_TIMEOUT_MS,
+    );
     pendings.set(id, {
       resolve: v => {
+        clearTimeout(timer);
         const dt = Date.now() - t0;
         if (WORKER_LOGS_ENABLED)
           console.log('[Dkls RN←WV] ok', {
@@ -83,6 +174,7 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
         resolve(v);
       },
       reject: e => {
+        clearTimeout(timer);
         const dt = Date.now() - t0;
         if (WORKER_LOGS_ENABLED)
           console.log('[Dkls RN←WV] ERR', {id, dt, err: String(e)});
@@ -98,7 +190,7 @@ export async function callWorker<T = any>(msg: any): Promise<T> {
   });
 }
 
-export const DklsWorkerHost = () => {
+const DklsWorkerWebView = () => {
   const [bootHtml] = useState(() => {
     return `
 <!doctype html>
@@ -145,15 +237,6 @@ export const DklsWorkerHost = () => {
           if (v instanceof Uint8Array) return 'Uint8Array(' + v.length + ')';
           if (Array.isArray(v)) return 'Array(' + v.length + ')';
           return typeof v;
-        }
-
-        function preview(v) {
-          try {
-            return JSON.stringify(v, (k, val) => val instanceof Uint8Array ? Array.from(val).slice(0, 16) + '…' : val).slice(0, 300);
-          }
-          catch {
-            return String(v).slice(0, 300);
-          }
         }
 
         function isHandle(v) {
@@ -205,13 +288,14 @@ export const DklsWorkerHost = () => {
 
         function enqueue(objId, task) {
           const chain = (inFlight.get(objId) || Promise.resolve()).then(task, task);
-          inFlight.set(objId, chain.finally(() => {
-            if (inFlight.get(objId) === chain) inFlight.delete(objId);
-          }));
+          const tail = chain.catch(() => {}).then(() => {
+            if (inFlight.get(objId) === tail) inFlight.delete(objId);
+          });
+          inFlight.set(objId, tail);
           return chain;
         }
 
-        let nextId = 1;
+        let nextId = ${_bootAttempt * OBJECT_IDS_PER_WORKER + 1};
         let dklsMod = null;
 
         const DKLS_JS_B64 = ${JSON.stringify(DKLS_JS_BASE64)};
@@ -236,12 +320,27 @@ export const DklsWorkerHost = () => {
           }
         }
 
+        function encodeBytes(bytes) {
+          if (bytes.length < 128) return Array.from(bytes);
+          let binary = '';
+          for (let i = 0; i < bytes.length; i += 8192) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+          }
+          return { __dklsBytes: btoa(binary) };
+        }
+
         function toU8(x) {
           if (x == null) return undefined;
           if (x instanceof Uint8Array) return x;
           if (Array.isArray(x)) return new Uint8Array(x);
 
           if (typeof x === "object") {
+            if (typeof x.__dklsBytes === 'string') {
+              const binary = atob(x.__dklsBytes);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              return bytes;
+            }
             const keys = Object.keys(x);
             const isArrayLike = keys.length > 0 && keys.every((k, i) => k === String(i));
             if (isArrayLike) {
@@ -260,6 +359,7 @@ export const DklsWorkerHost = () => {
         function deproxy(v) {
           if (Array.isArray(v)) return v.map(deproxy);
           if (v && typeof v === "object") {
+            if (typeof v.__dklsBytes === 'string') return toU8(v);
             if (typeof v._id === "number") {
               const o = objects.get(v._id);
               if (!o) throw new Error("Unknown objId " + v._id);
@@ -284,8 +384,8 @@ export const DklsWorkerHost = () => {
         }
 
         function norm(x) {
-          if (x instanceof Uint8Array) return Array.from(x);
-          if (x instanceof ArrayBuffer) return Array.from(new Uint8Array(x));
+          if (x instanceof Uint8Array) return encodeBytes(x);
+          if (x instanceof ArrayBuffer) return encodeBytes(new Uint8Array(x));
 
           if (dklsMod && x instanceof dklsMod.Keyshare) {
             const objId = nextId++;
@@ -295,23 +395,15 @@ export const DklsWorkerHost = () => {
           }
 
           if (dklsMod && x instanceof dklsMod.Message) {
-          const objId = nextId++;
-          objects.set(objId, x);
-          return { objId };
+          const message = { payload: norm(x.payload), from_id: x.from_id, to_id: x.to_id };
+          x.free();
+          return message;
           }
           if (Array.isArray(x)) return x.map(norm);
           return x;
         }
 
         async function onCall(data) {
-          post({
-            id: -998, ok: true,
-            result: "[DKLS LOG] onCall with args=" + JSON.stringify({
-              id: data.id, type: data.type, className: data.className,
-              method: data.method, argsPreview: preview(data.args),
-            })
-          });
-
           const { id, type } = data;
           try {
             if (type === "init") {
@@ -321,10 +413,12 @@ export const DklsWorkerHost = () => {
 
             if (type === "free") {
               const { objId } = data;
-              if (!objects.has(objId)) {
+              const obj = objects.get(objId);
+              if (!obj) {
                 return reply(id, true, "already_freed");
               }
               objects.delete(objId);
+              if (obj.__wbg_ptr) obj.free();
               return reply(id, true, "freed");
             }
 
@@ -338,8 +432,6 @@ export const DklsWorkerHost = () => {
               }
               let a = clone(deproxy(args || []));
               if (!Array.isArray(a)) a = [a];
-
-              console.log('[WV] construct', className, 'rawArgsTypes=', a.map(typeOf), 'rawArgsPreview=', preview(a));
 
               if (className === 'SignSessionOTVariant') {
                 console.log('[Worker] Constructing SignSessionOTVariant');
@@ -377,13 +469,7 @@ export const DklsWorkerHost = () => {
               if (className === "Message" && a.length >= 1) {
                 const before = a[0];
                 a[0] = toU8(a[0]);
-                post({
-                  id: -989, ok: true,
-                  result: "[DKLS LOG] Building Message: payload.len=" + a[0].length + ", from=" + a[1] + ", to=" + a[2]
-                });
               }
-
-              console.log('[WV] construct', className, 'normArgsTypes=', a.map(typeOf), 'normArgsPreview=', preview(a));
 
               const inst = new Ctor(...a);
               const objId = nextId++;
@@ -397,7 +483,6 @@ export const DklsWorkerHost = () => {
               const fn = S && S[data.method];
               if (typeof fn !== "function") throw new Error("No static " + data.className + "." + data.method);
               let a2 = clone(deproxy(data.args || []));
-              console.log('[WV] staticConstruct', data.className + '.' + data.method, 'argsTypes=', (Array.isArray(a2) ? a2 : []).map(typeOf), 'argsPrev=', preview(a2));
               const inst2 = fn(...(Array.isArray(a2) ? a2 : [a2]));
               const oid2 = nextId++;
               objects.set(oid2, inst2);
@@ -412,10 +497,6 @@ export const DklsWorkerHost = () => {
 
               const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(obj), method);
               if (descriptor && descriptor.get) {
-                post({
-                  id: -980, ok: true,
-                  result: "[DKLS LOG] getter: " + method
-                });
                 return enqueue(objId, async () => {
                   let res = obj[method];
                   if (res && typeof res.then === 'function') res = await res;
@@ -426,34 +507,15 @@ export const DklsWorkerHost = () => {
 
               const fn = obj[method];
               if (typeof fn !== 'function') throw new Error('No method ' + method);
-                if (method === 'toBytes') {
-                post({
-                  id: -970, ok: true,
-                  result: "[DKLS LOG] toBytes"
-                });
-              }
 
               let a = Array.isArray(args) ? args : (args == null ? [] : [args]);
 
               if (method === 'handleMessages' && a.length >= 1 && Array.isArray(a[0])) {
-                post({
-                  id: -997, ok: true,
-                  result: "[DKLS LOG] handleMessages: procesing " + a[0].length + " messages"
-                });
-
                 const inMsgs = a[0];
                 const outMsgs = [];
 
                 for (let i = 0; i < inMsgs.length; i++) {
                   let m = inMsgs[i];
-
-                  post({
-                    id: -996, ok: true,
-                    result: "[DKLS LOG] msg[" + i + "]: type=" + typeOf(m) +
-                            ", isHandle=" + isHandle(m) +
-                            ", isPlain=" + isPlainMsg(m) +
-                            ", keys=" + (m && typeof m === 'object' ? Object.keys(m).join(',') : 'N/A')
-                  });
 
                   if (isHandle(m)) {
                     const inst = objects.get(m._id);
@@ -461,10 +523,6 @@ export const DklsWorkerHost = () => {
                       throw new Error('Unknown message handle _id=' + m._id + ' at index ' + i);
                     }
                     if (dklsMod && inst instanceof dklsMod.Message) {
-                      post({
-                        id: -995, ok: true,
-                        result: "[DKLS LOG] msg[" + i + "]: using existing handle _id=" + m._id
-                      });
                       outMsgs.push(inst);
                       continue;
                     }
@@ -473,20 +531,12 @@ export const DklsWorkerHost = () => {
 
                   if (isPlainMsg(m)) {
                     const p = toU8(m.payload);
-                    post({
-                      id: -994, ok: true,
-                      result: "[DKLS LOG] msg[" + i + "]: creating Message, payload.len=" + p.length + ", from=" + m.from_id + ", to=" + m.to_id
-                    });
                     const msg = new dklsMod.Message(p, m.from_id, m.to_id);
                     outMsgs.push(msg);
                     continue;
                   }
 
                   if (dklsMod && m instanceof dklsMod.Message) {
-                    post({
-                      id: -993, ok: true,
-                      result: "[DKLS LOG] msg[" + i + "]: its already a WASM instance"
-                    });
                     outMsgs.push(m);
                     continue;
                   }
@@ -502,33 +552,14 @@ export const DklsWorkerHost = () => {
                     from_id: m && m.from_id !== undefined ? m.from_id : 'missing',
                   };
 
-                  post({
-                    id: -992, ok: false,
-                    result: "[DKLS ERROR] msg[" + i + "]: unknown type - " + JSON.stringify(errDetail)
-                  });
-
                   throw new Error('Bad message entry for handleMessages at index ' + i + ': ' + JSON.stringify(errDetail));
                 }
 
-                post({
-                  id: -991, ok: true,
-                  result: "[DKLS LOG] handleMessages: " + outMsgs.length + " messages prepared for WASM"
-                });
-
                 let commitments = a.length >= 2 && a[1] != null ? a[1] : undefined;
                 if (commitments && Array.isArray(commitments)) {
-                  post({
-                    id: -986, ok: true,
-                    result: "[DKLS LOG] Converting commitments from Array to Uint8Array..."
-                  });
-
                   commitments = commitments.map((c, idx) => {
                     if (Array.isArray(c)) {
                       const u8 = new Uint8Array(c);
-                      post({
-                        id: -985, ok: true,
-                        result: "[DKLS LOG] Commitment[" + idx + "] converted: Array(" + c.length + ") → Uint8Array(" + u8.length + ")"
-                      });
                       return u8;
                     }
                     return c;
@@ -537,59 +568,14 @@ export const DklsWorkerHost = () => {
 
                 const seed = a.length >= 3 && a[2] != null ? a[2] : undefined;
                 a = [outMsgs, commitments, seed];
-                post({
-                  id: -990, ok: true,
-                  result: "[DKLS LOG] Validating messages for WASM before handleMessages..."
-                });
-
-                for (let i = 0; i < outMsgs.length; i++) {
-                  const msg = outMsgs[i];
-                  if (!msg || !(msg instanceof dklsMod.Message)) {
-                    throw new Error('outMsgs[' + i + '] its not a valid instance of Message');
-                  }
-
-                  try {
-                    const payload = msg.payload;
-                    const from = msg.from_id;
-                    const to = msg.to_id;
-
-                    post({
-                      id: -989, ok: true,
-                      result: "[DKLS LOG] Message[" + i + "] valid: payload.len=" + payload.length + ", from=" + from + ", to=" + to
-                    });
-                  } catch (e) {
-                    post({
-                      id: -988, ok: false,
-                      result: "[DKLS ERROR] Message[" + i + "] CORRUPT: " + String(e)
-                    });
-                    throw new Error('Message[' + i + '] corrupt or its free: ' + String(e));
-                  }
-                }
-
-                post({
-                  id: -987, ok: true,
-                  result: "[DKLS LOG] all messages are valid calling WASM..."
-                });
               }
 
               if (method === 'combine' && Array.isArray(a[0])) {
-                post({
-                  id: -984, ok: true,
-                  result: "[DKLS LOG] combine: processing " + a[0].length + " messages"
-                });
-
                 const inMsgs = a[0];
                 const outMsgs = [];
 
                 for (let i = 0; i < inMsgs.length; i++) {
                   let m = inMsgs[i];
-
-                  post({
-                    id: -983, ok: true,
-                    result: "[DKLS LOG] combine msg[" + i + "]: type=" + typeOf(m) +
-                            ", isHandle=" + isHandle(m) +
-                            ", keys=" + (m && typeof m === 'object' ? Object.keys(m).join(',') : 'N/A')
-                  });
 
                   if (isHandle(m)) {
                     const inst = objects.get(m._id);
@@ -597,20 +583,17 @@ export const DklsWorkerHost = () => {
                       throw new Error('Unknown message handle _id=' + m._id + ' at index ' + i);
                     }
                     if (dklsMod && inst instanceof dklsMod.Message) {
-                      post({
-                        id: -982, ok: true,
-                        result: "[DKLS LOG] combine msg[" + i + "]: resolved handle _id=" + m._id + " to Message instance"
-                      });
                       outMsgs.push(inst);
                       continue;
                     }
                   }
 
+                  if (isPlainMsg(m)) {
+                    outMsgs.push(new dklsMod.Message(toU8(m.payload), m.from_id, m.to_id));
+                    continue;
+                  }
+
                   if (dklsMod && m instanceof dklsMod.Message) {
-                    post({
-                      id: -981, ok: true,
-                      result: "[DKLS LOG] combine msg[" + i + "]: already a Message instance"
-                    });
                     outMsgs.push(m);
                     continue;
                   }
@@ -618,31 +601,13 @@ export const DklsWorkerHost = () => {
                   throw new Error('combine: Invalid message at index ' + i + ', type=' + typeOf(m));
                 }
 
-                post({
-                  id: -980, ok: true,
-                  result: "[DKLS LOG] combine: calling WASM combine with " + outMsgs.length + " Message instances"
-                });
-
                 a = [outMsgs];
               }
 
               return enqueue(objId, async () => {
                 let res = fn.apply(obj, a);
                 if (res && typeof res.then === 'function') res = await res;
-                if (method === 'toBytes') {
-                  post({
-                    id: -969, ok: true,
-                    result: "[DKLS LOG] toBytes raw result: type=" + typeOf(res) + ", len=" + (res?.length || -1) + ", constructor=" + (res?.constructor?.name || 'unknown')
-                  });
-                }
                 const normed = norm(res);
-
-                if (method === 'toBytes') {
-                  post({
-                    id: -968, ok: true,
-                    result: "[DKLS LOG] toBytes after norm: type=" + typeOf(normed) + ", len=" + (normed?.length || -1) + ", isArray=" + Array.isArray(normed) + ", sample=" + (Array.isArray(normed) ? normed.slice(0, 10).join(',') : 'N/A')
-                  });
-                }
                 return reply(id, true, normed);
               }).catch(e => reply(id, false, String((e && e.message) || e)));
             }
@@ -652,7 +617,6 @@ export const DklsWorkerHost = () => {
               const obj = objects.get(objId);
               if (!obj) throw new Error("Unknown objId " + objId);
               const val = await obj[prop];
-              console.log('[WV] get', { objId, prop, valType: typeOf(val), prev: preview(val) });
               return reply(id, true, val);
             }
 
@@ -709,8 +673,10 @@ export const DklsWorkerHost = () => {
       ) {
         if (!_isReady) {
           _isReady = true;
+          clearBootTimer();
           _readyResolve?.();
           _readyResolve = null;
+          _readyReject = null;
           if (_outQueue.length && _post) {
             for (const p of _outQueue.splice(0)) _post(p);
           }
@@ -725,7 +691,7 @@ export const DklsWorkerHost = () => {
       }
       pendings.delete(id);
       if (ok) p.resolve(result);
-      else p.reject(result);
+      else p.reject(new Error(result));
     } catch (e) {
       if (WORKER_LOGS_ENABLED)
         console.log(
@@ -744,8 +710,21 @@ export const DklsWorkerHost = () => {
     if (_outQueue.length && _post) {
       for (const p of _outQueue.splice(0)) _post(p);
     }
+    // The boot timeout runs only while the WebView is mounted, so a mount
+    // request with no host rendered (e.g. in tests) leaves no timer behind.
+    if (!_isReady) {
+      clearBootTimer();
+      _bootTimer = setTimeout(
+        () => failBoot(`no boot signal within ${BOOT_TIMEOUT_MS}ms`),
+        BOOT_TIMEOUT_MS,
+      );
+    }
     return () => {
       _post = null;
+      clearBootTimer();
+      if (_isReady) {
+        failWorker(new Error('DKLS worker unmounted'));
+      }
     };
   }, []);
 
@@ -766,13 +745,36 @@ export const DklsWorkerHost = () => {
         incognito
         mixedContentMode="never"
         onLoad={() => console.log('[DKLS HOST] webview onLoad')}
-        onError={e => console.log('[DKLS HOST] onError', e?.nativeEvent)}
+        onError={e =>
+          failBoot(`webview error: ${e?.nativeEvent?.description || 'unknown'}`)
+        }
         onHttpError={e =>
-          console.log('[DKLS HOST] onHttpError', e?.nativeEvent)
+          failBoot(
+            `webview http error: ${e?.nativeEvent?.statusCode ?? 'unknown'}`,
+          )
+        }
+        onContentProcessDidTerminate={() =>
+          failWorker(new Error('DKLS worker process terminated'))
+        }
+        onRenderProcessGone={() =>
+          failWorker(new Error('DKLS worker process terminated'))
         }
       />
     </View>
   );
+};
+
+export const DklsWorkerHost = () => {
+  const mountGeneration = useSyncExternalStore(
+    subscribeDklsMount,
+    getDklsMountGeneration,
+  );
+
+  if (!mountGeneration) {
+    return null;
+  }
+
+  return <DklsWorkerWebView key={mountGeneration} />;
 };
 
 const styles = StyleSheet.create({

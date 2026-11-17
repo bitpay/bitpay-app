@@ -57,6 +57,7 @@ const WyreSettings: React.FC = () => {
     };
 
     showWyreWarning();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shows the out-of-service warning once on mount
   }, []);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ const WyreSettings: React.FC = () => {
       );
       setTransactions(wyrePaymentRequests);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
   }, [isFocused]);
 
   return (
@@ -119,7 +121,7 @@ const WyreSettings: React.FC = () => {
                     </PrRow>
                   );
                 })}
-            {(!paymentRequests || paymentRequests.length == 0) && (
+            {(!paymentRequests || paymentRequests.length === 0) && (
               <NoPrMsg>
                 {t('There are currently no transactions with Wyre')}
               </NoPrMsg>

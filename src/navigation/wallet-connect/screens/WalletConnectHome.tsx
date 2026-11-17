@@ -238,12 +238,12 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
   let wallet = Object.values(keys)
     .flatMap(key => key.wallets)
     .find(
-      wallet =>
-        isSameAddress(wallet.receiveAddress, senderAddress) &&
-        wallet.chain === swapFromChain &&
-        wallet.network === network &&
-        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
-        matchesRequestToken(wallet, request),
+      w =>
+        isSameAddress(w.receiveAddress, senderAddress) &&
+        w.chain === swapFromChain &&
+        w.network === network &&
+        w.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+        matchesRequestToken(w, request),
     );
 
   let _swapFromCurrencyAbbreviation = swapFromCurrencyAbbreviation;
@@ -252,7 +252,7 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
   if (!wallet) {
     wallet = Object.values(keys)
       .flatMap(key => key.wallets)
-      .find(wallet => wallet.chain === swapFromChain);
+      .find(w => w.chain === swapFromChain);
 
     _swapFromCurrencyAbbreviation =
       // @ts-ignore
@@ -336,6 +336,7 @@ const WalletConnectHome = () => {
     };
 
     checkIfRequestsV2AreIncomplete();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when requestsV2 changes; rejectCallRequest is read at that time
   }, [requestsV2]);
 
   const rejectCallRequest = async (request: WCV2RequestType) => {
@@ -428,7 +429,8 @@ const WalletConnectHome = () => {
         ],
       }),
     );
-  }, [dispatch, sessionV2]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- showErrorMessage is memoized on dispatch only, so it is stable
+  }, [dispatch, sessionV2, t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -538,7 +540,7 @@ const WalletConnectHome = () => {
     if (accountDisconnected) {
       navigation.goBack();
     }
-  }, [accountDisconnected]);
+  }, [accountDisconnected, navigation]);
 
   useEffect(() => {
     if (
@@ -554,12 +556,12 @@ const WalletConnectHome = () => {
       const {chainId} = requestV2.params;
       const {chain, network} = WALLET_CONNECT_SUPPORTED_CHAINS[chainId] || {};
       const wallet = keyFullWalletObjs.find(
-        wallet =>
-          wallet.receiveAddress === selectedAccountAddress &&
-          wallet.chain === chain &&
-          wallet.network === network &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
-          matchesRequestToken(wallet, requestV2),
+        w =>
+          w.receiveAddress === selectedAccountAddress &&
+          w.chain === chain &&
+          w.network === network &&
+          w.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(w, requestV2),
       );
       if (!wallet) {
         showErrorMessage(
@@ -572,6 +574,7 @@ const WalletConnectHome = () => {
       }
       handleRequestMethod(requestV2, wallet);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when context changes (opened from a notification); other values are read at that time
   }, [context]);
 
   const closeModal = () => {
@@ -628,12 +631,12 @@ const WalletConnectHome = () => {
       const {network} =
         WALLET_CONNECT_SUPPORTED_CHAINS[item.params.chainId] || {};
       const wallet = keyFullWalletObjs.find(
-        wallet =>
-          wallet.receiveAddress === selectedAccountAddress &&
-          wallet.chain === swapFromChain &&
-          wallet.network === network &&
-          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation &&
-          matchesRequestToken(wallet, item),
+        w =>
+          w.receiveAddress === selectedAccountAddress &&
+          w.chain === swapFromChain &&
+          w.network === network &&
+          w.currencyAbbreviation === swapFromCurrencyAbbreviation &&
+          matchesRequestToken(w, item),
       );
       if (!wallet) {
         return <></>;
@@ -691,6 +694,7 @@ const WalletConnectHome = () => {
         </RowContainer>
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- memoized on requestsV2 only; other values are read when it changes
     [requestsV2],
   );
 

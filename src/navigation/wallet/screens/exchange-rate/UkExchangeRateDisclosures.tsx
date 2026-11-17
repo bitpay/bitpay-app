@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   disclosureBullet: {
-    width: 16,
+    minWidth: 16,
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',

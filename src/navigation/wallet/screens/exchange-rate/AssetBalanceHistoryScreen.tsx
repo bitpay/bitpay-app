@@ -11,6 +11,7 @@ import {
 import useLegacyLastDayChangeRowData from '../../../../components/charts/useLegacyLastDayChangeRowData';
 import {ScreenGutter} from '../../../../components/styled/Containers';
 import type {FiatRateInterval} from '../../../../store/rate/rate.models';
+import type {PortfolioPopulateProgress} from '../../../../utils/portfolio/assets';
 import {usePortfolioAnalysis} from '../../../../portfolio/ui/hooks/usePortfolioAnalysis';
 import usePortfolioBalanceChartReadiness from '../../../../portfolio/ui/hooks/usePortfolioBalanceChartReadiness';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
@@ -46,6 +47,7 @@ const AssetBalanceChartSection = React.memo(
     showLoaderWhenNoSnapshots,
     isBalanceChartDataReadyToQuery,
     preserveVisibleSeriesWhileNotReady,
+    populateProgress,
     onChangeRowData,
     onDisplayedAnalysisPointChange,
     onSelectionActiveChange,
@@ -61,6 +63,7 @@ const AssetBalanceChartSection = React.memo(
     showLoaderWhenNoSnapshots: boolean;
     isBalanceChartDataReadyToQuery?: boolean;
     preserveVisibleSeriesWhileNotReady?: boolean;
+    populateProgress?: PortfolioPopulateProgress;
     onChangeRowData: (data: AssetChartChangeRow) => void;
     onDisplayedAnalysisPointChange: (
       point: AssetDisplayedAnalysisPoint,
@@ -86,6 +89,7 @@ const AssetBalanceChartSection = React.memo(
           preserveVisibleSeriesWhileNotReady={
             preserveVisibleSeriesWhileNotReady
           }
+          populateProgress={populateProgress}
           onChangeRowData={onChangeRowData}
           onDisplayedAnalysisPointChange={onDisplayedAnalysisPointChange}
           onSelectionActiveChange={onSelectionActiveChange}
@@ -158,6 +162,7 @@ const AssetBalanceHistoryScreen = ({
     requestedTimeframe !== displayedTimeframe;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets chart selection/timeframe state when the viewed asset changes
     setChartChangeRow(undefined);
     setSelectionActive(false);
     setChartDisplayedPoint(undefined);
@@ -284,6 +289,7 @@ const AssetBalanceHistoryScreen = ({
           preserveVisibleSeriesWhileNotReady={
             shouldPreserveStaleAssetBalanceChart
           }
+          populateProgress={balanceChartReadiness.populateProgress}
           onChangeRowData={handleChartChangeRowData}
           onDisplayedAnalysisPointChange={handleDisplayedAnalysisPointChange}
           onSelectionActiveChange={setSelectionActive}

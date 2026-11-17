@@ -25,8 +25,6 @@ import {
 } from 'react-native';
 import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import _ from 'lodash';
-import cloneDeep from 'lodash.clonedeep';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
@@ -193,12 +191,11 @@ const SwapCryptoApproveErc20: React.FC = () => {
       );
       const knownContract = spenderDataWhitelist.find(contract => {
         return (
-          contract?.address?.toLowerCase() ==
-          cloneDeep(spenderData.address).toLowerCase()
+          contract?.address?.toLowerCase() === spenderData.address.toLowerCase()
         );
       });
 
-      if (!_.isEmpty(knownContract)) {
+      if (knownContract) {
         logger.debug(
           'Spender address verified: ' + JSON.stringify(knownContract),
         );
@@ -281,8 +278,8 @@ const SwapCryptoApproveErc20: React.FC = () => {
     logger.debug(`Approve calldata: ${approveData}`);
 
     try {
-      const ctxp = await createTx(approveData);
-      setCtxp(ctxp);
+      const newCtxp = await createTx(approveData);
+      setCtxp(newCtxp);
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
@@ -376,6 +373,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
     setIsLoading(true);
     encodeErc20DataAndCreateTx();
     getSpenderData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount
   }, []);
 
   useEffect(() => {
@@ -571,7 +569,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
             try {
               logger.debug('Swipe completed. Making payment...');
               makePayment();
-            } catch (err) {}
+            } catch {}
           }}
           forceReset={resetSwipeButton}
         />

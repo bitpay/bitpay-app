@@ -141,6 +141,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const hasContacts = useAppSelector(({CONTACT}) => CONTACT.list.length > 0);
   const listRef = useRef<ScrollView>(null);
   useScrollToTop(listRef);
 
@@ -198,6 +199,10 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
             .replace(/[^a-z0-9]+/g, '-')}-row`}
           accessibilityLabel={item.title}
           onPress={() => {
+            if (item.id === 'Contacts' && !hasContacts) {
+              navigation.navigate('ContactsAdd');
+              return;
+            }
             navigation.navigate('SettingsDetails', {
               initialRoute: item.id,
               ...(item.id === 'Connections' ? {redirectTo} : {}),

@@ -23,6 +23,7 @@ import {
 import {checkEncryptPassword} from '../../utils/wallet';
 import {broadcastTx, checkBiometricForSending, getTx} from '../send/send';
 import {getErrorName} from '../../../../constants/BWCError';
+import {requestDklsWorkerMount} from '../../../../dkls/DklsWorker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TSS_SESSION_PREFIX = 'TSS_SIGN_SESSION_';
@@ -559,7 +560,7 @@ export const startTSSSigning =
     callbacks: TSSSigningCallbacks;
     password?: string | undefined;
   }): Effect<Promise<TransactionProposal>> =>
-  async (dispatch, getState): Promise<TransactionProposal> => {
+  async (): Promise<TransactionProposal> => {
     const {key, wallet, txp, callbacks, password} = opts;
 
     return new Promise(async (resolve, reject) => {
@@ -717,7 +718,7 @@ export const pollTxpUntilBroadcast = async (
       if (updatedTxp.status === 'broadcasted') {
         return updatedTxp;
       }
-    } catch (_) {}
+    } catch {}
   }
   throw new Error(
     'It seems there was a problem broadcasting the transaction. Please try creating a new one.',
@@ -733,6 +734,7 @@ export const joinTSSSigningSession =
     setShowTSSProgressModal: (show: boolean) => void;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
+    requestDklsWorkerMount();
     const {APP} = getState();
     const {key, wallet, txp, callbacks, setShowTSSProgressModal} = opts;
     let password: string | undefined;
@@ -792,7 +794,7 @@ export const joinTSSSigningSession =
         logManager.debug('[TSS Join] Broadcast complete');
         await callbacks.onStatusChange('complete');
         return broadcastedTx as TransactionProposal;
-      } catch (_) {
+      } catch {
         // Another participant may have broadcasted already — poll for it.
         logManager.debug(
           '[TSS Join] Broadcast failed, polling for broadcasted status',

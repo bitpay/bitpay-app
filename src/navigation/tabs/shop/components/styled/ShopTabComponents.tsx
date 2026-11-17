@@ -56,12 +56,15 @@ const styles = StyleSheet.create({
   sectionHeaderContainer: {
     display: 'flex',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
+    gap: 8,
   },
   sectionHeaderButton: {
     marginTop: 38,
     marginBottom: 12,
     fontWeight: '500',
+    flexShrink: 1,
   },
   sectionHeader: {
     fontSize: 18,
@@ -69,6 +72,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 40,
     flexGrow: 1,
+    flexShrink: 1,
     fontWeight: '500',
   },
   sectionDivider: {

@@ -190,6 +190,7 @@ const Addresses = () => {
   const dispatch = useAppDispatch();
   const [copiedAddressWithBalance, setCopiedAddressWithBalance] = useState('');
   const [copiedUnusedAddress, setCopiedUnusedAddress] = useState('');
+  const [buttonState, setButtonState] = useState<ButtonState>();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -215,7 +216,6 @@ const Addresses = () => {
       setButtonState(undefined);
     });
   }, [navigation, t]);
-  const [buttonState, setButtonState] = useState<ButtonState>();
   const [viewAll, setViewAll] = useState<boolean>();
   const [usedAddress, setUsedAddress] = useState<any[]>();
   const [latestUsedAddress, setLatestUsedAddress] = useState<any[]>();
@@ -267,6 +267,8 @@ const Addresses = () => {
     [dispatch],
   );
 
+  const tokenContractAddress = token?.address;
+  const multisigContractAddress = multisigEthInfo?.multisigContractAddress;
   const setAddresses = useCallback(
     async (isCancelled: () => boolean) => {
       try {
@@ -275,9 +277,8 @@ const Addresses = () => {
             doNotVerify: true,
           }),
           GetWalletBalance(wallet, {
-            tokenAddress: token?.address ? token.address : '',
-            multisigContractAddress:
-              multisigEthInfo?.multisigContractAddress || '',
+            tokenAddress: tokenContractAddress ? tokenContractAddress : '',
+            multisigContractAddress: multisigContractAddress || '',
           }),
         ]);
         if (isCancelled()) {
@@ -323,9 +324,9 @@ const Addresses = () => {
     [
       buildUiFormatList,
       dispatch,
-      multisigEthInfo?.multisigContractAddress,
+      multisigContractAddress,
       t,
-      token?.address,
+      tokenContractAddress,
       wallet,
     ],
   );

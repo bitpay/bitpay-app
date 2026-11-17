@@ -1,9 +1,9 @@
 import React from 'react';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {BaseText} from '../../../components/styled/Text';
-import {StyleSheet} from 'react-native';
+import {BaseText, Paragraph} from '../../../components/styled/Text';
+import {StyleSheet, View} from 'react-native';
 import {t} from 'i18next';
-import {RootStacks, navigationRef} from '../../../Root';
+import {Trans} from 'react-i18next';
 
 interface BottomNotificationListType {
   key: number;
@@ -15,6 +15,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 10,
   },
+  emailMessage: {paddingVertical: 20},
+  email: {fontWeight: '600'},
 });
 
 export const DecryptError = (): BottomNotificationConfig => {
@@ -380,6 +382,37 @@ export const ExcludedUtxosWarning = ({
         action: () => {
           gotIt();
         },
+        primary: true,
+      },
+    ],
+  };
+};
+
+export const EmailUnableToReceiveCrypto = (
+  email: string,
+): BottomNotificationConfig => {
+  return {
+    type: 'warning',
+    title: t('Unable to Send to Contact'),
+    message: '',
+    message2: (
+      <View style={styles.emailMessage}>
+        <Paragraph>
+          <Trans
+            i18nKey="EmailUnableToReceiveCrypto"
+            values={{email}}
+            components={[<Paragraph style={styles.email} />]}
+            tOptions={{interpolation: {escapeValue: true}}}
+            shouldUnescape
+          />
+        </Paragraph>
+      </View>
+    ),
+    enableBackdropDismiss: true,
+    actions: [
+      {
+        text: 'OK',
+        action: () => {},
         primary: true,
       },
     ],

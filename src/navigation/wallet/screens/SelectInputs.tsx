@@ -53,7 +53,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
-import _ from 'lodash';
+import {orderBy} from '../../../utils/array';
 import {
   buildUIFormattedWallet,
   toFiat,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 55,
+    minHeight: 55,
   },
   selectInputsContainer: {
     flex: 1,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'nowrap',
-    height: 48,
+    minHeight: 48,
   },
   dropdownTitle: {
     flexDirection: 'row',
@@ -259,8 +259,8 @@ const SelectInputs = () => {
         utxosWithFiatAmount.filter(u => u.locked),
         utxosWithFiatAmount.filter(u => !u.locked),
       ];
-      setLockedUtxos(_.orderBy(_lockedUtxos, 'amount', 'desc'));
-      setInputs(_.orderBy(_availableUtxos, 'amount', 'desc'));
+      setLockedUtxos(orderBy(_lockedUtxos, 'amount', 'desc'));
+      setInputs(orderBy(_availableUtxos, 'amount', 'desc'));
     } catch (err) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(`An error occurred while getting utxos: ${errStr}`);
@@ -278,6 +278,7 @@ const SelectInputs = () => {
       return;
     }
     const totalSat = Number(totalAmount) * precision.unitToSatoshi;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentionally recomputed only when totalAmount changes (not on rate updates)
     setTotalFiatAmount(
       formatFiatAmount(
         convertToFiat(
@@ -298,10 +299,13 @@ const SelectInputs = () => {
         defaultAltCurrency.isoCode,
       ),
     );
-  }, [totalAmount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputes the fiat total only when totalAmount changes; rates and wallet fields are read at that time
+  }, [totalAmount, dispatch]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async mount-time UTXO load; state is only set after awaits
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to load the wallet UTXOs
   }, []);
 
   useEffect(() => {
@@ -312,13 +316,15 @@ const SelectInputs = () => {
       dispatch,
       'symbol',
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentionally rebuilt only when lockedUtxos changes
     setUiFormattedWallet(_uiFormattedWallet);
-  }, [lockedUtxos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuilds the wallet row only when lockedUtxos change; wallet, rates and currency are read at that time
+  }, [lockedUtxos, dispatch]);
 
   const inputsSelectAll = (UtxosWithFiatAmount: UtxoWithFiatAmount[]) => {
-    let totalAmount = 0;
+    let selectedTotal = 0;
     const updatedUtxos = UtxosWithFiatAmount.map(utxo => {
-      totalAmount += Number(utxo.amount);
+      selectedTotal += Number(utxo.amount);
       return {...utxo, checked: !utxo.checked};
     });
     setInputs(updatedUtxos);
@@ -326,7 +332,7 @@ const SelectInputs = () => {
       setTotalAmount(Number(0).toFixed(precision?.unitDecimals));
       setSelectAll(false);
     } else {
-      setTotalAmount(Number(totalAmount).toFixed(precision!.unitDecimals));
+      setTotalAmount(Number(selectedTotal).toFixed(precision!.unitDecimals));
       setSelectAll(true);
     }
   };
@@ -485,7 +491,8 @@ const SelectInputs = () => {
         ) : null}
       </>
     ),
-    [lockedUtxos, hideLockedUtxos],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- precision is re-created every render from the route-param wallet; memo keyed on the UTXO list and toggle
+    [lockedUtxos, hideLockedUtxos, t],
   );
 
   return (

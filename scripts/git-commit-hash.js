@@ -40,6 +40,7 @@ function writeToEnv(key, value, path) {
 }
 
 function main() {
+  // eslint-disable-next-line handle-callback-err -- pre-existing: writes whatever stdout git returned, even on failure
   childProcess.exec('git rev-parse --short=7 HEAD', (err, stdout) => {
     writeToEnv('GIT_COMMIT_HASH', stdout, '.env.development');
     writeToEnv('GIT_COMMIT_HASH', stdout, '.env.production');

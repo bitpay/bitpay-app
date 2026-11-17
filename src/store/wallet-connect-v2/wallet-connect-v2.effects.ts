@@ -69,17 +69,10 @@ import {
   getBase64Encoder,
   getTransactionDecoder,
   getCompiledTransactionMessageDecoder,
-  getBase58Encoder,
-  createKeyPairFromPrivateKeyBytes,
-  signTransaction,
-  getBase64EncodedWireTransaction,
-  partiallySignTransaction,
-  signBytes,
-  getBase58Decoder,
-  ReadonlyUint8Array,
 } from '@solana/kit';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {isHiddenByTestnetMode} from '../wallet/utils/testnet';
 
 const BWC = BwcProvider.getInstance();
 
@@ -307,7 +300,7 @@ export const walletConnectV2RejectSessionProposal =
         '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
       );
       dispatch(sessionProposal());
-    } catch (e) {
+    } catch {
       logManager.error(
         '[WC-V2/walletConnectV2RejectSessionProposal]: an error occurred while rejecting session.',
       );
@@ -337,9 +330,12 @@ export const walletConnectV2SubscribeToEvents =
           )}`,
         );
 
-        const isChainSupported = Object.keys(
-          WALLET_CONNECT_SUPPORTED_CHAINS,
-        ).includes(event.params.chainId);
+        const requestedChain =
+          WALLET_CONNECT_SUPPORTED_CHAINS[event.params.chainId];
+        // A testnet session made earlier stops answering once testnet mode
+        // is off, because its wallets are hidden.
+        const isChainSupported =
+          !!requestedChain && !isHiddenByTestnetMode(requestedChain);
         const isMethodSupported = Object.values({
           ...EIP155_SIGNING_METHODS,
           ...SOLANA_SIGNING_METHODS,
@@ -490,7 +486,7 @@ export const walletConnectV2SubscribeToEvents =
 
       const session: WCV2SessionType | undefined =
         getState().WALLET_CONNECT_V2.sessions.find(
-          (session: WCV2SessionType) => session.topic === event.topic,
+          (sessionItem: WCV2SessionType) => sessionItem.topic === event.topic,
         );
 
       const address = getNamespacesAccounts(session?.namespaces)
@@ -553,7 +549,7 @@ export const walletConnectV2SubscribeToEvents =
               proposal,
             )}`,
           );
-        } catch (error) {}
+        } catch {}
       },
     );
     web3wallet.on(
@@ -573,7 +569,7 @@ export const walletConnectV2SubscribeToEvents =
           if (request) {
             await dispatch(walletConnectV2RejectCallRequest(request));
           }
-        } catch (error) {}
+        } catch {}
       },
     );
   };

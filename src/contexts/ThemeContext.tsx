@@ -20,3 +20,8 @@ export const useTheme = (): BitPayTheme => {
   }
   return context;
 };
+
+export const ThemeRelay: React.FC<{children: ReactNode}> = ({children}) => {
+  const theme = useTheme();
+  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+};

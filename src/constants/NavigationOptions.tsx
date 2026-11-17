@@ -14,6 +14,7 @@ export const baseNavigatorOptions: NativeStackNavigationOptions = {
   headerBackButtonMenuEnabled: false,
   headerBackVisible: false,
   animation: 'default',
+  fullScreenGestureEnabled: false,
   freezeOnBlur: true,
 };
 

@@ -12,11 +12,15 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {AddPillContainer} from '../../navigation/wallet/screens/AddCustomToken';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks/useFontScale';
 
 const styles = StyleSheet.create({
   addressView: {
     alignItems: 'flex-end',
     margin: 10,
+  },
+  addressViewStacked: {
+    alignItems: 'flex-start',
   },
   rowContainer: {
     flexDirection: 'row',
@@ -26,6 +30,10 @@ const styles = StyleSheet.create({
     marginVertical: 0,
     marginHorizontal: 6,
     justifyContent: 'space-around',
+  },
+  rowContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   rowContainerSelected: {
     borderColor: Action,
@@ -38,13 +46,16 @@ const styles = StyleSheet.create({
 });
 
 const RowContainer: React.FC<
-  {selected: boolean} & React.ComponentProps<typeof TouchableOpacity>
-> = ({selected, style, ...rest}) => {
+  {selected: boolean; stacked?: boolean} & React.ComponentProps<
+    typeof TouchableOpacity
+  >
+> = ({selected, stacked, style, ...rest}) => {
   const theme = useTheme();
   return (
     <TouchableOpacity
       style={[
         styles.rowContainer,
+        stacked ? styles.rowContainerStacked : null,
         selected
           ? [
               {backgroundColor: theme.dark ? '#2240C440' : LightBlue},
@@ -74,13 +85,15 @@ interface Props {
 
 const AccountRow = ({account, chain, selected, onPress}: Props) => {
   const {t} = useTranslation();
+  const stacked = useIsLargeFont();
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
+      stacked={stacked}
       selected={selected}>
       <CurrencyColumn>
-        <H5 ellipsizeMode="tail" numberOfLines={1}>
+        <H5 ellipsizeMode="tail" numberOfLines={stacked ? 2 : 1}>
           {t('Account {{number}}', {number: account.accountNumber})}
         </H5>
         {account.network !== 'livenet' && (
@@ -90,7 +103,8 @@ const AccountRow = ({account, chain, selected, onPress}: Props) => {
         )}
       </CurrencyColumn>
       <CurrencyColumn>
-        <View style={styles.addressView}>
+        <View
+          style={[styles.addressView, stacked && styles.addressViewStacked]}>
           <SendToPillContainer>
             <AddPillContainer>
               <CurrencyImage img={CurrencyListIcons[chain]} size={20} />

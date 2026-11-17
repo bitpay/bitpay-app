@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   },
   emailContainer: {
     alignItems: 'center',
-    height: 48,
+    minHeight: 48,
     paddingTop: 0,
     paddingRight: 14,
     paddingBottom: 0,

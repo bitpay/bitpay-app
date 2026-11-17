@@ -8,13 +8,28 @@ import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 export const TRANSACTION_ROW_HEIGHT = 75;
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useIsLargeFont} from '../../utils/hooks/useFontScale';
 
 const styles = StyleSheet.create({
   transactionContainer: {
     flexDirection: 'row',
     padding: 12,
     alignItems: 'center',
-    height: TRANSACTION_ROW_HEIGHT,
+    minHeight: TRANSACTION_ROW_HEIGHT,
+  },
+  transactionContainerStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  tailContainer: {
+    flexShrink: 0,
+  },
+  tailContainerStacked: {
+    alignSelf: 'stretch',
+    marginTop: 6,
+  },
+  valueStacked: {
+    textAlign: 'left',
   },
   iconContainer: {
     marginRight: 8,
@@ -75,6 +90,7 @@ const TransactionRow = ({
   onPressTransaction,
 }: Props) => {
   const theme = useTheme();
+  const stacked = useIsLargeFont();
   const onPress = useCallback(
     () => onPressTransaction?.(transaction),
     [onPressTransaction, transaction],
@@ -82,7 +98,10 @@ const TransactionRow = ({
 
   return (
     <TouchableOpacity
-      style={styles.transactionContainer}
+      style={[
+        styles.transactionContainer,
+        stacked && styles.transactionContainerStacked,
+      ]}
       testID={testID}
       onPress={onPressTransaction ? onPress : undefined}>
       {iconURI ? (
@@ -110,7 +129,7 @@ const TransactionRow = ({
         <View style={styles.descriptionContainer}>
           <BaseText
             style={[styles.description, {color: theme.colors.text}]}
-            numberOfLines={details ? 2 : 1}
+            numberOfLines={stacked ? undefined : details ? 2 : 1}
             ellipsizeMode={'tail'}>
             {description}
             {details && (
@@ -122,14 +141,22 @@ const TransactionRow = ({
           </BaseText>
         </View>
       )}
-      <View>
+      <View
+        style={[styles.tailContainer, stacked && styles.tailContainerStacked]}>
         {value ? (
-          <BaseText style={[styles.value, {color: theme.colors.text}]}>
+          <BaseText
+            style={[
+              styles.value,
+              stacked && styles.valueStacked,
+              {color: theme.colors.text},
+            ]}>
             {value}
           </BaseText>
         ) : null}
         {time ? (
-          <ListItemSubText textAlign={'right'}>{time}</ListItemSubText>
+          <ListItemSubText textAlign={stacked ? 'left' : 'right'}>
+            {time}
+          </ListItemSubText>
         ) : null}
       </View>
     </TouchableOpacity>

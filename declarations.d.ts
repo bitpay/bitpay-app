@@ -11,8 +11,6 @@ declare module '@env' {
   export const BRAZE_API_KEY_ANDROID: string;
   export const BRAZE_API_KEY_IOS: string;
   export const BRAZE_EXPORT_API_KEY: string;
-  export const BRAZE_MERGE_AND_DELETE_API_KEY: string;
-  export const BRAZE_REST_API_ENDPOINT: string;
   export const DISABLE_DEVELOPMENT_LOGGING: string;
   export const DOSH_APP_ID: string;
   export const DOSH_WHITELIST: string;
@@ -32,6 +30,9 @@ declare module '@env' {
   export const SENTRY_DSN: string;
   export const REGTEST_BASE_BITPAY_URL: string;
   export const STATIC_CONTENT_CARDS_ENABLED: string;
+  export const IS_MAESTRO: string;
+  /** Set to 'true' only by scripts/android-perf.sh — gates src/perf. */
+  export const IS_PERF: string;
 }
 
 declare module '@sumsub/react-native-mobilesdk-module' {
@@ -93,3 +94,7 @@ declare module '@sumsub/react-native-mobilesdk-module' {
 
   export default SNSMobileSDK;
 }
+
+// moment's per-locale files are imported only for their side effect of
+// registering the locale (src/utils/momentLocales.ts).
+declare module 'moment/locale/*';

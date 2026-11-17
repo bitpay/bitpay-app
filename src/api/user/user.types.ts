@@ -1,5 +1,3 @@
-import {Card} from '../../store/card/card.models';
-
 export interface BasicUserInfo {
   country: string;
   eid: string;
@@ -32,20 +30,8 @@ export interface FetchBasicInfoResponse {
 
 export interface InitialUserData {
   basicInfo: BasicUserInfo;
-  cards: Card[];
-  cardBalances: {
-    id: string;
-    balance: number;
-  }[];
-  doshToken: string;
 }
 
 export interface FetchInitialUserDataResponse {
   user: InitialUserData;
-}
-
-export interface FetchDoshTokenResponse {
-  user: {
-    doshToken: string;
-  };
 }

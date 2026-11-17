@@ -11,6 +11,7 @@ import {Key} from '../../store/wallet/wallet.models';
 import KeySvg from '../../../assets/img/key.svg';
 import {AvailableWalletsPill} from './GlobalSelectRow';
 import {useTranslation} from 'react-i18next';
+import {filterTestnetWallets} from '../../store/wallet/utils/testnet';
 
 interface Props {
   item: Key;
@@ -28,7 +29,7 @@ const KeyGlobalSelectRow = ({item, emit}: Props) => {
       </CurrencyColumn>
       <AvailableWalletsPill>
         <H7 medium={true}>
-          {wallets.length} {t('Wallets')}
+          {filterTestnetWallets(wallets).length} {t('Wallets')}
         </H7>
       </AvailableWalletsPill>
       <AngleRightSvg />

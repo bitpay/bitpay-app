@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import type {Key, Wallet} from '../../../store/wallet/wallet.models';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {filterPortfolioChartableWallets} from './usePortfolioChartableWallets';
 import {getLastFiniteNumber, runPortfolioChartQuery} from '../common';
 import {buildKeyPercentageDifferenceMap} from '../selectors/buildKeySummariesFromAnalysis';
 import {
@@ -8,6 +9,7 @@ import {
   getPortfolioWalletsInputSignature,
   usePortfolioStoredWalletAnalysisScope,
 } from './usePortfolioStoredWalletAnalysisScope';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 function arePercentageMapsEqual(
   left: Record<string, number | null>,
@@ -24,7 +26,10 @@ function arePercentageMapsEqual(
 
 const getVisibleKeyWallets = (key: Key): Wallet[] => {
   return (key.wallets || []).filter(
-    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+    wallet =>
+      !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
+      !isHiddenByTestnetMode(wallet),
   );
 };
 
@@ -55,6 +60,15 @@ export function usePortfolioKeyPercentages(args: {
       wallets: [],
     });
 
+  // Same wallets as the balance chart, so a key's change and the chart's
+  // change agree when they cover the same wallets.
+  const invalidDecimalsByWalletId = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.invalidDecimalsByWalletId,
+  );
+  const quarantinesByWalletId = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.quarantinesByWalletId,
+  );
+
   const keysInputSignature = getPortfolioKeyPercentageInputSignature(args.keys);
   const keyInputs = useMemo(() => {
     if (!enabled) {
@@ -66,7 +80,11 @@ export function usePortfolioKeyPercentages(args: {
         dispatch,
         quoteCurrency,
         rates,
-        wallets: getVisibleKeyWallets(key),
+        wallets: filterPortfolioChartableWallets(
+          getVisibleKeyWallets(key),
+          invalidDecimalsByWalletId,
+          quarantinesByWalletId,
+        ),
       });
 
       return {
@@ -78,7 +96,17 @@ export function usePortfolioKeyPercentages(args: {
         currentRatesSignature: scope.currentRatesSignature,
       };
     });
-  }, [args.keys, dispatch, enabled, keysInputSignature, quoteCurrency, rates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keysInputSignature is a deliberate recompute trigger for key/wallet content changes that keep the same args.keys reference
+  }, [
+    args.keys,
+    dispatch,
+    enabled,
+    invalidDecimalsByWalletId,
+    keysInputSignature,
+    quarantinesByWalletId,
+    quoteCurrency,
+    rates,
+  ]);
 
   const requestKey = useMemo(() => {
     if (!enabled) {

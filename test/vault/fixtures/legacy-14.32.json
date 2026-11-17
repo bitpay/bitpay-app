@@ -1,0 +1,163 @@
+{
+  "notice": "PUBLIC THROWAWAY TEST KEYS. NEVER FUND. Generated in an isolated project; not a captured device save.",
+  "password": "throwaway-fixture-password",
+  "cases": {
+    "plain": {
+      "state": {
+        "APP": {
+          "migrationMMKVStorageComplete": true
+        },
+        "WALLET": {
+          "keys": {
+            "fixture": {
+              "id": "fixture",
+              "properties": {
+                "xPrivKey": "xprv9s21ZrQH143K3j2pzs9qFaUmu78PSKCiHYLenzisLgwSNVMfvyKQEKT2DKwSdXzcGHbGbv7hbYK6FDNMVh6hTw2B84qZ2Cc5wPpVGUz9abC",
+                "xPrivKeyEDDSA": "xprv9s21ZrQH143K2M1ZeSLUaWSNgu5Py93nbrouNDB89gpLNHETPA9AqWCj4xGERLxkLc3JmSHJ2iTcFUosQ6H9K2NrrBBwkkVoKEjUz52TyyX",
+                "mnemonic": "boss food kiss domain rate permit caught ordinary spin huge donkey disease",
+                "version": 1,
+                "mnemonicHasPassphrase": false,
+                "fingerPrint": "be7a0671",
+                "fingerPrintEDDSA": "1238700d",
+                "compliantDerivation": true,
+                "id": "84b808de-d424-471f-abed-6efdfd2d3a69"
+              },
+              "wallets": []
+            }
+          }
+        },
+        "SHOP": {
+          "giftCards": {
+            "livenet": []
+          }
+        },
+        "CONTACT": {
+          "list": []
+        },
+        "_persist": {
+          "version": -1,
+          "rehydrated": true
+        }
+      },
+      "raw": "{\"APP\":\"\\\"{\\\\\\\"migrationMMKVStorageComplete\\\\\\\":true}\\\"\",\"WALLET\":\"\\\"{\\\\\\\"keys\\\\\\\":{\\\\\\\"fixture\\\\\\\":{\\\\\\\"id\\\\\\\":\\\\\\\"fixture\\\\\\\",\\\\\\\"properties\\\\\\\":{\\\\\\\"xPrivKey\\\\\\\":\\\\\\\"encrypted:U2FsdGVkX1+SocTPHlZQS5xDhd9WdPStEhrzm57LAemVA4CvKSIU9nuZi29oy7S2YvP05U86MrBcey/VIBLp+3q+LfJQSsfcQVGNr7n4wEoh3jqVMuvuyHEhbaSNF1e72irnwgO5/gJJ1WK55vcq6BGYkZQCToNWHXEFegzjN6I=\\\\\\\",\\\\\\\"xPrivKeyEDDSA\\\\\\\":\\\\\\\"xprv9s21ZrQH143K2M1ZeSLUaWSNgu5Py93nbrouNDB89gpLNHETPA9AqWCj4xGERLxkLc3JmSHJ2iTcFUosQ6H9K2NrrBBwkkVoKEjUz52TyyX\\\\\\\",\\\\\\\"mnemonic\\\\\\\":\\\\\\\"encrypted:U2FsdGVkX1+Eg2dYefqBrBKbsK5BvjeEm1sy4bKhczxYzq9AftxpH0P0M0vYse1GO9e6hNw9Mpo94AFJUMGbrCZXzXHGU1RQuzdv+NXv4zah21mtiM5DQK9PFJQA1pva\\\\\\\",\\\\\\\"version\\\\\\\":1,\\\\\\\"mnemonicHasPassphrase\\\\\\\":false,\\\\\\\"fingerPrint\\\\\\\":\\\\\\\"be7a0671\\\\\\\",\\\\\\\"fingerPrintEDDSA\\\\\\\":\\\\\\\"1238700d\\\\\\\",\\\\\\\"compliantDerivation\\\\\\\":true,\\\\\\\"id\\\\\\\":\\\\\\\"84b808de-d424-471f-abed-6efdfd2d3a69\\\\\\\"},\\\\\\\"wallets\\\\\\\":[]}}}\\\"\",\"SHOP\":\"\\\"{\\\\\\\"giftCards\\\\\\\":{\\\\\\\"livenet\\\\\\\":[]}}\\\"\",\"CONTACT\":\"\\\"U2FsdGVkX1/A7698nv8BpW654NjPjAn5XYIQZ8LdS7Y=\\\"\",\"_persist\":\"\\\"U2FsdGVkX1/RakWe0Ej/D7W+ikSJUWW3JJ+Qpr8iClQQ6EATzCrLy/BM/Ygq+bB20b9d1P1kVvzrtuNcGf8DwA==\\\"\"}"
+    },
+    "passwordOperation": {
+      "state": {
+        "APP": {
+          "migrationMMKVStorageComplete": true
+        },
+        "WALLET": {
+          "keys": {
+            "fixture": {
+              "id": "fixture",
+              "properties": {
+                "xPrivKey": null,
+                "xPrivKeyEncrypted": "{\"iv\":\"xuK7RINEH2l2vl87T8jD9w==\",\"v\":1,\"iter\":1000,\"ks\":128,\"ts\":64,\"mode\":\"ccm\",\"adata\":\"\",\"cipher\":\"aes\",\"salt\":\"phAl/fU8duI=\",\"ct\":\"on9vNSIw53JchG/41sNule5wyDhBkJpVJDZdsYwQleXT+OJ2LWQ3fQwhDfsDjkxuoYB6aWio0I2bDFUmysnCt6mdIlEhkRYU8R92vNbuHQZIAduJhLMtNt5kW+k12/DehBKokC3g2E7+vc2NxdjoPtGbXjEGO3o=\"}",
+                "xPrivKeyEDDSA": "xprv9s21ZrQH143K2M1ZeSLUaWSNgu5Py93nbrouNDB89gpLNHETPA9AqWCj4xGERLxkLc3JmSHJ2iTcFUosQ6H9K2NrrBBwkkVoKEjUz52TyyX",
+                "mnemonic": null,
+                "mnemonicEncrypted": "{\"iv\":\"FIdqCZUov4rlfCWwxIuRKg==\",\"v\":1,\"iter\":1000,\"ks\":128,\"ts\":64,\"mode\":\"ccm\",\"adata\":\"\",\"cipher\":\"aes\",\"salt\":\"phAl/fU8duI=\",\"ct\":\"eaMQiqB5iBbWYRwnojlKK+jieGB6oU77Cf+VIrnbkQaMRZRCPJiK/r0pnl0SnZjIclnbFpjWrTQjJ2MlWvfhK3jnFDLKsIvGOaZ/CUi2gUSx5g==\"}",
+                "version": 1,
+                "mnemonicHasPassphrase": false,
+                "fingerPrint": "be7a0671",
+                "fingerPrintEDDSA": "1238700d",
+                "compliantDerivation": true,
+                "id": "84b808de-d424-471f-abed-6efdfd2d3a69"
+              },
+              "wallets": []
+            }
+          }
+        },
+        "SHOP": {
+          "giftCards": {
+            "livenet": []
+          }
+        },
+        "CONTACT": {
+          "list": []
+        },
+        "_persist": {
+          "version": -1,
+          "rehydrated": true
+        }
+      },
+      "raw": "{\"APP\":\"\\\"{\\\\\\\"migrationMMKVStorageComplete\\\\\\\":true}\\\"\",\"WALLET\":\"\\\"{\\\\\\\"keys\\\\\\\":{\\\\\\\"fixture\\\\\\\":{\\\\\\\"id\\\\\\\":\\\\\\\"fixture\\\\\\\",\\\\\\\"properties\\\\\\\":{\\\\\\\"xPrivKey\\\\\\\":null,\\\\\\\"xPrivKeyEncrypted\\\\\\\":\\\\\\\"encrypted:U2FsdGVkX1+ziiI4u5wa3OCUENzzKQ4yH8WmI2gvJ7dpAyFm4Ifo2y4BL2x4PX8NTB4ycy4xANz66A2lSJEfBwPlVyJIdDhjczB/MuukqtFq+Q1RaS16qIYbYsSUeNa1fTckS5B8YcHLCdW8N3d+tUg8j4ot2ZCobLRVk1f6F6eV2JhfxZH6vTnTP6p/Xr9lbHDQi3TwIkomXGGflRUbpsr87kIMWjnILuDAB3yBZMgWHAIGhS9ikD/tT/emoE7PP7wMRrbcoki0L2KgZ8iaW3iAIISPFCmU3YMnWld5dsSzfArbllW++9LxH1m9NLnYAomU7PuJg5SZpztK1psJMEwvzOeVmhuxOGTqraV4wsvM8uOtzbO6hUyxnJCH02FO+EueBoW8G1cRhX4Rud/6ZSS/y0A1PbF3TzsekExBJWc=\\\\\\\",\\\\\\\"xPrivKeyEDDSA\\\\\\\":\\\\\\\"xprv9s21ZrQH143K2M1ZeSLUaWSNgu5Py93nbrouNDB89gpLNHETPA9AqWCj4xGERLxkLc3JmSHJ2iTcFUosQ6H9K2NrrBBwkkVoKEjUz52TyyX\\\\\\\",\\\\\\\"mnemonic\\\\\\\":null,\\\\\\\"mnemonicEncrypted\\\\\\\":\\\\\\\"encrypted:U2FsdGVkX19+u7Y5IZtxAnkeQQNIZ3qL+40gz1ElElkfQKx5ajVB0Z46TJAqYZAjRsGP55RzKaT7Go08xRLmDWuuS26EhepmJaVS9koqpS0wyiEqmUVM7Wy8SvVsUiYfdl7nJylfQkq1QdFZFvW4G09kl5cxLnuPt7wd6RoVwbDrrFh+5rfw8VpIVSdXt9m8uaRkzn3f4DRQKDI+hLkNfJy06of8Xw+Haz9z+//CqR8riX47FLifdVtB+eJjlHakv74AhXNZQXePpHXpBb2tLDKrOD36BSy5TX9kCsmnbGGvjKfN9TeEzv5ITB1ke4oOPeHVvj4KQdAqRLf+1R44ze798830z42451OE9w8jZwY=\\\\\\\",\\\\\\\"version\\\\\\\":1,\\\\\\\"mnemonicHasPassphrase\\\\\\\":false,\\\\\\\"fingerPrint\\\\\\\":\\\\\\\"be7a0671\\\\\\\",\\\\\\\"fingerPrintEDDSA\\\\\\\":\\\\\\\"1238700d\\\\\\\",\\\\\\\"compliantDerivation\\\\\\\":true,\\\\\\\"id\\\\\\\":\\\\\\\"84b808de-d424-471f-abed-6efdfd2d3a69\\\\\\\"},\\\\\\\"wallets\\\\\\\":[]}}}\\\"\",\"SHOP\":\"\\\"{\\\\\\\"giftCards\\\\\\\":{\\\\\\\"livenet\\\\\\\":[]}}\\\"\",\"CONTACT\":\"\\\"U2FsdGVkX19CstGytYZxi7DjCNxROk4lvtknGtWwXYs=\\\"\",\"_persist\":\"\\\"U2FsdGVkX1+h3Oa8mserYCYAOjLVgPDVGgI00T4iR2IpC4phkTi6xHWodb/Bz7W7u3n5g7skpei4BXTRcVXGLA==\\\"\"}"
+    },
+    "constructorPassword": {
+      "state": {
+        "APP": {
+          "migrationMMKVStorageComplete": true
+        },
+        "WALLET": {
+          "keys": {
+            "fixture": {
+              "id": "fixture",
+              "properties": {
+                "xPrivKeyEncrypted": "{\"iv\":\"580Uvyt24K5MEB/inxZ+Pg==\",\"v\":1,\"iter\":1000,\"ks\":128,\"ts\":64,\"mode\":\"ccm\",\"adata\":\"\",\"cipher\":\"aes\",\"salt\":\"phAl/fU8duI=\",\"ct\":\"GMuNSYXDDg6RHg1dzF+oFLPHptxMjVB+Y8osONg8NgA8q8MY/+3PsK82mzUMlxwwKbe1MC89EhjOS09gXlWPjpdd0PP3T3Lhy3/bi1PjeZ79xgDPpspLOP3kscY4CqnjE3hBhYIQM279Njc4CR5JD2zBu7H93SE=\"}",
+                "xPrivKeyEDDSAEncrypted": "{\"iv\":\"T4AwmOCEzgr+n8L4hnCbOg==\",\"v\":1,\"iter\":1000,\"ks\":128,\"ts\":64,\"mode\":\"ccm\",\"adata\":\"\",\"cipher\":\"aes\",\"salt\":\"phAl/fU8duI=\",\"ct\":\"ASSzmj3e/eEN7DCEDbsYJco9r9OTrGJOVmUewzFJXiQck4TPJ5FxWXy95iLrvXkOc0E32DGHvCP6SfLABTtaYckDGgYnL8qZ5VGShHeePjhppVHK9GoAZKQ1jiecWgIVGgxe/w8UhmLNTR6YdvEPBQ8eC72mc50=\"}",
+                "mnemonicEncrypted": "{\"iv\":\"TXaZoS4LNy5MiS5yGIi9UQ==\",\"v\":1,\"iter\":1000,\"ks\":128,\"ts\":64,\"mode\":\"ccm\",\"adata\":\"\",\"cipher\":\"aes\",\"salt\":\"phAl/fU8duI=\",\"ct\":\"NnwT9DZ4CdT0uGhHfCe0mAWRbs7JTSWXHi1Cq4ZqJwfMl/hN/x8+Yq5JVnQvjcEIM81iwNmGAZ7OLjLksy38U/MIXZtwxOo=\"}",
+                "version": 1,
+                "fingerPrint": "01e922bd",
+                "fingerPrintEDDSA": "428805e9",
+                "compliantDerivation": true,
+                "id": "67a490df-ff19-4eb0-88ce-206ae2c77a74"
+              },
+              "wallets": []
+            }
+          }
+        },
+        "SHOP": {
+          "giftCards": {
+            "livenet": []
+          }
+        },
+        "CONTACT": {
+          "list": []
+        },
+        "_persist": {
+          "version": -1,
+          "rehydrated": true
+        }
+      },
+      "raw": "{\"APP\":\"\\\"{\\\\\\\"migrationMMKVStorageComplete\\\\\\\":true}\\\"\",\"WALLET\":\"\\\"{\\\\\\\"keys\\\\\\\":{\\\\\\\"fixture\\\\\\\":{\\\\\\\"id\\\\\\\":\\\\\\\"fixture\\\\\\\",\\\\\\\"properties\\\\\\\":{\\\\\\\"xPrivKeyEncrypted\\\\\\\":\\\\\\\"encrypted:U2FsdGVkX1/pCZjUH7A7VAYMFKkJUPKH0ZsRzapMigK5OkXLzPkubWh3Z8Y/xP9hHj7EVJ7+K2ACyuK3OqrkzrgNqzerk9KLT+837eSHFNeBQdRsvayUecopUTb0Ee2VTG4ssC4mDtgdaBRX1cQ61+HTXct86L2BhjtwweL8EIaOUbzlF96jcYxPkmmlx3u+5HdGsWG9rA5ElfHVfcWqZih5TCzXUQyHKhukuO6dgtIkZYqvssIt/zvTulpijwyp0DBe15fvavh/otuiXBVHzj+Vo3Sw85tK0n7ccCtKAj/vvW2G0J+5JXeVT+G7zGp+D0kk+/jWlMMidl8bciy6mJhwZaui/OKqK3N0ceUisMWlDvkvQsStnJjYgH3YXna/Dm6LD8gT9bl4otFWi1LO0mEOjh2kFqjVBOO9eBe2WEc=\\\\\\\",\\\\\\\"xPrivKeyEDDSAEncrypted\\\\\\\":\\\\\\\"{\\\\\\\\\\\\\\\"iv\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"T4AwmOCEzgr+n8L4hnCbOg==\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"v\\\\\\\\\\\\\\\":1,\\\\\\\\\\\\\\\"iter\\\\\\\\\\\\\\\":1000,\\\\\\\\\\\\\\\"ks\\\\\\\\\\\\\\\":128,\\\\\\\\\\\\\\\"ts\\\\\\\\\\\\\\\":64,\\\\\\\\\\\\\\\"mode\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"ccm\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"adata\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"cipher\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"aes\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"salt\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"phAl/fU8duI=\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\"ct\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\"ASSzmj3e/eEN7DCEDbsYJco9r9OTrGJOVmUewzFJXiQck4TPJ5FxWXy95iLrvXkOc0E32DGHvCP6SfLABTtaYckDGgYnL8qZ5VGShHeePjhppVHK9GoAZKQ1jiecWgIVGgxe/w8UhmLNTR6YdvEPBQ8eC72mc50=\\\\\\\\\\\\\\\"}\\\\\\\",\\\\\\\"mnemonicEncrypted\\\\\\\":\\\\\\\"encrypted:U2FsdGVkX18Oymx3onHdd69WsMFZvFoTjHBjCS8Z5y8SkD2nsJeOoYC2bBWMPF+LZd7gHLTlNniILBi+jpWw76GiwDBfrQkSoz8e/yOFhE/aPAh+yTy6LZpjX9jn/Xc6VozPN6VbUxjw/pq4SFlFdl5+X/tnMag9slULHXCnQPvkveOzYBbKPGdS5OQcukUGhYLem/k8/c8zO84o7IpRanksJD9OxcQHlV0ETPq2IRosJnY6zOLjir3ylDO2o3K8mZK05OInA0n821BPhzspVJ0mF7qStUbyfwaNu+82vaKQbb3we8CxQ8eDuOQd29Sl1Ais0Abn7+mHYJQQsvuing==\\\\\\\",\\\\\\\"version\\\\\\\":1,\\\\\\\"fingerPrint\\\\\\\":\\\\\\\"01e922bd\\\\\\\",\\\\\\\"fingerPrintEDDSA\\\\\\\":\\\\\\\"428805e9\\\\\\\",\\\\\\\"compliantDerivation\\\\\\\":true,\\\\\\\"id\\\\\\\":\\\\\\\"67a490df-ff19-4eb0-88ce-206ae2c77a74\\\\\\\"},\\\\\\\"wallets\\\\\\\":[]}}}\\\"\",\"SHOP\":\"\\\"{\\\\\\\"giftCards\\\\\\\":{\\\\\\\"livenet\\\\\\\":[]}}\\\"\",\"CONTACT\":\"\\\"U2FsdGVkX1+/F3JEtu2mWFEEYCkFamybwDsUyA8yAME=\\\"\",\"_persist\":\"\\\"U2FsdGVkX19J80IhknwGJWMpQ377HkDR9WVkVqTorPjBDKNg8EGim9LvW02EXOyaeFKvex+4pL0iipeCLeXNRQ==\\\"\"}"
+    },
+    "whole": {
+      "state": {
+        "APP": {
+          "migrationMMKVStorageComplete": true
+        },
+        "WALLET": {
+          "keys": {
+            "fixture": {
+              "id": "fixture",
+              "properties": {
+                "xPrivKey": "xprv9s21ZrQH143K3j2pzs9qFaUmu78PSKCiHYLenzisLgwSNVMfvyKQEKT2DKwSdXzcGHbGbv7hbYK6FDNMVh6hTw2B84qZ2Cc5wPpVGUz9abC",
+                "xPrivKeyEDDSA": "xprv9s21ZrQH143K2M1ZeSLUaWSNgu5Py93nbrouNDB89gpLNHETPA9AqWCj4xGERLxkLc3JmSHJ2iTcFUosQ6H9K2NrrBBwkkVoKEjUz52TyyX",
+                "mnemonic": "boss food kiss domain rate permit caught ordinary spin huge donkey disease",
+                "version": 1,
+                "mnemonicHasPassphrase": false,
+                "fingerPrint": "be7a0671",
+                "fingerPrintEDDSA": "1238700d",
+                "compliantDerivation": true,
+                "id": "84b808de-d424-471f-abed-6efdfd2d3a69"
+              },
+              "wallets": []
+            }
+          }
+        },
+        "SHOP": {
+          "giftCards": {
+            "livenet": []
+          }
+        },
+        "CONTACT": {
+          "list": []
+        },
+        "_persist": {
+          "version": -1,
+          "rehydrated": true
+        }
+      },
+      "raw": "{\"APP\":\"\\\"U2FsdGVkX19Ni2VjovtlGZ7YgBSF9v+LXBiqUBy/gkDqKVnDlBI4y56u1zopdLlACi/HkSEJjWFLbswH77FPVw==\\\"\",\"WALLET\":\"\\\"U2FsdGVkX1+lW4VvwnpHp3ns4WO9vxb4OEM0dFjl9m7Mf5wMQTj3v8RypDQI+seisrV7Cbggay48LpYeOyzyf23fLlbCCr7y8sAItixEjEy36+nGqELgAZ+nacL8tJ7iYaoA9dhh7tFRvrRcmowIYMJ1l65SqGITUxNnDEsh2Cj+fgTlji0twJKJv8jBuJI0gJdbp1yMTr1Z+juA1y2cLbZGBwg8JwbgH68z8YbpOq9Z2NI98VV64kmle6FnIPS7Pbhlv9OTiV8SI0ZgHfl/ZKY2UegME7a25jh+KwHwPB2H7Ax9n4x90I/6y3uw03Gb/gO2BCljAIA5exAnE9t3L8esWx38CVFAVj1cUmznr/CtBOt1xfnk+qae+G7GSmQUelXZcPHQUzHKtEqnwUjko+di0PAThjeimslBArovPmxBPkVRSDRsnS3tFoI1amrlnh2ieGL1bG+jFN8UF7uFZFQsCyBwLyhiF66hh3uVmImt4bRM7AKy0exA50jZLGqAox+Awt+nnxi+F193KWlNHulij3ypextajTbSo0GOxzuSqwX7xnABEiPAjvyowvn/gEJhRj/Mojx11ZiJ/SZy1PoG1wT7drVV7cdkF0gk/l7806dpW5V4uAKunC000GYAcWM1gY6+Bo4KO7n7SEBcuUpb/jj2sqjzYxcNCg/T163Ev6iEdH50ry4K/7IAio2TGn368DzUDk2T+MPL94laT5MaRuvIHmk8tEH1touc7Gvn5JrmngBT3dE8poNxqZe53ZoVlNV5uXJ/gr8C5nr2aTtOX0GJ9WcdxvCsSgbTwlVRsQUfkuXl+KO2sUUa3fnCQraJvHoGSMqb6YLn01ya/+DAQFHEFqY+Jsq1jt1lYUuMWmoqZiOe8PJVIcarfN/mO6om8xQMCXlUEClhkVGzHIBm2/9p599AydnwS6Ah2AvmY8RYy/dyxRp3hGY1Z+thG8P8Y721GSkmFv//6Y9AiQ==\\\"\",\"SHOP\":\"\\\"U2FsdGVkX19LIdhkO7lXjZi78hCjrtCCpDlzRHntI3DHxzngS6go5MmvWDmxjCxE\\\"\",\"CONTACT\":\"\\\"U2FsdGVkX1+biTxpStnW1sMUUEaLJLXU13Apw/xQbEc=\\\"\",\"_persist\":\"\\\"U2FsdGVkX19sIXBvz9AocQGidwkH/OeDnBggrjd1YqH7JvRgqYC+gBUTDrz01yu8Etp3dthHA0Sq7WHDCxsEGw==\\\"\"}"
+    }
+  }
+}

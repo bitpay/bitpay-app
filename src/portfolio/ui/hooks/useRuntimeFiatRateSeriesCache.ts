@@ -1,4 +1,4 @@
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../../../utils/object';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {FiatRateCacheRequest} from '../../core/fiatRatesShared';
 import type {FiatRateSeriesCache} from '../../../store/rate/rate.models';

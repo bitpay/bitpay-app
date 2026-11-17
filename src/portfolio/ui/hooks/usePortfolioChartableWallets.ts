@@ -17,6 +17,29 @@ const addMarkedWalletIds = (
   });
 };
 
+/**
+ * The wallets the portfolio charts can include: those without an
+ * invalid-decimals marker or a quarantine. Shared by the balance chart and
+ * the per-key change so both describe the same set of wallets.
+ */
+export const filterPortfolioChartableWallets = <T extends Pick<Wallet, 'id'>>(
+  wallets: T[],
+  invalidDecimalsByWalletId: WalletMarkerMap,
+  quarantinesByWalletId: WalletMarkerMap,
+): T[] => {
+  const quarantinedWalletIds = new Set<string>();
+  addMarkedWalletIds(quarantinedWalletIds, invalidDecimalsByWalletId);
+  addMarkedWalletIds(quarantinedWalletIds, quarantinesByWalletId);
+  if (!quarantinedWalletIds.size) {
+    return wallets;
+  }
+
+  return (wallets || []).filter(wallet => {
+    const walletId = String(wallet?.id || '').trim();
+    return !walletId || !quarantinedWalletIds.has(walletId);
+  });
+};
+
 export default function usePortfolioChartableWallets(args: {
   enabled?: boolean;
   wallets: Wallet[];
@@ -36,16 +59,10 @@ export default function usePortfolioChartableWallets(args: {
       return [];
     }
 
-    const quarantinedWalletIds = new Set<string>();
-    addMarkedWalletIds(quarantinedWalletIds, invalidDecimalsByWalletId);
-    addMarkedWalletIds(quarantinedWalletIds, quarantinesByWalletId);
-    if (!quarantinedWalletIds.size) {
-      return args.wallets;
-    }
-
-    return (args.wallets || []).filter(wallet => {
-      const walletId = String(wallet?.id || '').trim();
-      return !walletId || !quarantinedWalletIds.has(walletId);
-    });
+    return filterPortfolioChartableWallets(
+      args.wallets,
+      invalidDecimalsByWalletId,
+      quarantinesByWalletId,
+    );
   }, [args.wallets, enabled, invalidDecimalsByWalletId, quarantinesByWalletId]);
 }

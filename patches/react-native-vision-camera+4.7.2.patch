@@ -1,0 +1,51 @@
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraPackage.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraPackage.kt
+index ca2e06c..2d8ccc3 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraPackage.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraPackage.kt
+@@ -1,16 +1,39 @@
+ package com.mrousavy.camera.react
+ 
+-import com.facebook.react.ReactPackage
++import com.facebook.react.BaseReactPackage
+ import com.facebook.react.bridge.NativeModule
+ import com.facebook.react.bridge.ReactApplicationContext
++import com.facebook.react.module.model.ReactModuleInfo
++import com.facebook.react.module.model.ReactModuleInfoProvider
+ import com.facebook.react.uimanager.ViewManager
+ 
+-class CameraPackage : ReactPackage {
+-  override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> =
+-    listOf(
+-      CameraViewModule(reactContext),
+-      CameraDevicesManager(reactContext)
+-    )
++/**
++ * Lazy package: React Native creates these modules on first JS access instead
++ * of at startup. With the eager ReactPackage form, bridgeless RN built both
++ * modules while the React host started, so every launch loaded VisionCamera's
++ * native library and started ProcessCameraProvider + ExtensionsManager, even
++ * though only the Scan screen uses the camera.
++ */
++class CameraPackage : BaseReactPackage() {
++  override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? =
++    when (name) {
++      CAMERA_VIEW -> CameraViewModule(reactContext)
++      CAMERA_DEVICES -> CameraDevicesManager(reactContext)
++      else -> null
++    }
++
++  override fun getReactModuleInfoProvider(): ReactModuleInfoProvider =
++    ReactModuleInfoProvider {
++      mapOf(
++        CAMERA_VIEW to ReactModuleInfo(CAMERA_VIEW, CameraViewModule::class.java.name, false, false, false, false),
++        CAMERA_DEVICES to ReactModuleInfo(CAMERA_DEVICES, CameraDevicesManager::class.java.name, false, false, false, false)
++      )
++    }
+ 
+   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> = listOf(CameraViewManager())
++
++  private companion object {
++    const val CAMERA_VIEW = "CameraView"
++    const val CAMERA_DEVICES = "CameraDevices"
++  }
+ }

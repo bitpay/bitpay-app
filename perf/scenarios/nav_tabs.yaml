@@ -1,0 +1,42 @@
+appId: com.bitpay.wallet
+---
+# Tab-to-tab navigation. The app is already running and settled when this
+# starts, so every frame recorded here belongs to a transition rather than to
+# startup.
+#
+# On assertions: only Home and Settings currently expose a testID on their
+# content, so those are the only hops with a real arrival check. Shop and Bills
+# are driven by tap + animation settle. That is a limitation of this flow's
+# ability to *verify* arrival — it does not affect measurement accuracy, because
+# per-screen transition times come from the in-app navigation listener, which is
+# keyed by React Navigation route name and needs no testIDs at all. Adding
+# content testIDs to Shop and Bills would let this flow fail loudly on a
+# navigation break rather than silently timing a tap that went nowhere.
+
+- assertVisible:
+    id: 'portfolio-balance-toggle'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'tab-shop'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'tab-bills'
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'tab-settings'
+- extendedWaitUntil:
+    visible:
+      id: 'settings-bitpay-id-profile-row'
+    timeout: 20000
+- waitForAnimationToEnd
+
+- tapOn:
+    id: 'tab-home'
+- extendedWaitUntil:
+    visible:
+      id: 'portfolio-balance-toggle'
+    timeout: 20000
+- waitForAnimationToEnd

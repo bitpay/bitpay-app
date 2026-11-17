@@ -5,7 +5,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import debounce from 'lodash.debounce';
+import {debounce} from './utils/debounce';
 import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useRef} from 'react';
 import {useStore} from 'react-redux';
@@ -101,9 +101,6 @@ import DebugScreen, {
   DebugScreenParamList,
   DebugScreens,
 } from './navigation/Debug';
-import CardActivationGroup, {
-  CardActivationGroupParamList,
-} from './navigation/card-activation/CardActivationGroup';
 import {
   createWalletsForAccounts,
   fixWalletAddresses,
@@ -131,11 +128,19 @@ import BillGroup, {
 } from './navigation/tabs/shop/bill/BillGroup';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
+import {
+  mark as perfMark,
+  flushStartup as perfFlushStartup,
+  scheduleLoadProfile as perfScheduleLoadProfile,
+  onNavigationStateChange as perfOnNavigationStateChange,
+  startNavigationReporting as perfStartNavigationReporting,
+} from './perf/PerfMonitor';
+import {reportFullyDrawn} from './perf/fullyDrawn';
+import {markFirstScreenShown} from './utils/startupSignals';
 import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-//import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
 import {KeyMethods} from './store/wallet/wallet.models';
 import {
@@ -195,7 +200,6 @@ export type RootStackParamList = {
   ScanGroupParamList &
   ExternalServicesGroupParamList &
   SwapCryptoGroupParamList &
-  CardActivationGroupParamList &
   OnboardingGroupParamList &
   AuthGroupParamList &
   GiftCardGroupParamList &
@@ -224,7 +228,6 @@ export type NavScreenParams = NavigatorScreenParams<
     OnboardingGroupParamList &
     BitpayIdGroupParamList &
     WalletGroupParamList &
-    CardActivationGroupParamList &
     GiftCardGroupParamList &
     MerchantGroupParamList &
     BillGroupParamList &
@@ -279,7 +282,7 @@ export const getNavigationTabName = () => {
     TabsScreens.HOME,
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
-    TabsScreens.CARD,
+    TabsScreens.BILLS,
     TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
@@ -330,6 +333,7 @@ const StartupGate = () => {
     }
 
     hasRoutedRef.current = true;
+    perfMark('bp_startup_route');
 
     navigation.reset({
       index: 0,
@@ -582,7 +586,7 @@ export default () => {
       subscriptionAppStateChange.remove();
       stopSilentInterval();
     };
-  }, []);
+  }, [dispatch]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
@@ -614,9 +618,9 @@ export default () => {
               dispatch(AppActions.lockAuthorizedUntil(undefined));
               showLockOption();
             } else {
-              const timeSinceBoot = await Timer.getRelativeTime();
+              const currentTimeSinceBoot = await Timer.getRelativeTime();
               const authorizedUntil =
-                Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+                Number(currentTimeSinceBoot) + LOCK_AUTHORIZED_TIME;
               dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
               dispatch(AppActions.showBlur(false));
             }
@@ -649,6 +653,7 @@ export default () => {
       onAppStateChange,
     );
     return () => subscriptionAppStateChange.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- blurScreenList is a constant array rebuilt every render; listing it would re-subscribe on every render
   }, [
     dispatch,
     onboardingCompleted,
@@ -727,7 +732,7 @@ export default () => {
             if (message.length < 800) {
               console.debug(`[BWC] ${message}`);
             }
-          } catch (_) {}
+          } catch {}
         };
       });
     };
@@ -752,6 +757,8 @@ export default () => {
           theme={theme}
           linking={linking}
           onReady={async () => {
+            perfMark('bp_nav_ready');
+            perfStartNavigationReporting();
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
             dispatch(showBlur(pinLockActive || biometricLockActive));
@@ -772,10 +779,29 @@ export default () => {
                   new Promise(resolve =>
                     Braze.getInitialURL(deepLink => resolve(deepLink)),
                   );
+                const waitForStartupGateRouting = () =>
+                  new Promise<void>(resolve => {
+                    const isRouted = () =>
+                      navigationRef.getCurrentRoute()?.name !== 'StartupGate';
+                    if (isRouted()) {
+                      resolve();
+                      return;
+                    }
+                    const unsubscribe = navigationRef.addListener(
+                      'state',
+                      () => {
+                        if (isRouted()) {
+                          unsubscribe();
+                          resolve();
+                        }
+                      },
+                    );
+                  });
                 const [url, brazeUrl] = await Promise.all([
                   Linking.getInitialURL(),
                   getBrazeInitialUrl(),
                 ]);
+                await waitForStartupGateRouting();
                 await sleep(10);
                 urlEventHandler({url: url || brazeUrl});
               }
@@ -1045,11 +1071,16 @@ export default () => {
               lastNavStartTsRef.current = Date.now();
             }
 
+            const currentRoute = navigationRef.getCurrentRoute()?.name;
+
+            // Deliberately NOT debounced: the analytics listener above can
+            // afford to coalesce events, but a transition timer that waits
+            // 300ms would measure the debounce instead of the navigation.
+            perfOnNavigationStateChange(currentRoute);
+
             if (splashHiddenRef.current) {
               return;
             }
-
-            const currentRoute = navigationRef.getCurrentRoute()?.name;
 
             if (currentRoute && currentRoute !== 'StartupGate') {
               splashHiddenRef.current = true;
@@ -1063,6 +1094,15 @@ export default () => {
                       }`,
                     );
                   });
+
+                  // This is the app's real time-to-interactive: the splash is
+                  // gone and a navigable screen is on-screen. Everything the
+                  // harness reports as TTFD is anchored here.
+                  perfMark('bp_splash_hidden');
+                  markFirstScreenShown();
+                  reportFullyDrawn();
+                  perfFlushStartup();
+                  perfScheduleLoadProfile();
                 });
               });
             }
@@ -1155,7 +1195,6 @@ export default () => {
             {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root, theme})}
             {WalletGroup({Wallet: Root, theme})}
-            {CardActivationGroup({CardActivation: Root, theme})}
             {ScanGroup({Scan: Root, theme})}
             {GiftCardGroup({GiftCard: Root, theme})}
             {MerchantGroup({Merchant: Root, theme})}
@@ -1214,7 +1253,6 @@ export default () => {
             onRender={logReactProfiler}>
             <BiometricModal />
           </PerformanceProfiler>
-          {/* <ImportLedgerWalletModal /> */}
           <PerformanceProfiler
             id="overlay:wallet-connect"
             onRender={logReactProfiler}>

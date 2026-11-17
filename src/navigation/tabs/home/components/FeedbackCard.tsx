@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
   emojiAction: {
     width: 44,
-    height: 44,
+    minHeight: 44,
   },
 });
 

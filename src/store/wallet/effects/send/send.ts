@@ -1,16 +1,3 @@
-import AppBtc from '@ledgerhq/hw-app-btc';
-import AppEth from '@ledgerhq/hw-app-eth';
-import {Transaction} from '@ledgerhq/hw-app-btc/lib/types';
-import {CreateTransactionArg} from '@ledgerhq/hw-app-btc/lib/createTransaction';
-import {serializeTransactionOutputs} from '@ledgerhq/hw-app-btc/lib/serializeTransaction';
-import {splitTransaction} from '@ledgerhq/hw-app-btc/lib/splitTransaction';
-import ledgerService from '@ledgerhq/hw-app-eth/lib/services/ledger';
-import {BufferReader} from '@ledgerhq/hw-app-btc/lib/buffertools';
-import {encode} from 'ripple-binary-codec';
-import Xrp from '@ledgerhq/hw-app-xrp';
-import {Payment} from 'xrpl/src/models/transactions';
-import Transport from '@ledgerhq/hw-transport';
-import axios from 'axios';
 import {Effect} from '../../../index';
 import {
   CustomTransactionData,
@@ -23,14 +10,11 @@ import {
   TxDetails,
   Wallet,
   TransactionOptionsContext,
-  BitcoreUtxoTransactionLike,
-  BitcoreEvmTransactionLike,
   ProposalErrorHandlerContext,
-  KeyMethods,
 } from '../../wallet.models';
 import {
-  FormatAmount,
   FormatAmountStr,
+  FromBaseUnits,
   ParseAmount,
   SatToUnit,
   parseAmountToStringIfBN,
@@ -91,9 +75,7 @@ import {
   GetPrecision,
   IsERCToken,
   IsVMChain,
-  IsSegwitCoin,
   IsSVMChain,
-  IsUtxoChain,
   IsEVMChain,
   IsNonceChain,
 } from '../../utils/currency';
@@ -106,8 +88,7 @@ import {
   openUrlWithInAppBrowser,
   submitDeviceEvent,
 } from '../../../app/app.effects';
-import _ from 'lodash';
-import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import ReactNativeBiometrics from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {DeviceEventEmitter, Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
@@ -120,19 +101,16 @@ import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
-import {Network, URL} from '../../../../constants';
+import {URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
-import {
-  UtxoAccountParams,
-  currencyConfigs,
-} from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
 import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
+import {requestDklsWorkerMount} from '../../../../dkls/DklsWorker';
 import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
@@ -141,6 +119,7 @@ import {
   startTSSSigning,
   pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
+import {isHiddenByTestnetMode} from '../../utils/testnet';
 
 const HAS_CONFIRMING_TXS_MAX_AGE_MS = 10 * 1000;
 
@@ -184,13 +163,8 @@ export const createProposalAndBuildTxDetails =
             feeLevel: cachedFeeLevel,
             useUnconfirmedFunds,
             queuedTransactions,
-            enableReplaceByFee,
           },
         } = getState();
-
-        if (wallet.isHardwareWallet && credentials.chain === 'bch') {
-          tx.signingMethod = 'ecdsa';
-        }
 
         if (wallet.tssKeyId && credentials.chain === 'bch') {
           tx.signingMethod = 'ecdsa';
@@ -655,6 +629,7 @@ export const buildTxDetails =
         throw new Error('Invalid coin or chain');
       }
 
+      const amountSat = amount!;
       amount = Number(amount); // Support BN (use number instead string only for view)
       let effectiveRate;
       if (invoice && defaultAltCurrencyIsoCode === invoice.currency) {
@@ -730,6 +705,7 @@ export const buildTxDetails =
                 chain,
                 undefined,
                 fee,
+                true,
               ),
             ),
             fiatAmount: formatFiatAmount(feeToFiat, defaultAltCurrencyIsoCode),
@@ -748,6 +724,7 @@ export const buildTxDetails =
                 chain,
                 undefined,
                 networkCost,
+                true,
               ),
             ),
             fiatAmount: formatFiatAmount(
@@ -774,14 +751,14 @@ export const buildTxDetails =
         subTotal: {
           cryptoAmount: dispatch(
             // @ts-ignore
-            FormatAmountStr(coin, chain, tokenAddress, amount),
+            FormatAmountStr(coin, chain, tokenAddress, amountSat, true),
           ),
           fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
         },
         total: {
           cryptoAmount: isERC20
             ? `${dispatch(
-                FormatAmountStr(coin, chain, tokenAddress, amount),
+                FormatAmountStr(coin, chain, tokenAddress, amountSat, true),
                 // @ts-ignore
               )}\n + ${dispatch(
                 FormatAmountStr(
@@ -789,10 +766,20 @@ export const buildTxDetails =
                   chain,
                   undefined,
                   fee,
+                  true,
                 ),
               )}`
             : dispatch(
-                FormatAmountStr(coin, chain, tokenAddress, amount + fee),
+                FormatAmountStr(
+                  coin,
+                  chain,
+                  tokenAddress,
+                  (
+                    BigInt(parseAmountToStringIfBN(amountSat)) +
+                    BigInt(parseAmountToStringIfBN(fee))
+                  ).toString(),
+                  true,
+                ),
               ),
           fiatAmount: formatFiatAmount(
             amountToFiat + feeToFiat,
@@ -1017,7 +1004,7 @@ export const buildTransactionProposal =
               wallet.chain,
             );
 
-            if (!_.isEmpty(warningMsg)) {
+            if (warningMsg) {
               dispatch(
                 showBottomNotificationModal(
                   ExcludedUtxosWarning({
@@ -1288,6 +1275,12 @@ export const buildTransactionProposal =
           }
         }
 
+        // A Solana Pay memo says what the payment is for (BitPay matches SOL
+        // invoice payments by it), so native SOL sends need it as much as SPL.
+        if (solanaPayOpts?.memo && IsSVMChain(txp.chain!) && !txp.memo) {
+          txp.memo = solanaPayOpts.memo;
+        }
+
         resolve(txp);
       } catch (error) {
         reject(error);
@@ -1304,13 +1297,17 @@ const withTssBchSigningMethod = <T extends Partial<TransactionProposal>>(
     ? {...txp, signingMethod: 'ecdsa'}
     : txp;
 
+// Keys imported from a Ledger in older versions still load and show
+// balances, but the app can no longer sign for them.
+export const HARDWARE_WALLET_SIGNING_UNSUPPORTED =
+  'Sending from a hardware wallet is no longer supported in the BitPay app. Use the wallet’s own app to send.';
+
 export const startSendPayment =
   ({
     txp,
     key,
     wallet,
     recipient,
-    transport,
     tssCallbacks,
     setShowTSSProgressModal,
   }: {
@@ -1318,12 +1315,14 @@ export const startSendPayment =
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-    transport?: Transport;
     tssCallbacks?: TSSSigningCallbacks;
     setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
+      if (key.hardwareSource) {
+        return reject(new Error(HARDWARE_WALLET_SIGNING_UNSUPPORTED));
+      }
       try {
         wallet.createTxProposal(
           withTssBchSigningMethod(wallet, {...txp, dryRun: false}),
@@ -1339,7 +1338,6 @@ export const startSendPayment =
                   key,
                   wallet,
                   recipient,
-                  transport,
                   ataOwnerAddress: txp.ataOwnerAddress,
                   tssCallbacks,
                   setShowTSSProgressModal,
@@ -1367,7 +1365,6 @@ export const publishAndSign =
     key,
     wallet,
     recipient,
-    transport,
     password,
     signingMultipleProposals,
     ataOwnerAddress,
@@ -1378,7 +1375,6 @@ export const publishAndSign =
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-    transport?: Transport;
     password?: string;
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
     ataOwnerAddress?: string; // only for solana tokens, if the recipient needs to create an associated token account
@@ -1391,6 +1387,10 @@ export const publishAndSign =
         assertDeviceIntegrityForSensitiveAction('crypto-sign');
       } catch (error) {
         return reject(error);
+      }
+
+      if (key.hardwareSource) {
+        return reject(new Error(HARDWARE_WALLET_SIGNING_UNSUPPORTED));
       }
 
       const {APP} = getState();
@@ -1445,6 +1445,9 @@ export const publishAndSign =
       }
 
       const isTSSSigning = requiresTSSSigning(wallet, key);
+      if (isTSSSigning) {
+        requestDklsWorkerMount();
+      }
       try {
         if (isTSSSigning && !tssCallbacks) {
           tssCallbacks = {
@@ -1457,7 +1460,7 @@ export const publishAndSign =
             onRoundUpdate: (round, type) =>
               logManager.debug(`[TSS] Round ${round} ${type}`),
             onError: err => logManager.error(`[TSS] Error: ${err.message}`),
-            onComplete: sig => logManager.debug(`[TSS] Complete`),
+            onComplete: () => logManager.debug(`[TSS] Complete`),
           };
         }
         if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
@@ -1510,7 +1513,7 @@ export const publishAndSign =
           );
         }
 
-        if (key.isReadOnly && !key.hardwareSource) {
+        if (key.isReadOnly) {
           // read only wallet
           return resolve(publishedTx);
         }
@@ -1528,19 +1531,6 @@ export const publishAndSign =
             }),
           );
           logManager.debug('success TSS sign [publishAndSign]');
-        } else if (key.hardwareSource) {
-          if (!transport) {
-            return reject(
-              new Error('No transport provided for hardware signing.'),
-            );
-          }
-          signedTx = await signTxWithHardwareWallet(
-            transport,
-            wallet,
-            key,
-            txpToSign as TransactionProposal,
-          );
-          logManager.debug('success hardware sign [publishAndSign]');
         } else {
           signedTx = (await signTx(
             wallet,
@@ -1556,7 +1546,7 @@ export const publishAndSign =
             tssCallbacks?.onStatusChange('broadcasting');
             try {
               broadcastedTx = await broadcastTx(wallet, signedTx);
-            } catch (_) {
+            } catch {
               // Another copayer may have already broadcasted — poll for confirmed state.
               broadcastedTx = await pollTxpUntilBroadcast(wallet, signedTx.id);
             }
@@ -1567,10 +1557,11 @@ export const publishAndSign =
           logManager.debug('success broadcast [publishAndSign]');
 
           const {fee, amount} = broadcastedTx as {
-            fee: number;
-            amount: number;
+            fee: number | string;
+            amount: number | string;
           };
-          const targetAmount = wallet.balance.sat - (fee + amount);
+          const targetAmount =
+            wallet.balance.sat - (Number(fee) + Number(amount));
 
           setTimeout(() => {
             // show refresing in wallet details view
@@ -1874,418 +1865,6 @@ export const signTx = (
   });
 };
 
-const _fetchTxMainnetCache: Record<string, string> = {};
-const _fetchTxTestnetCache: Record<string, string> = {};
-const _fetchTxCache = {
-  [Network.mainnet]: _fetchTxMainnetCache,
-  [Network.testnet]: _fetchTxTestnetCache,
-};
-
-/**
- * Fetch raw data for a COIN transaction by ID.
- *
- * @param txId
- * @param coin The cryptocurrency symbol (e.g., btc, ltc, doge).
- * @param network
- * @returns transaction data as a hex string
- */
-const fetchUtxoTxById = async (
-  txId: string,
-  coin: string,
-  network: Network,
-): Promise<string> => {
-  if (_fetchTxCache[network][txId]) {
-    return _fetchTxCache[network][txId];
-  }
-  let networkEndpoint = network === 'livenet' ? 'main' : 'test3';
-  let url =
-    coin === 'bch'
-      ? `https://api.fullstack.cash/v5/rawtransactions/getRawTransaction/${txId}`
-      : `https://api.blockcypher.com/v1/${coin}/${networkEndpoint}/txs/${txId}?includeHex=true`;
-  const apiResponse = await axios.get<any>(url);
-  const txDataHex = coin === 'bch' ? apiResponse?.data : apiResponse?.data?.hex;
-  if (!txDataHex) {
-    throw new Error('Could not fetch transaction data');
-  }
-
-  _fetchTxCache[network][txId] = txDataHex;
-  return txDataHex;
-};
-
-const isString = (s: any): s is string => {
-  return typeof s === 'string';
-};
-
-const createLedgerTransactionArgUtxo = (
-  wallet: Wallet,
-  txp: TransactionProposal,
-) => {
-  return new Promise<CreateTransactionArg>(async (resolve, reject) => {
-    const BWC = BwcProvider.getInstance();
-    const utils = BWC.getUtils();
-    const txpAsTx = utils.buildTx(txp) as BitcoreUtxoTransactionLike;
-    const accountPath = wallet.hardwareData?.accountPath;
-    const inputPaths = (txp.inputPaths || []).filter(isString);
-
-    if (!accountPath) {
-      return reject(new Error('No account path found for this wallet.'));
-    }
-    const hasSegwitPath =
-      accountPath.includes("84'") || accountPath.includes("49'");
-
-    // BWS only returns inputPaths for addresses it knows about
-    // We kick off a scan when we import the hardware wallet so it may not be complete yet
-    if (!inputPaths.length) {
-      return reject(
-        new Error(
-          'No input paths found. Start an address scan, if not already started, then try again later.',
-        ),
-      );
-    }
-
-    if (inputPaths.length !== txpAsTx.inputs.length) {
-      return reject(
-        new Error(
-          'Not enough input paths found. Start an address scan, if not already started, then try again later.',
-        ),
-      );
-    }
-
-    // array of BIP 32 paths pointing to the path to the private key used for each UTXO
-    const associatedKeysets: string[] = inputPaths.map(
-      p => `${accountPath}/${p.replace('m/', '')}`,
-    );
-
-    try {
-      // inputs is an array of <inputData> where <inputData> is itself an array of [inputTx, vout, redeemScript, sequence]
-      // so it will end up being an array of arrays
-      const inputs: CreateTransactionArg['inputs'] = await Promise.all(
-        txpAsTx.inputs.map(async input => {
-          // prevTxId is given in BigEndian format, no need to reverse
-          const txId = input.prevTxId.toString('hex');
-          // TODO: use BWS to get the raw transaction hex
-          // const txp = await getTxByHash(wallet, txId);
-          // const inputTxHex = txp.raw;
-          const inputTxHex = await fetchUtxoTxById(txId, txp.coin, txp.network);
-
-          const isSegwitSupported = IsSegwitCoin(txp.coin);
-          // TODO: safe to always set this to false or undefined?
-          const hasTimestamp = false;
-          const hasExtraData = false;
-          const additionals: string[] | undefined = undefined;
-          const inputTx = splitTransaction(
-            inputTxHex,
-            isSegwitSupported,
-            hasTimestamp,
-            hasExtraData,
-            additionals,
-          );
-
-          const outputIndex = input.outputIndex;
-          // TODO: safe to always set this to undefined ?
-          const redeemScript = undefined; // TODO: optional redeem script to use when consuming a segwit input
-          const sequence = input.sequenceNumber; // optional
-
-          const inputData: CreateTransactionArg['inputs'][0] = [
-            inputTx,
-            outputIndex,
-            redeemScript,
-            sequence,
-          ];
-
-          return inputData;
-        }),
-      );
-
-      const hasChange = typeof txpAsTx._changeIndex !== 'undefined';
-
-      // optional BIP 32 path pointing to the path to the public key used to compute the change address
-      const changePath = hasChange
-        ? `${accountPath}/${txp.changeAddress.path.replace('m/', '')}`
-        : undefined;
-
-      // undefined will default to SIGHASH_ALL.
-      // SIGHASH_ALL | SIGHASH_FORKID for bch
-      const sigHashType = txp.coin === 'bch' ? 0x41 : 0x01;
-      const segwit = IsSegwitCoin(txp.coin) && hasSegwitPath;
-
-      const outputs = txpAsTx.outputs.map(output => {
-        const amountBuf = Buffer.alloc(8);
-        amountBuf.writeUInt32LE(output.satoshis);
-
-        return {
-          amount: amountBuf,
-          script: output.script.toBuffer(),
-        };
-      });
-
-      const outputScriptHex = serializeTransactionOutputs({
-        outputs,
-      } as Transaction).toString('hex');
-
-      /**
-       * TODO: add additionals
-       * 'bech32' for spending native segwit outputs,
-       * 'abc', for bch,
-       * 'gold' for btg,
-       * 'bipxxx' for using BIPxxx,
-       * 'sapling' to indicate a zec transaction is supporting sapling
-       */
-      let additionals: string[] = [];
-
-      if (txp.coin === 'bch') {
-        additionals = ['abc', 'cashaddr'];
-      } else if (txp.coin === 'btc' && hasSegwitPath) {
-        additionals = ['bech32']; // TODO: safe to always set this to 'bech32' ? Potencial issues here
-      }
-
-      const arg: CreateTransactionArg = {
-        inputs,
-        associatedKeysets,
-        changePath,
-        outputScriptHex,
-        sigHashType,
-        segwit,
-        additionals,
-      };
-
-      return resolve(arg);
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
-
-const getUtxoSignaturesFromLedger = async (
-  wallet: Wallet,
-  txp: TransactionProposal,
-  transport: Transport,
-  params: UtxoAccountParams,
-) => {
-  const app = new AppBtc({
-    transport,
-    currency: params.transportCurrency,
-    scrambleKey: params.currencySymbol.toUpperCase(),
-  });
-
-  const arg = await createLedgerTransactionArgUtxo(wallet, txp).catch(err => {
-    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-
-    throw new Error(
-      `Unable to create transaction argument for Ledger to sign: ${errMsg}`,
-    );
-  });
-
-  // The Ledger HW BTC app returns the final signed tx
-  // We just need the signatures so we patch the logic to store
-  // the generated signatures in this array
-  const extractedSignatures: Buffer[] = [];
-
-  // @ts-ignore
-  arg.patch_signatureArray = extractedSignatures;
-
-  await app.createPaymentTransaction(arg);
-
-  // remove the sighashtype (last byte)
-  const signatures = extractedSignatures.map(sigBuf => {
-    const reader = new BufferReader(sigBuf);
-    const signature = reader.readSlice(sigBuf.length - 1);
-
-    return signature.toString('hex');
-  });
-
-  return signatures;
-};
-
-const getSignatureString = (signatureObject: {
-  s: string;
-  v: string;
-  r: string;
-}) => {
-  // Assuming signatureObject = { s: string, v: string, r: string }
-  let signature = '0x';
-  // Ensure each part is a hexadecimal string. If they're not, you should convert them to hex.
-  const r = signatureObject.r;
-  const s = signatureObject.s;
-  let v = signatureObject.v;
-  // TODO: safe to always set this to 27 or 28 for matic ? Workaround for handling chainID flags (ex 137 for Matic)
-  switch (v) {
-    case '0135':
-      v = '1B';
-      break;
-    case '0136':
-      v = '1C';
-      break;
-  }
-  // Concatenate r, s, and v to form the signature string
-  signature += r + s + v;
-  return signature;
-};
-
-const getEVMSignaturesFromLedger = async (
-  wallet: Wallet,
-  txp: TransactionProposal,
-  transport: Transport,
-) => {
-  try {
-    const accountPath = wallet.hardwareData?.accountPath;
-    if (!accountPath) {
-      throw new Error('No account path found for this wallet.');
-    }
-    const BWC = BwcProvider.getInstance();
-    const utils = BWC.getUtils();
-    const txpAsTx = utils.buildTx(txp) as BitcoreEvmTransactionLike;
-    const raw = txpAsTx.uncheckedSerialize()[0];
-    var cleanedHexString = raw.replace(/^0x/, '');
-    const resolution = await ledgerService.resolveTransaction(
-      cleanedHexString,
-      {},
-      {},
-    );
-    const eth = new AppEth(transport);
-    const signature = await eth.signTransaction(
-      accountPath,
-      cleanedHexString,
-      resolution,
-    );
-    const signatureHex = getSignatureString(signature);
-    return [signatureHex];
-  } catch (err) {
-    throw new Error('Something went wrong signing the transaction: ' + err);
-  }
-};
-
-const getXrpSignaturesFromLedger = async (
-  wallet: Wallet,
-  txp: TransactionProposal,
-  transport: Transport,
-) => {
-  try {
-    let transactionJSON: Payment = {
-      TransactionType: 'Payment',
-      Account: txp.from,
-      Destination: txp.outputs[0].toAddress!,
-      Amount: txp.amount.toString(),
-      Fee: txp.fee.toString(),
-      Flags: 2147483648,
-      Sequence: txp.nonce,
-      SigningPubKey: wallet.credentials.hardwareSourcePublicKey.toUpperCase(),
-    };
-    if (txp.destinationTag) {
-      transactionJSON.DestinationTag = txp.destinationTag;
-    }
-    if (txp.invoiceID) {
-      transactionJSON.InvoiceID = txp.invoiceID;
-    }
-    const xrp = new Xrp(transport);
-    const transactionBlob = encode(transactionJSON);
-    const signature = await xrp.signTransaction(
-      wallet.credentials.rootPath,
-      transactionBlob,
-    );
-    transactionJSON.TxnSignature = signature.toUpperCase();
-    const signatureBlob = encode(transactionJSON);
-    return [signatureBlob];
-  } catch (err) {
-    throw new Error('Something went wrong signing the transaction: ' + err);
-  }
-};
-
-const getSignaturesFromLedger = (
-  transport: Transport,
-  wallet: Wallet,
-  txp: TransactionProposal,
-) => {
-  const {chain: currency, network, chain} = wallet.credentials;
-  if (IsUtxoChain(chain)) {
-    const configFn = currencyConfigs[chain];
-    const params = configFn(network);
-    return getUtxoSignaturesFromLedger(
-      wallet,
-      txp,
-      transport,
-      params as UtxoAccountParams,
-    );
-  }
-  if (
-    ['eth', 'matic', 'base', 'op', 'arb'].includes(chain) ||
-    IsERCToken(currency, chain)
-  ) {
-    return getEVMSignaturesFromLedger(wallet, txp, transport);
-  }
-  if (chain === 'xrp') {
-    return getXrpSignaturesFromLedger(wallet, txp, transport);
-  }
-
-  throw new Error(`Unsupported chain: ${chain.toUpperCase()}`);
-};
-
-const getSignaturesFromHardwareWallet = (
-  transport: Transport,
-  wallet: Wallet,
-  key: Key,
-  txp: TransactionProposal,
-) => {
-  if (!wallet.isHardwareWallet) {
-    return Promise.reject('Wallet is not associated with a hardware wallet');
-  }
-
-  if (key.hardwareSource === 'ledger') {
-    return getSignaturesFromLedger(transport, wallet, txp);
-  }
-
-  return Promise.reject('Unsupported hardware wallet');
-};
-
-export const signTxWithHardwareWallet = async (
-  transport: Transport,
-  wallet: Wallet,
-  key: Key,
-  txp: TransactionProposal,
-) => {
-  let signatures: string[];
-
-  try {
-    signatures = await getSignaturesFromHardwareWallet(
-      transport,
-      wallet,
-      key,
-      txp,
-    );
-  } catch (err: any) {
-    if (err.message.includes('0x6985')) {
-      // Ledger device: Condition of use not satisfied (denied by the user?) (0x6985)
-      throw 'user denied transaction';
-    }
-    throw err;
-  }
-
-  const signedTxp = await new Promise<TransactionProposal>(
-    (resolve, reject) => {
-      const debugBaseUrl = null;
-
-      try {
-        wallet.pushSignatures(
-          txp,
-          signatures,
-          (err: any, result: TransactionProposal) => {
-            if (err) {
-              return reject(err);
-            }
-
-            resolve(result);
-          },
-          debugBaseUrl,
-        );
-      } catch (err) {
-        reject(err);
-      }
-    },
-  );
-
-  return signedTxp;
-};
-
 export const broadcastTx = (
   wallet: Wallet,
   txp: TransactionProposal,
@@ -2462,14 +2041,16 @@ const processInsufficientFunds = async (
   });
 
   const useConfirmedFunds = !getState().WALLET.useUnconfirmedFunds;
-  const amountSat = dispatch(
-    ParseAmount(
-      amount,
-      wallet.currencyAbbreviation,
-      wallet.chain,
-      wallet.tokenAddress,
-    ),
-  ).amountSat;
+  const amountSat = Number(
+    dispatch(
+      ParseAmount(
+        amount,
+        wallet.currencyAbbreviation,
+        wallet.chain,
+        wallet.tokenAddress,
+      ),
+    ).amountSat,
+  );
   if (useConfirmedFunds && wallet.balance.sat >= amountSat + feeRatePerKb) {
     return generateInsufficientConfirmedFundsError(onDismiss);
   } else {
@@ -2510,7 +2091,7 @@ const processInsufficientFundsForFee = (
   const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
     dispatch,
     linkedWallet ? linkedWallet : wallet,
-    toShowAmount,
+    Number(toShowAmount),
   );
 
   const title =
@@ -2625,7 +2206,7 @@ export const handleCreateTxProposalError =
             ],
           });
       }
-    } catch (err2) {
+    } catch {
       return GeneralError();
     }
   };
@@ -2737,14 +2318,12 @@ export const buildEthERCTokenSpeedupTx =
         } = wallet;
 
         const {customData, addressTo, nonce, data, gasLimit} = transaction;
-        const amount = Number(
-          dispatch(
-            FormatAmount(
-              currencyAbbreviation,
-              chain,
-              tokenAddress,
-              transaction.amount,
-            ),
+        const amount = dispatch(
+          FromBaseUnits(
+            transaction.amount,
+            currencyAbbreviation,
+            chain,
+            tokenAddress,
           ),
         );
         const recipient = {
@@ -2953,6 +2532,7 @@ export const sendCrypto =
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
+          !isHiddenByTestnetMode(wallet) &&
           wallet.isComplete() &&
           !wallet.pendingTssSession,
       )
@@ -3007,7 +2587,11 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
+      if (assetContext) {
+        navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
+      } else {
+        navigationRef.navigate('GlobalSendTo');
+      }
     }
   };
 

@@ -134,6 +134,7 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
         name={SwapCryptoScreens.SWAP_CRYPTO_ROOT}
         component={SwapCryptoRoot}
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Swap')}</HeaderTitle>,
           headerRight: () => <SwapHistoryHeaderRight />,
         }}

@@ -164,7 +164,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const getWordPosition = (word: {index: number; indexStr: string}) =>
     i18n.resolvedLanguage === 'en' ? word.indexStr : word.index + 1;
 
-  const [randomWords, setRandomWords] = useState(generateRandomWords());
+  const [randomWords, setRandomWords] = useState(generateRandomWords);
 
   const checkValidWord = (userInput: string, index: number): boolean => {
     const word = randomWords[index].word;
@@ -283,7 +283,9 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     );
   };
   const onPressHeaderCancelRef = useRef(onPressHeaderCancel);
-  onPressHeaderCancelRef.current = onPressHeaderCancel;
+  useLayoutEffect(() => {
+    onPressHeaderCancelRef.current = onPressHeaderCancel;
+  });
 
   const headerTitle = useMemo(() => {
     return () => <HeaderTitle>{t('Verify your Phrase')}</HeaderTitle>;

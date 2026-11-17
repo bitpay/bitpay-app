@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import {uniqBy} from '../../utils/array';
 import {Network} from '../../constants';
 import {
   BillPayAccount,
@@ -149,7 +149,7 @@ export const shopReducer = (
         ...state,
         billPayPayments: {
           ...state.billPayPayments,
-          [action.payload.network]: _.uniqBy(
+          [action.payload.network]: uniqBy(
             [
               ...billPayPayments,
               ...state.billPayPayments[action.payload.network],

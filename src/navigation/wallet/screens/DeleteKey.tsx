@@ -20,6 +20,7 @@ import {
   unSubscribeEmailNotifications,
   unSubscribePushNotifications,
 } from '../../../store/app/app.effects';
+import {cancelTSSCeremony} from '../../../store/wallet/effects/create-multisig/create-multisig';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 import {RootStacks} from '../../../Root';
@@ -93,6 +94,7 @@ const DeleteKey = () => {
 
   const [isVisible, setIsVisible] = useState(false);
   const startDeleteKey = async () => {
+    dispatch(cancelTSSCeremony(keyId));
     setIsVisible(false);
     await sleep(500);
     showOngoingProcess('DELETING_KEY');

@@ -7,7 +7,6 @@ import {
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
-import _ from 'lodash';
 import React, {
   ReactElement,
   useCallback,
@@ -61,6 +60,7 @@ import {
 } from '../../../store/app/app.actions';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 import {
   buildUIFormattedWallet,
   findWalletById,
@@ -135,7 +135,10 @@ import TransactionRow from '../../../components/list/TransactionRow';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {
+  GetBlockExplorerLink,
+  IsERCToken,
+} from '../../../store/wallet/utils/currency';
 import {
   INITIAL_CACHED_TX_HYDRATION_LIMIT,
   flattenTransactionGroups,
@@ -170,7 +173,7 @@ import {
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
   },
   transactionSectionHeaderContainer: {
     padding: gutter,
-    height: 55,
+    minHeight: 55,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -254,7 +257,7 @@ const styles = StyleSheet.create({
     padding: gutter,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 75,
+    minHeight: 75,
   },
   description: {
     overflow: 'hidden',
@@ -569,6 +572,12 @@ const getTxDescriptionDetails = (key: string | undefined) =>
   key === 'moonpay' ? 'MoonPay' : undefined;
 
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
+  // React Compiler opt-out: the compiler already skips this screen because of
+  // the intentional mount-only `exhaustive-deps` suppression on the hydrated
+  // history memo below. It also relies on render-time latest-value refs and a
+  // debounced loader memo the compiler cannot preserve; keep it uncompiled
+  // explicitly until those are reworked.
+  'use no memo';
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
@@ -620,17 +629,29 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
-  const uiFormattedWallet = useMemo(
-    () =>
-      buildUIFormattedWallet(
+  const uiFormattedWallet = useMemo(() => {
+    const {currencyAbbreviation, chain, tokenAddress, balance} = fullWalletObj;
+    const formatFullPrecision = (sat: number) =>
+      dispatch(
+        FormatAmount(currencyAbbreviation, chain, tokenAddress, sat, true),
+      );
+    return {
+      ...buildUIFormattedWallet(
         fullWalletObj,
         defaultAltCurrency.isoCode,
         rates,
         dispatch,
         'symbol',
       ),
-    [defaultAltCurrency.isoCode, dispatch, fullWalletObj, rates],
-  );
+      cryptoBalance: formatFullPrecision(balance.sat),
+      cryptoLockedBalance: formatFullPrecision(balance.satLocked),
+      cryptoConfirmedLockedBalance: formatFullPrecision(
+        balance.satConfirmedLocked,
+      ),
+      cryptoSpendableBalance: formatFullPrecision(balance.satSpendable),
+      cryptoPendingBalance: formatFullPrecision(balance.satPending),
+    };
+  }, [defaultAltCurrency.isoCode, dispatch, fullWalletObj, rates]);
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[uiFormattedWallet.network],
   );
@@ -825,7 +846,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             await sleep(500);
             navigation.navigate('RequestSpecificAmountQR', {
               wallet: fullWalletObj,
-              requestAmount: Number(amount),
+              requestAmount: amount,
             });
             sleep(300).then(() => setButtonState(null));
           },
@@ -965,6 +986,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     shouldRenderZeroBalanceChart: shouldRenderZeroWalletBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleWalletBalanceChart,
     isBalanceChartDataReadyToQuery: isWalletBalanceChartDataReadyToQuery,
+    populateProgress: walletChartPopulateProgress,
     chartableWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: cacheEligibleWallets,
@@ -1079,11 +1101,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const walletChartChangeRowStyle = useMemo(() => ({marginTop: 2}), []);
 
   const setNeedActionTxps = useCallback(
-    (pendingTxps: TransactionProposal[]) => {
+    (txps: TransactionProposal[]) => {
       const txpsPending: TransactionProposal[] = [];
       const txpsUnsent: TransactionProposal[] = [];
       const formattedPendingTxps = BuildUiFriendlyList(
-        pendingTxps,
+        txps,
         currencyAbbreviation,
         chain,
         [],
@@ -1091,9 +1113,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         walletId,
       );
       formattedPendingTxps.forEach((txp: any) => {
-        const action: any = _.find(txp.actions, {
-          copayerId: fullWalletObj.credentials.copayerId,
-        });
+        const action: any = txp.actions?.find(
+          (txpAction: any) =>
+            txpAction.copayerId === fullWalletObj.credentials.copayerId,
+        );
 
         if (
           ((!action || action.type === 'failed') && txp.status === 'pending') ||
@@ -1175,6 +1198,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     },
   );
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
   const debouncedLoadHistory = useMemo(
     () => debounce(loadHistory, 300, {leading: true}),
     [loadHistory],
@@ -1197,10 +1221,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const updateWalletStatusAndProfileBalanceRef = useRef(
     updateWalletStatusAndProfileBalance,
   );
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   updateWalletStatusAndProfileBalanceRef.current =
     updateWalletStatusAndProfileBalance;
 
   useFocusEffect(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
     useCallback(() => {
       dispatch(
         Analytics.track('View Wallet', {
@@ -1278,6 +1304,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listFooterComponent = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
     () => (
       <>
         {!groupedHistory?.length ? null : (
@@ -1433,11 +1460,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const viewOnBlockchain = async (withConfirmation?: boolean) => {
     const coin = fullWalletObj.currencyAbbreviation.toLowerCase();
-    const chain = fullWalletObj.chain.toLowerCase();
+    const walletChain = fullWalletObj.chain.toLowerCase();
 
     if (
-      ['eth', 'matic', 'xrp', 'arb', 'base', 'op', 'sol'].includes(chain) ||
-      IsERCToken(coin, chain)
+      ['eth', 'matic', 'xrp', 'arb', 'base', 'op', 'sol'].includes(
+        walletChain,
+      ) ||
+      IsERCToken(coin, walletChain)
     ) {
       let address;
       try {
@@ -1455,17 +1484,20 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrls}account/${address}`
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
-      if (SUPPORTED_VM_TOKENS.includes(chain)) {
-        url =
-          fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`
-            : `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrlsTestnet}address/${address}`;
+      if (SUPPORTED_VM_TOKENS.includes(walletChain)) {
+        url = GetBlockExplorerLink(
+          fullWalletObj.network,
+          walletChain,
+          `address/${address}`,
+        );
       }
-      if (IsERCToken(coin, chain)) {
-        url =
-          fullWalletObj.network === 'livenet'
-            ? `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrls}address/${address}#tokentxns`
-            : `https://${BitpaySupportedCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${address}#tokentxns`;
+      if (IsERCToken(coin, walletChain)) {
+        url = GetBlockExplorerLink(
+          fullWalletObj.network,
+          walletChain,
+          `address/${address}`,
+          '#tokentxns',
+        );
       }
 
       if (url) {
@@ -1874,7 +1906,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       }
                     />
                     {shouldShowWalletChartPlaceholder ? (
-                      <BalanceChartLoadingPlaceholder />
+                      <BalanceChartLoadingPlaceholder
+                        populateProgress={walletChartPopulateProgress}
+                      />
                     ) : null}
                     {shouldRenderWalletChart ? (
                       <View
@@ -1882,6 +1916,14 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           shouldShowWalletChartPlaceholder
                             ? styles.hiddenChart
                             : undefined
+                        }
+                        accessibilityElementsHidden={
+                          shouldShowWalletChartPlaceholder
+                        }
+                        importantForAccessibility={
+                          shouldShowWalletChartPlaceholder
+                            ? 'no-hide-descendants'
+                            : 'auto'
                         }>
                         <BalanceHistoryChart
                           wallets={chartableWallets}
@@ -1915,6 +1957,17 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             balanceChartSurface.chartCallbacks.onChangeRowData
                           }
                           onRenderableSeriesChange={
+                            onWalletChartRenderableSeriesChange
+                          }
+                          populateProgress={walletChartPopulateProgress}
+                          // Only the visible placeholder animates while this chart is hidden.
+                          skeletonVariant={
+                            shouldShowWalletChartPlaceholder
+                              ? 'static'
+                              : 'drawing'
+                          }
+                          // Reveal the chart's own error state (with Retry).
+                          onErrorStateChange={
                             onWalletChartRenderableSeriesChange
                           }
                           timeframeSelectorWidth={timeframeSelectorWidth}

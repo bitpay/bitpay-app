@@ -11,11 +11,8 @@ import {
 } from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
-import {getUniqueId} from 'react-native-device-info';
-import * as Keychain from 'react-native-keychain';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
-import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
 import {
@@ -29,6 +26,11 @@ import {
   transformPortfolioPopulateStatus,
   encryptSpecificFields,
 } from './transforms/transforms';
+import {
+  deserializeModernPersistValue,
+  encryptPersistValue,
+} from './transforms/encrypt';
+import {createRehydrationFailureMiddleware} from './persistence-guard';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
@@ -42,7 +44,6 @@ import {
   sellCryptoReducer,
   sellCryptoReduxPersistBlackList,
 } from './sell-crypto/sell-crypto.reducer';
-import {cardReducer, cardReduxPersistBlacklist} from './card/card.reducer';
 import {
   locationReducer,
   locationReduxPersistBlackList,
@@ -91,6 +92,7 @@ import {
 import {clearWalletPortfolioDataWithRuntime} from './portfolio';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {invalidateWalletDerivedCachesForAction} from './wallet/utils/walletDerivedCacheLifecycle';
+import {syncTestnetWalletsVisibility} from './wallet/utils/testnet';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
 
@@ -101,7 +103,6 @@ import {
   setActivePersistor,
 } from './persistor';
 import {rehydrateWalletSecrets} from './wallet-secrets/wallet-secrets.effects';
-import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {logManager} from '../managers/LogManager';
@@ -114,8 +115,16 @@ import {
   logReducerDuration,
 } from './performanceDiagnostics';
 import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
+import {
+  isPerfEnabled,
+  recordAction,
+  registerStoreForPerf,
+} from '../perf/PerfMonitor';
 
-export const storage = new MMKV();
+import {modernStorage as storage, requireVaultActive} from './vault-storage';
+import {prepareModernVault} from './vault-runtime';
+import {unencryptedPersistStores} from './transforms/persist-encryption';
+export {storage};
 
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
@@ -140,6 +149,14 @@ const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
 ]);
 
 let backupTriggerAction: string | null = null;
+let backupRetryLabel: string | null = null;
+// Bounds retries and the missing-backup path: persist:root is written with
+// throttle 0, so a broken filesystem would otherwise retry on every slice change
+let backupFailures = 0;
+let backupInFlight = false;
+// Latest persist:root not yet handed to a backup; writes arriving while one is
+// in flight coalesce here instead of queueing attempts past the failure limit
+let pendingPersistRoot: string | null = null;
 
 let storeDispatch: ((action: AnyAction) => void) | null = null;
 // Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
@@ -197,13 +214,52 @@ const removePortfolioChartsPersistRoot = (
     delete parsed.PORTFOLIO_CHARTS;
 
     return {changed: true, value: JSON.stringify(parsed)};
-  } catch (_) {
+  } catch {
     return {changed: false, value: rawJson};
+  }
+};
+
+const runFsBackup = async (): Promise<void> => {
+  const value = pendingPersistRoot;
+  if (backupInFlight || value === null) {
+    return;
+  }
+  backupInFlight = true;
+  pendingPersistRoot = null;
+  let label = backupTriggerAction;
+  backupTriggerAction = null;
+  try {
+    // A fresh trigger action always gets one attempt, as before retries existed
+    if (!label && backupFailures < 3) {
+      label =
+        backupRetryLabel ??
+        ((await backupFileExists()) ? null : 'no existing backup');
+    }
+    if (!label) {
+      return;
+    }
+    try {
+      await backupPersistRoot(value);
+      backupFailures = 0;
+      backupRetryLabel = null;
+      logManager.debug(`Backed up store to filesystem, triggered by ${label}.`);
+    } catch {
+      // Retry on the next persist:root write rather than waiting for another
+      // trigger action, which may never come
+      backupFailures++;
+      backupRetryLabel = label;
+    }
+  } finally {
+    backupInFlight = false;
+    if (pendingPersistRoot !== null) {
+      runFsBackup();
+    }
   }
 };
 
 export const reduxStorage: Storage = {
   setItem: async (key, value) => {
+    requireVaultActive();
     const setItemStartedAt = PERF_DEBUG ? performance.now() : 0;
     const valueToStore =
       key === 'persist:root' && typeof value === 'string'
@@ -237,20 +293,10 @@ export const reduxStorage: Storage = {
     }
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
-        const hasBackup = await backupFileExists();
-        if (backupTriggerAction || !hasBackup) {
-          const triggerLabel = backupTriggerAction ?? 'no existing backup';
-          backupPersistRoot(valueToStore)
-            .then(() =>
-              logManager.debug(
-                `Backed up store to filesystem, triggered by ${triggerLabel}.`,
-              ),
-            )
-            .catch(() => {});
-          backupTriggerAction = null;
-        }
+        pendingPersistRoot = valueToStore;
+        runFsBackup();
       }
-    } catch (_) {}
+    } catch {}
     if (PERF_DEBUG) {
       logPersistPhase(
         'setItem.total',
@@ -263,6 +309,7 @@ export const reduxStorage: Storage = {
     }
   },
   getItem: key => {
+    requireVaultActive();
     try {
       const value = storage.getString(key);
       if (value == null && key === 'persist:root') {
@@ -278,7 +325,7 @@ export const reduxStorage: Storage = {
             logManager.info(
               `MMKV persist:root removed PORTFOLIO_CHARTS - beforeBytes:${value.length} afterBytes:${sanitized.value.length}`,
             );
-          } catch (_) {}
+          } catch {}
         }
         return Promise.resolve(sanitized.value);
       }
@@ -308,6 +355,7 @@ export const reduxStorage: Storage = {
     }
   },
   removeItem: key => {
+    requireVaultActive();
     try {
       storage.delete(key);
     } catch (err) {
@@ -358,9 +406,30 @@ const registerPersistFlushOnBackground = (persistor: {
   );
 };
 
+// Slices that no longer exist but can still be in state persisted by older
+// app versions. Dropping them before the merge keeps combineReducers from
+// warning about unexpected keys, and the next write leaves them out.
+const REMOVED_PERSISTED_SLICES = ['CARD'];
+
+const reconcilePersistedState: typeof autoMergeLevel2 = (
+  inboundState,
+  originalState,
+  reducedState,
+  config,
+) => {
+  const inbound = {...inboundState} as Record<string, unknown>;
+  REMOVED_PERSISTED_SLICES.forEach(slice => delete inbound[slice]);
+  return autoMergeLevel2(
+    inbound as typeof inboundState,
+    originalState,
+    reducedState,
+    config,
+  );
+};
+
 const basePersistConfig = {
   storage: reduxStorage,
-  stateReconciler: autoMergeLevel2,
+  stateReconciler: reconcilePersistedState,
   writeFailHandler: reportPersistWriteError,
 };
 
@@ -368,7 +437,6 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   APP: appReduxPersistBlackList,
   BITPAY_ID: bitPayIdReduxPersistBlackList,
   BUY_CRYPTO: buyCryptoReduxPersistBlackList,
-  CARD: cardReduxPersistBlacklist,
   LOCATION: locationReduxPersistBlackList,
   LOG: logReduxPersistBlackList,
   SELL_CRYPTO: sellCryptoReduxPersistBlackList,
@@ -396,7 +464,6 @@ const reducers = {
   APP: appReducer,
   BITPAY_ID: bitPayIdReducer,
   BUY_CRYPTO: buyCryptoReducer,
-  CARD: cardReducer,
   LOCATION: locationReducer,
   LOG: logReducer,
   SELL_CRYPTO: sellCryptoReducer,
@@ -454,6 +521,7 @@ const rootReducer = (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- dev debug toggle: enabled by uncommenting middlewares.push(logger) in configureStore
 const logger = createLogger({
   predicate: (_getState, action) =>
     ![
@@ -485,16 +553,21 @@ const logger = createLogger({
       },
       BITPAY_ID: {
         ...state.BITPAY_ID,
-        doshToken: null,
         apiToken: null,
       },
     };
   },
 });
 
-const getStore = async () => {
+const initializeStore = async () => {
+  let rehydrationFailure: Error | null = null;
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
 
+  middlewares.push(
+    createRehydrationFailureMiddleware(error => {
+      rehydrationFailure ??= error;
+    }),
+  );
   const reduxPerformanceMiddleware: Middleware =
     store => next => (action: AnyAction) => {
       if (!PERF_DEBUG || typeof action?.type !== 'string') {
@@ -542,6 +615,13 @@ const getStore = async () => {
         store.dispatch(clearWalletPortfolioDataWithRuntime({walletIds}) as any);
       }
 
+      // BWC keeps parsed request keys for signing (patched for speed); drop
+      // them with the key. Lazy so the store module doesn't load BWC early.
+      try {
+        const {BwcProvider} = require('../lib/bwc');
+        BwcProvider.getInstance().getUtils().clearRequestPrivateKeyCache?.();
+      } catch {}
+
       return result;
     };
   };
@@ -555,7 +635,7 @@ const getStore = async () => {
             flushPersistenceSoon();
           }
         }
-      } catch (_) {}
+      } catch {}
       return next(action);
     };
 
@@ -568,6 +648,22 @@ const getStore = async () => {
 
   if (PERF_DEBUG) {
     middlewares.unshift(reduxPerformanceMiddleware);
+  }
+  // Perf builds only (IS_PERF): counts and times every action for the
+  // harness's load profile. Outermost, so it times the whole chain.
+  if (isPerfEnabled) {
+    middlewares.unshift(() => next => (action: AnyAction) => {
+      const startedAt = performance.now();
+      const result = next(action);
+      if (typeof action?.type === 'string') {
+        recordAction(
+          action.type,
+          performance.now() - startedAt,
+          (action as AnyAction).payload,
+        );
+      }
+      return result;
+    });
   }
   middlewares.push(lastActionMiddleware());
   middlewares.push(invalidateWalletDerivedCachesMiddleware);
@@ -584,7 +680,7 @@ const getStore = async () => {
     // middlewares.push(inmmutableMiddleware);
   }
 
-  const secretKey = await getEncryptionKey().catch(() => getUniqueId());
+  const secretKey = await getEncryptionKey();
 
   const instrumentPersistTransform = (name: string, transform: any) => {
     if (!PERF_DEBUG) {
@@ -645,32 +741,44 @@ const getStore = async () => {
       ),
       instrumentPersistTransform(
         'encryptTransform',
-        encryptTransform({
-          secretKey,
-          onError: err => {
-            pausePersistor(err);
-            const errStr =
-              err instanceof Error ? err.message : JSON.stringify(err);
+        createTransform<any, any, RootState>(
+          (inboundState, key) => {
+            if (typeof key === 'string' && unencryptedPersistStores.has(key)) {
+              return JSON.stringify(inboundState);
+            }
 
-            store.dispatch(
-              LogActions.persistLog(
-                LogActions.error(`Encrypt transform failed - ${errStr}`),
-              ),
+            return encryptPersistValue(
+              inboundState,
+              secretKey,
+              `persist:${String(key)}`,
             );
-            Sentry.captureException(err, {
-              level: 'error',
-            });
           },
-          unencryptedStores: [
-            'APP',
-            'MARKET_STATS',
-            'PORTFOLIO',
-            'RATE',
-            'SHOP',
-            'SHOP_CATALOG',
-            'WALLET',
-          ],
-        }),
+          (outboundState, key) => {
+            try {
+              return deserializeModernPersistValue(
+                outboundState,
+                secretKey,
+                String(key),
+                typeof key === 'string' && unencryptedPersistStores.has(key),
+              );
+            } catch (err) {
+              pausePersistor(err);
+              const errStr =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              store.dispatch(
+                LogActions.persistLog(
+                  LogActions.error(
+                    `Decrypt persist transform failed - ${errStr}`,
+                  ),
+                ),
+              );
+              Sentry.captureException(err, {
+                level: 'error',
+              });
+              throw err;
+            }
+          },
+        ),
       ),
     ],
   };
@@ -689,7 +797,9 @@ const getStore = async () => {
           action.payload?.WALLET?.secretsMigrated &&
           !action.payload.WALLET_SECRETS
         ) {
-          pausePersistor(new Error('Persisted wallet secrets are missing'));
+          const error = new Error('Persisted wallet secrets are missing');
+          rehydrationFailure ??= error;
+          pausePersistor(error);
         }
       }
       if (PERF_DEBUG && action && typeof action.type === 'string') {
@@ -700,7 +810,7 @@ const getStore = async () => {
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.start storageKeys:${keysCount}`,
             );
-          } catch (_) {}
+          } catch {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
           !firstRehydrateLogged
@@ -712,7 +822,7 @@ const getStore = async () => {
             const totalSize = (() => {
               try {
                 return JSON.stringify(payload).length;
-              } catch (_) {
+              } catch {
                 return -1;
               }
             })();
@@ -721,15 +831,15 @@ const getStore = async () => {
               Object.keys(payload).forEach(k => {
                 try {
                   sizeByReduxKey[k] = JSON.stringify(payload[k]).length;
-                } catch (_) {}
+                } catch {}
               });
-            } catch (_) {}
+            } catch {}
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.complete durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
                 sizeByReduxKey,
               )}`,
             );
-          } catch (_) {}
+          } catch {}
         }
       }
       return next(action);
@@ -743,6 +853,14 @@ const getStore = async () => {
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+  registerStoreForPerf(
+    store.getState as unknown as () => Record<string, unknown>,
+  );
+  // Registered before the Provider subscribes, so list helpers see the new
+  // testnet visibility by the time components re-render.
+  store.subscribe(() =>
+    syncTestnetWalletsVisibility(store.getState() as unknown as RootState),
+  );
   // Enable direct log dispatching now that the store exists
   storeDispatch = store.dispatch;
 
@@ -750,11 +868,21 @@ const getStore = async () => {
   storeDispatch(LogActions.clear());
   initLogs.drainAndDispatch(storeDispatch);
 
-  const persistor = persistStore(store, null, () => {
-    (store.dispatch as AppDispatch)(rehydrateWalletSecrets());
+  let resolveBootstrap: () => void = () => {};
+  const bootstrapped = new Promise<void>(resolve => {
+    resolveBootstrap = resolve;
   });
+  const persistor = persistStore(store, undefined, resolveBootstrap);
   setActivePersistor(persistor);
 
+  await bootstrapped;
+  if (rehydrationFailure) {
+    persistor.pause();
+    Sentry.captureException(rehydrationFailure, {level: 'error'});
+    throw rehydrationFailure;
+  }
+
+  (store.dispatch as AppDispatch)(rehydrateWalletSecrets());
   activePersistor = persistor;
   registerPersistFlushOnBackground(persistor);
 
@@ -779,6 +907,14 @@ export type Effect<ReturnType = void> = ThunkAction<
   Action<string>
 >;
 
+let storeInitialization: ReturnType<typeof initializeStore> | undefined;
+const getStore = () => {
+  storeInitialization ??= initializeStore().catch(error => {
+    storeInitialization = undefined;
+    throw error;
+  });
+  return storeInitialization;
+};
 export default getStore;
 
 export function configureTestStore(initialState: any) {
@@ -788,59 +924,11 @@ export function configureTestStore(initialState: any) {
     traceLimit: 25,
   })(applyMiddleware(...middlewares));
   const store = createStore(rootReducer, initialState, middlewareEnhancers);
+  syncTestnetWalletsVisibility(store.getState());
+  store.subscribe(() => syncTestnetWalletsVisibility(store.getState()));
   return store as Store<RootState, AnyAction> & {
     dispatch: AppDispatch;
   };
 }
 
-export async function getEncryptionKey(): Promise<string> {
-  const encryptionKeyId = 'bitpay-app-encryption-key';
-
-  try {
-    logManager.info('getEncryptionKey: attempting to retrieve from Keychain');
-    const existingKey = await Keychain.getGenericPassword({
-      service: encryptionKeyId,
-    });
-
-    if (existingKey && existingKey.password) {
-      logManager.info('getEncryptionKey: found existing key in Keychain');
-      return existingKey.password;
-    }
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: Keychain get failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-    throw err;
-  }
-
-  logManager.warn('getEncryptionKey: generating new key (no existing key)');
-  const newKey = getUniqueId();
-
-  try {
-    // Save to keychain
-    await Keychain.setGenericPassword(encryptionKeyId, newKey, {
-      service: encryptionKeyId,
-    });
-    logManager.info('getEncryptionKey: stored new key in Keychain');
-  } catch (err) {
-    initLogs.add(
-      LogActions.persistLog(
-        LogActions.error(
-          `getEncryptionKey: Keychain set failed - ${getErrorString(err)}`,
-        ),
-      ),
-    );
-    Sentry.captureException(err, {
-      level: 'error',
-    });
-  }
-
-  return newKey;
-}
+export const getEncryptionKey = prepareModernVault;

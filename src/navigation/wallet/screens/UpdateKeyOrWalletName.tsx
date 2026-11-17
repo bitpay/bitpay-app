@@ -91,8 +91,8 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
     formState: {errors},
   } = useForm<{name: string}>({resolver: yupResolver(schema)});
 
-  const setPlaceholderName = (context: string) => {
-    switch (context) {
+  const setPlaceholderName = (nameContext: string) => {
+    switch (nameContext) {
       case 'key':
         return key.keyName;
       case 'wallet':

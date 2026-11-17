@@ -1,4 +1,5 @@
 import {useIsFocused, useScrollToTop, useTheme} from '@react-navigation/native';
+import {markOnce as perfMarkOnce} from '../../../perf/PerfMonitor';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
@@ -91,11 +92,13 @@ import {formatUnknownError} from '../../../utils/errors/formatUnknownError';
 import type {RootState} from '../../../store';
 import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
-import {
-  scheduleAfterInteractionsAndFrames,
-  scheduleAfterTransitionAndIdle,
-} from '../../../utils/scheduleAfterInteractionsAndFrames';
+import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import {useStartupSettled} from '../../../utils/startupSignals';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
+
+/** After startup settles, before the Receive preload may run. */
+const HOME_FLOW_PRELOAD_STARTUP_DELAY_MS = 2000;
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -135,17 +138,6 @@ const selectHomeFlowPreloadEligibility = createSelector(
     const completedKeys = Object.values(keys).filter(key => key.backupComplete);
     return {
       canPreloadReceive: completedKeys.length > 0,
-      canPreloadSend: completedKeys.some(key =>
-        key.wallets.some(
-          wallet =>
-            !wallet.hideWallet &&
-            !wallet.hideWalletByAccount &&
-            typeof wallet.isComplete === 'function' &&
-            wallet.isComplete() &&
-            !wallet.pendingTssSession &&
-            wallet.balance.sat > 0,
-        ),
-      ),
     };
   },
 );
@@ -158,7 +150,9 @@ const selectPendingTransactionProposalCount = createSelector(
         count +
         key.wallets.reduce(
           (walletCount, wallet) =>
-            walletCount + (wallet.pendingTxps?.length || 0),
+            isHiddenByTestnetMode(wallet)
+              ? walletCount
+              : walletCount + (wallet.pendingTxps?.length || 0),
           0,
         ),
       0,
@@ -455,15 +449,15 @@ const HomeExchangeRatesSection = React.memo(
 );
 
 const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
+  perfMarkOnce('bp_home_render');
+  useEffect(() => perfMarkOnce('bp_home_commit'), []);
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
   const isHomeFocused = useIsFocused();
   const [refreshing, setRefreshing] = useState(false);
   const hasKeys = useAppSelector(selectHasHomeKeys);
-  const {canPreloadReceive, canPreloadSend} = useAppSelector(
-    selectHomeFlowPreloadEligibility,
-  );
+  const {canPreloadReceive} = useAppSelector(selectHomeFlowPreloadEligibility);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrencyIsoCode = useAppSelector(
     ({APP}) => APP.defaultAltCurrency?.isoCode,
@@ -657,35 +651,34 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     [maybeActivateHomeDiscoverSection],
   );
 
-  const preloadedHomeFlowsRef = useRef(new Set<'receive' | 'send'>());
-  const preloadHomeFlow = useCallback(
-    (context: 'receive' | 'send') => {
-      if (
-        preloadedHomeFlowsRef.current.has(context) ||
-        (context === 'receive' && !canPreloadReceive) ||
-        (context === 'send' && !canPreloadSend)
-      ) {
-        return;
-      }
+  const receiveFlowPreloadedRef = useRef(false);
+  const preloadReceiveFlow = useCallback(() => {
+    if (receiveFlowPreloadedRef.current || !canPreloadReceive) {
+      return;
+    }
 
-      if (typeof (navigation as any).preload !== 'function') {
-        return;
-      }
+    if (typeof (navigation as any).preload !== 'function') {
+      return;
+    }
 
-      preloadedHomeFlowsRef.current.add(context);
-      performanceLog(`[PERF-PRELOAD] GlobalSelect start context:${context}`);
-      (navigation as any).preload('GlobalSelect', {
-        context,
-        _preloadContent: true,
-      });
-    },
-    [canPreloadReceive, canPreloadSend, navigation],
+    receiveFlowPreloadedRef.current = true;
+    performanceLog('[PERF-PRELOAD] GlobalSelect start context:receive');
+    (navigation as any).preload('GlobalSelect', {
+      context: 'receive',
+      _preloadContent: true,
+    });
+  }, [canPreloadReceive, navigation]);
+  // Preloading Receive renders the wallet picker (a list of wallets with
+  // their icons) on the UI thread. On a cold start it fired during the first
+  // look at Home; hold it until startup has settled.
+  const startupSettledForPreload = useStartupSettled(
+    HOME_FLOW_PRELOAD_STARTUP_DELAY_MS,
   );
   const wasHomeFocusedRef = useRef(false);
 
   useEffect(() => {
     if (isHomeFocused && !wasHomeFocusedRef.current) {
-      preloadedHomeFlowsRef.current.clear();
+      receiveFlowPreloadedRef.current = false;
     }
     wasHomeFocusedRef.current = isHomeFocused;
   }, [isHomeFocused]);
@@ -693,52 +686,23 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const homeFlowPreloadTaskRef = useRef<
     ReturnType<typeof scheduleAfterTransitionAndIdle> | undefined
   >(undefined);
-  const secondHomeFlowPreloadTaskRef = useRef<
-    ReturnType<typeof scheduleAfterInteractionsAndFrames> | undefined
-  >(undefined);
   const cancelHomeFlowPreloads = useCallback(() => {
     homeFlowPreloadTaskRef.current?.cancel();
-    secondHomeFlowPreloadTaskRef.current?.cancel();
     homeFlowPreloadTaskRef.current = undefined;
-    secondHomeFlowPreloadTaskRef.current = undefined;
   }, []);
 
   useEffect(() => {
-    if (!isHomeFocused || appIsLoading) {
+    if (!isHomeFocused || appIsLoading || !startupSettledForPreload) {
       return;
     }
 
-    let secondPreloadTask:
-      | ReturnType<typeof scheduleAfterInteractionsAndFrames>
-      | undefined;
     const preloadTask = scheduleAfterTransitionAndIdle({
       navigation: navigation as any,
       transitionFallbackMs: 800,
       idleTimeoutMs: 1200,
       callback: signal => {
-        if (signal.aborted) {
-          return;
-        }
-
-        if (canPreloadReceive) {
-          preloadHomeFlow('receive');
-        }
-        if (canPreloadSend) {
-          if (canPreloadReceive) {
-            secondPreloadTask = scheduleAfterInteractionsAndFrames({
-              fallbackMs: 1600,
-              callback: secondSignal => {
-                if (!signal.aborted && !secondSignal.aborted) {
-                  preloadHomeFlow('send');
-                }
-              },
-            });
-            secondHomeFlowPreloadTaskRef.current = secondPreloadTask;
-          } else {
-            if (!signal.aborted) {
-              preloadHomeFlow('send');
-            }
-          }
+        if (!signal.aborted) {
+          preloadReceiveFlow();
         }
       },
     });
@@ -746,21 +710,16 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
     return () => {
       preloadTask.cancel();
-      secondPreloadTask?.cancel();
       if (homeFlowPreloadTaskRef.current === preloadTask) {
         homeFlowPreloadTaskRef.current = undefined;
-      }
-      if (secondHomeFlowPreloadTaskRef.current === secondPreloadTask) {
-        secondHomeFlowPreloadTaskRef.current = undefined;
       }
     };
   }, [
     appIsLoading,
-    canPreloadReceive,
-    canPreloadSend,
     isHomeFocused,
     navigation,
-    preloadHomeFlow,
+    preloadReceiveFlow,
+    startupSettledForPreload,
   ]);
 
   const receiveLinkingButton = useMemo(
@@ -806,6 +765,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           <View onLayout={onHomeViewportLayout} style={styles.viewport}>
             <ScrollView
               ref={scrollViewRef}
+              testID="home-scroll-view"
               onScroll={onHomeScroll}
               scrollEventThrottle={32}
               // Prevent iOS from injecting automatic top insets which creates a gap

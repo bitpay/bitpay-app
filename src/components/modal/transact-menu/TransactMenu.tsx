@@ -27,6 +27,7 @@ import {ExternalServicesScreens} from '../../../navigation/services/ExternalServ
 import {Keys} from '../../../store/wallet/wallet.reducer';
 import ArchaxFooter from '../../archax/archax-footer';
 import {isEuCountry} from '../../../store/location/location.effects';
+import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
 
 const styles = StyleSheet.create({
   transactButton: {
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    height: 60,
+    minHeight: 60,
     paddingLeft: 11,
     paddingRight: 26,
     marginBottom: 30,
@@ -121,6 +122,7 @@ const TransactMenuContent = React.memo(
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
+          !isHiddenByTestnetMode(wallet) &&
           wallet.isComplete() &&
           !wallet.pendingTssSession,
       );
@@ -196,7 +198,7 @@ const TransactMenuContent = React.memo(
           title: t('Send'),
           description: t('Send crypto to another wallet'),
           onPress: () => {
-            navigation.navigate('GlobalSelect', {context: 'send'});
+            navigation.navigate('GlobalSendTo');
           },
         },
         {

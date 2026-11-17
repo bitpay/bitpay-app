@@ -81,13 +81,14 @@ const SendToContact = () => {
         />
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context is a route param; memoized only on wallet and the setters, as before
     [wallet, setRecipientListContext, setRecipientAmountContext],
   );
 
   return (
     <>
       <View style={styles.sendToContactContainer}>
-        <SearchContainer style={{height: 54}}>
+        <SearchContainer style={{minHeight: 54}}>
           <SearchInput
             placeholder={t('Search contact')}
             placeholderTextColor={placeHolderTextColor}

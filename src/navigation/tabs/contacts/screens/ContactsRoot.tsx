@@ -1,18 +1,21 @@
 import React, {useState, useCallback, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../../utils/debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../../../contexts';
 import {FlatList, SafeAreaView, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
-import {useNavigation} from '@react-navigation/core';
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/core';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import AddressBookIcon from '../../../../../assets/img/tab-icons/contacts.svg';
 import AddContactIcon from '../../../../../assets/img/addcontact-icon.svg';
 import AddContactIconWhite from '../../../../../assets/img/addcontact-icon-white.svg';
-import Button from '../../../../components/button/Button';
 import {
   ActiveOpacity,
   HEIGHT,
@@ -32,29 +35,6 @@ const horizontalPadding = 20;
 const styles = StyleSheet.create({
   contactsContainer: {
     flex: 1,
-  },
-  noContacts: {
-    paddingHorizontal: 20,
-    height: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  noContactsIcon: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  noContactsTitle: {
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    marginTop: 40,
-  },
-  noContactsSubTitle: {
-    textAlign: 'center',
-    fontSize: 12,
   },
   title: {
     fontSize: 14,
@@ -103,33 +83,6 @@ const styles = StyleSheet.create({
     width: WIDTH - horizontalPadding * 2,
   },
 });
-
-const NoContactsTitle: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => {
-  const theme = useTheme();
-  return (
-    <BaseText
-      style={[styles.noContactsTitle, {color: theme.dark ? White : SlateDark}]}>
-      {children}
-    </BaseText>
-  );
-};
-
-const NoContactsSubTitle: React.FC<{children?: React.ReactNode}> = ({
-  children,
-}) => {
-  const theme = useTheme();
-  return (
-    <BaseText
-      style={[
-        styles.noContactsSubTitle,
-        {color: theme.dark ? White : SlateDark},
-      ]}>
-      {children}
-    </BaseText>
-  );
-};
 
 const Title: React.FC<{children?: React.ReactNode}> = ({children}) => {
   const theme = useTheme();
@@ -235,93 +188,85 @@ const ContactsRoot = ({}: NativeStackScreenProps<
     navigation.navigate('ContactsAdd');
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!contactList.length) {
+        navigation.canGoBack()
+          ? navigation.goBack()
+          : navigation.dispatch(StackActions.replace(ContactsScreens.ADD));
+      }
+    }, [contactList.length, navigation]),
+  );
+
+  if (!contactList.length) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={[styles.contactsContainer, {paddingTop: insets.top}]}>
-      {contactList.length ? (
-        <>
-          <View style={styles.searchContainer}>
-            <Controller
-              control={control}
-              rules={{
-                required: true,
+      <View style={styles.searchContainer}>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+          }}
+          render={({field: {onChange, onBlur, value}}) => (
+            <SearchBox
+              placeholder={t('Search Contacts')}
+              onBlur={onBlur}
+              onChangeText={(text: string) => {
+                onChange(text);
+                updateSearchResults(text);
               }}
-              render={({field: {onChange, onBlur, value}}) => (
-                <SearchBox
-                  placeholder={t('Search Contacts')}
-                  onBlur={onBlur}
-                  onChangeText={(text: string) => {
-                    onChange(text);
-                    updateSearchResults(text);
-                  }}
-                  value={value}
-                  type="search"
-                />
-              )}
-              name="search"
+              value={value}
+              type="search"
             />
-          </View>
-          <SectionHeaderContainer justifyContent={'space-between'}>
-            <View style={styles.contentTitle}>
-              <AddressBookIcon />
-              <Title>{t('Contacts')}</Title>
-            </View>
-            <TouchableOpacity
-              activeOpacity={ActiveOpacity}
-              testID="contacts-add-contact-button"
-              accessibilityLabel={t('Add Contact')}
-              onPress={goToCreateContact}>
-              <View style={styles.contentIcon}>
-                {theme.dark ? <AddContactIconWhite /> : <AddContactIcon />}
-              </View>
-            </TouchableOpacity>
-          </SectionHeaderContainer>
-          <Hr />
-          <HideableView show={!!searchVal}>
-            {searchResults.length ? (
-              <View style={styles.searchResults}>
-                <FlatList
-                  contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
-                  data={searchResults}
-                  renderItem={renderItem}
-                  keyExtractor={keyExtractor}
-                />
-              </View>
-            ) : (
-              <View style={styles.noResultsContainer}>
-                <NoResultsHeader>{t('No Results')}</NoResultsHeader>
-              </View>
-            )}
-          </HideableView>
-          <HideableView show={!searchVal}>
-            <View style={styles.searchResults}>
-              <FlatList
-                contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
-                data={contactList}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-              />
-            </View>
-          </HideableView>
-        </>
-      ) : (
-        <View style={styles.noContacts}>
-          <View style={styles.noContactsIcon}>
-            <AddressBookIcon width={60} height={100} />
-          </View>
-          <NoContactsTitle>{t('No contacts yet')}</NoContactsTitle>
-          <NoContactsSubTitle>
-            {t('Get started by adding your first one.')}
-          </NoContactsSubTitle>
-          <View style={styles.buttonContainer}>
-            <Button
-              testID="contacts-new-contact-button"
-              accessibilityLabel={t('New Contact')}
-              onPress={goToCreateContact}
-              children="New Contact"
-            />
-          </View>
+          )}
+          name="search"
+        />
+      </View>
+      <SectionHeaderContainer justifyContent={'space-between'}>
+        <View style={styles.contentTitle}>
+          <AddressBookIcon />
+          <Title>{t('Contacts')}</Title>
         </View>
-      )}
+        <TouchableOpacity
+          activeOpacity={ActiveOpacity}
+          testID="contacts-add-contact-button"
+          accessibilityLabel={t('Add Contact')}
+          onPress={goToCreateContact}>
+          <View style={styles.contentIcon}>
+            {theme.dark ? <AddContactIconWhite /> : <AddContactIcon />}
+          </View>
+        </TouchableOpacity>
+      </SectionHeaderContainer>
+      <Hr />
+      <HideableView show={!!searchVal}>
+        {searchResults.length ? (
+          <View style={styles.searchResults}>
+            <FlatList
+              contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
+              data={searchResults}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+            />
+          </View>
+        ) : (
+          <View style={styles.noResultsContainer}>
+            <NoResultsHeader>{t('No Results')}</NoResultsHeader>
+          </View>
+        )}
+      </HideableView>
+      <HideableView show={!searchVal}>
+        <View style={styles.searchResults}>
+          <FlatList
+            contentContainerStyle={{paddingBottom: 250, marginTop: 5}}
+            data={contactList}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+          />
+        </View>
+      </HideableView>
     </SafeAreaView>
   );
 };

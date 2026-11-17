@@ -26,12 +26,14 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
     borderRadius: 50,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderWidth: 1,
   },
   label: {
+    flexShrink: 1,
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',
@@ -39,7 +41,8 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   menu: {
-    width: 190,
+    minWidth: 190,
+    maxWidth: '90%',
     borderRadius: 10,
     shadowColor: Black,
     shadowOffset: {width: 0, height: 0},
@@ -67,7 +70,7 @@ const Container: React.FC<
     <TouchableOpacity
       style={[
         styles.container,
-        height ? {height} : null,
+        height ? {minHeight: height} : null,
         {
           borderColor: theme.dark ? SlateDark : Slate30,
           backgroundColor: theme.dark ? 'transparent' : White,

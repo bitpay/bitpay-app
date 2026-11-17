@@ -203,12 +203,6 @@ jest.mock('i18next', () => ({
   t: key => key,
 }));
 
-jest.mock('@ledgerhq/react-native-hw-transport-ble', () => ({
-  default: {
-    open: jest.fn(() => Promise.resolve('mocked transport instance')),
-  },
-}));
-
 // SafeAreaView is deprecated in RN 0.82 and fails to load its native deps in tests.
 // This mock intercepts the require inside react-native/index.js's SafeAreaView getter.
 jest.mock('react-native/Libraries/Components/SafeAreaView/SafeAreaView', () => {
@@ -240,7 +234,21 @@ jest.mock('@shopify/react-native-skia', () => ({
   __esModule: true,
   Canvas: 'Canvas',
   Path: 'Path',
-  Skia: {Path: jest.fn(() => ({moveTo: jest.fn(), lineTo: jest.fn(), close: jest.fn()}))},
+  Skia: {
+    Path: Object.assign(
+      jest.fn(() => ({moveTo: jest.fn(), lineTo: jest.fn(), close: jest.fn()})),
+      {
+        Make: jest.fn(() => ({
+          moveTo: jest.fn(),
+          lineTo: jest.fn(),
+          cubicTo: jest.fn(),
+          close: jest.fn(),
+        })),
+      },
+    ),
+  },
+  LinearGradient: 'LinearGradient',
+  vec: jest.fn((x = 0, y = 0) => ({x, y})),
   useValue: jest.fn(() => ({current: 0})),
   useComputedValue: jest.fn(() => ({current: 0})),
   runTiming: jest.fn(),
@@ -325,12 +333,22 @@ jest.mock('@solana/web3.js', () => ({
 jest.mock('@solana/kit', () => ({}));
 jest.mock('@solana-program/token-2022', () => ({findAssociatedTokenPda: jest.fn()}));
 
-// Ethers — large lib, mock for unit tests
-jest.mock('ethers', () => ({
-  ethers: {utils: {isAddress: jest.fn(() => true), getAddress: jest.fn(a => a)}, BigNumber: {from: jest.fn()}},
-  utils: {isAddress: jest.fn(() => true), getAddress: jest.fn(a => a)},
-  BigNumber: {from: jest.fn()},
-}));
+// Ethers — large lib, mock for unit tests. Unit conversion is kept real: it is money arithmetic.
+jest.mock('ethers', () => {
+  const {utils: actual} = jest.requireActual('ethers');
+  const utils = {
+    isAddress: jest.fn(() => true),
+    getAddress: jest.fn(a => a),
+    parseUnits: actual.parseUnits,
+    formatUnits: actual.formatUnits,
+    commify: actual.commify,
+  };
+  return {
+    ethers: {utils, BigNumber: {from: jest.fn()}},
+    utils,
+    BigNumber: {from: jest.fn()},
+  };
+});
 
 // @gorhom/bottom-sheet — requires BottomSheetModalProvider context; minimal mock
 jest.mock('@gorhom/bottom-sheet', () => {

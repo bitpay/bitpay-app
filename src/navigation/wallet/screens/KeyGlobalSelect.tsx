@@ -6,6 +6,7 @@ import KeyGlobalSelectRow from '../../../components/list/KeyGlobalSelectRow';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {keyExtractor} from '../../../utils/helper-methods';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {isKeyVisibleForTestnetMode} from '../../../store/wallet/utils/testnet';
 
 const styles = StyleSheet.create({
   safeAreaView: {
@@ -29,7 +30,9 @@ type KeyGlobalSelectScreenProps = NativeStackScreenProps<
 const KeyGlobalSelect: React.FC<KeyGlobalSelectScreenProps> = ({route}) => {
   let {onKeySelect} = route.params || {};
   const _keys = useAppSelector(({WALLET}) => WALLET.keys);
-  const keys = Object.values(_keys).filter(key => key.backupComplete);
+  const keys = Object.values(_keys).filter(
+    key => key.backupComplete && isKeyVisibleForTestnetMode(key),
+  );
 
   const renderItem = useCallback(
     ({item}: {item: Key}) => {

@@ -203,6 +203,12 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   context,
   txpCreatorId,
 }) => {
+  // React Compiler opt-out: copayerOpacities is a mutable Map that effects
+  // populate after render and the copayer rows read during render
+  // (copayerOpacities.get(...)). The compiler would memoize those rows on the
+  // (stable) Map identity and keep rendering the pre-effect fallback opacity,
+  // breaking the fade-out animation; keep it uncompiled.
+  'use no memo';
   const {t} = useTranslation();
   const theme = useTheme();
   const [internalIsVisible, setInternalIsVisible] = useState(false);
@@ -219,6 +225,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   const [showSigningHelp, setShowSigningHelp] = useState(false);
   const signingStartedAt = useRef<number | null>(null);
 
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   const copayerOpacities = useRef<Map<string, Animated.Value>>(
     new Map(),
   ).current;
@@ -238,6 +245,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   useEffect(() => {
     if (status !== 'signature_generation') {
       fadeAnimationDone.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets fade state together with imperative Animated.Value resets when status changes
       setHiddenCopayerIds(new Set());
       copayerOpacities.forEach(opacity => opacity.setValue(1));
     }
@@ -281,10 +289,12 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
       return () => clearTimeout(timer);
     } else {
       signingStartedAt.current = null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets signing-help timer state when status leaves signature_generation
       setShowSigningHelp(false);
     }
   }, [status]);
 
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   const spinAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (status === 'signature_generation') {
@@ -301,6 +311,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
       spinAnim.setValue(0);
     }
   }, [status, spinAnim]);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   const spinInterpolate = spinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -489,6 +500,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
           </View>
 
           <View>
+            {/* eslint-disable-next-line react-hooks/refs -- see 'use no memo' above */}
             {steps.map((step, index) => {
               const stepStatus = getStepStatus(index);
               const isActive = stepStatus === 'active';

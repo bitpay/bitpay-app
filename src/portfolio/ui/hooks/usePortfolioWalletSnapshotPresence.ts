@@ -13,6 +13,10 @@ type PortfolioWalletSnapshotPresenceState = {
   checked: boolean;
 };
 
+type SnapshotPresenceRequestState = PortfolioWalletSnapshotPresenceState & {
+  requestKey: string;
+};
+
 type CachedSnapshotPresence = {
   hasAnySnapshots: boolean;
   hasAllSnapshots: boolean;
@@ -114,26 +118,31 @@ export default function usePortfolioWalletSnapshotPresence(args: {
     ? getCachedSnapshotPresence(walletIdsKey)
     : undefined;
 
-  const [state, setState] = useState<PortfolioWalletSnapshotPresenceState>(
-    getCachedSnapshotPresenceState(cachedSnapshotPresence, false),
-  );
+  const requestKey = enabled ? walletIdsKey : '';
+  const [state, setState] = useState<SnapshotPresenceRequestState>({
+    ...getCachedSnapshotPresenceState(cachedSnapshotPresence, false),
+    requestKey,
+  });
 
   useEffect(() => {
     if (!enabled) {
-      setState(getEmptySnapshotPresenceState());
+      setState({...getEmptySnapshotPresenceState(), requestKey});
       return;
     }
 
     const requestedWalletIds = walletIdsKey ? walletIdsKey.split('|') : [];
 
     if (!requestedWalletIds.length) {
-      setState(getEmptySnapshotPresenceState());
+      setState({...getEmptySnapshotPresenceState(), requestKey});
       return;
     }
 
     let cancelled = false;
     const cachedPresenceForRequest = getCachedSnapshotPresence(walletIdsKey);
-    setState(getCachedSnapshotPresenceState(cachedPresenceForRequest, true));
+    setState({
+      ...getCachedSnapshotPresenceState(cachedPresenceForRequest, true),
+      requestKey,
+    });
 
     Promise.all(
       requestedWalletIds.map(async walletId => {
@@ -167,6 +176,7 @@ export default function usePortfolioWalletSnapshotPresence(args: {
           hasSnapshotsByWalletId,
           loading: false,
           checked: true,
+          requestKey,
         });
       })
       .catch(() => {
@@ -174,15 +184,22 @@ export default function usePortfolioWalletSnapshotPresence(args: {
           return;
         }
 
-        setState(
-          getCachedSnapshotPresenceState(cachedPresenceForRequest, false),
-        );
+        setState({
+          ...getCachedSnapshotPresenceState(cachedPresenceForRequest, false),
+          requestKey,
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [committedPortfolioRevisionToken, enabled, walletIdsKey]);
+  }, [committedPortfolioRevisionToken, enabled, requestKey, walletIdsKey]);
+
+  if (state.requestKey !== requestKey) {
+    return requestKey
+      ? getCachedSnapshotPresenceState(cachedSnapshotPresence, true)
+      : getEmptySnapshotPresenceState();
+  }
 
   return state;
 }

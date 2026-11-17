@@ -1,0 +1,99 @@
+diff --git a/node_modules/react-native-mmkv/cpp/LegacyInstanceGuard.h b/node_modules/react-native-mmkv/cpp/LegacyInstanceGuard.h
+new file mode 100644
+--- /dev/null
++++ b/node_modules/react-native-mmkv/cpp/LegacyInstanceGuard.h
+@@ -0,0 +1,21 @@
++#pragma once
++#include <atomic>
++
++namespace facebook::react {
++// Process lifetime, shared across TurboModule/React-context recreation.
++// A failed constructor also counts as access: never infer that it unmapped.
++class LegacyInstanceGuard {
++  enum State { unseen, opened, sealed };
++  std::atomic<State> state{unseen};
++public:
++  bool open() {
++    State expected = unseen;
++    return state.compare_exchange_strong(expected, opened) || expected == opened;
++  }
++  bool claimRetirement() {
++    State expected = unseen;
++    return state.compare_exchange_strong(expected, sealed) || expected == sealed;
++  }
++};
++inline LegacyInstanceGuard legacyInstanceGuard;
++} // namespace facebook::react
+diff --git a/node_modules/react-native-mmkv/cpp/NativeMmkvModule.h b/node_modules/react-native-mmkv/cpp/NativeMmkvModule.h
+--- a/node_modules/react-native-mmkv/cpp/NativeMmkvModule.h
++++ b/node_modules/react-native-mmkv/cpp/NativeMmkvModule.h
+@@ -31,6 +31,7 @@
+   NativeMmkvModule(std::shared_ptr<CallInvoker> jsInvoker);
+   ~NativeMmkvModule();
+-
++
++  bool claimLegacyRetirement(jsi::Runtime& runtime);
+   bool initialize(jsi::Runtime& runtime, std::string basePath);
+   jsi::Object createMMKV(jsi::Runtime& runtime, MMKVConfig config);
+ };
+diff --git a/node_modules/react-native-mmkv/cpp/NativeMmkvModule.cpp b/node_modules/react-native-mmkv/cpp/NativeMmkvModule.cpp
+--- a/node_modules/react-native-mmkv/cpp/NativeMmkvModule.cpp
++++ b/node_modules/react-native-mmkv/cpp/NativeMmkvModule.cpp
+@@ -6,6 +6,7 @@
+ //
+-
++
+ #include "NativeMmkvModule.h"
++#include "LegacyInstanceGuard.h"
+ #include "MMKV.h"
+ #include "MmkvHostObject.h"
+ #include "MmkvLogger.h"
+@@ -35,6 +36,10 @@
+-
++
+ NativeMmkvModule::~NativeMmkvModule() {}
+-
++
++bool NativeMmkvModule::claimLegacyRetirement(jsi::Runtime&) {
++  return legacyInstanceGuard.claimRetirement();
++}
++
+ jsi::Object NativeMmkvModule::createMMKV(jsi::Runtime& runtime, MMKVConfig config) {
+   auto instance = std::make_shared<MmkvHostObject>(config);
+   return jsi::Object::createFromHostObject(runtime, instance);
+diff --git a/node_modules/react-native-mmkv/cpp/MmkvHostObject.cpp b/node_modules/react-native-mmkv/cpp/MmkvHostObject.cpp
+--- a/node_modules/react-native-mmkv/cpp/MmkvHostObject.cpp
++++ b/node_modules/react-native-mmkv/cpp/MmkvHostObject.cpp
+@@ -7,6 +7,7 @@
+ //
+-
++
+ #include "MmkvHostObject.h"
++#include "LegacyInstanceGuard.h"
+ #include "MMKVManagedBuffer.h"
+ #include "MmkvLogger.h"
+ #include <MMKV.h>
+@@ -17,6 +18,9 @@
+ using namespace facebook;
+-
++
+ MmkvHostObject::MmkvHostObject(const facebook::react::MMKVConfig& config) {
++  if (config.id == "mmkv.default" && !react::legacyInstanceGuard.open()) {
++    throw std::runtime_error("Legacy MMKV is sealed for retirement in this process");
++  }
+   std::string path = config.path.has_value() ? config.path.value() : "";
+   std::string encryptionKey = config.encryptionKey.has_value() ? config.encryptionKey.value() : "";
+   bool hasEncryptionKey = encryptionKey.size() > 0;
+diff --git a/node_modules/react-native-mmkv/src/NativeMmkv.ts b/node_modules/react-native-mmkv/src/NativeMmkv.ts
+--- a/node_modules/react-native-mmkv/src/NativeMmkv.ts
++++ b/node_modules/react-native-mmkv/src/NativeMmkv.ts
+@@ -82,6 +82,8 @@
+ }
+-
++
+ export interface Spec extends TurboModule {
++  /** Seal old-instance opens only when none occurred in this native process. */
++  claimLegacyRetirement(): boolean;
+   /**
+    * Initialize MMKV with the given base storage directory.
+    * This should be the documents directory by default.

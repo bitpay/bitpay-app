@@ -12,7 +12,6 @@ import {
 } from '../../../../../components/styled/Containers';
 import Button from '../../../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
-import {LogActions} from '../../../../../store/log';
 import {
   Action,
   Feather,
@@ -323,21 +322,21 @@ const PasskeyScreen: React.FC = () => {
   const createPasskey = async () => {
     setShowOptions(false);
     if (listPasskeyCredentials && listPasskeyCredentials.length > 4) {
-      logManager.warn('[PasskeyScreen] Reached max number of passkeys'),
-        dispatch(
-          showBottomNotificationModal({
-            type: 'warning',
-            title: t("Couldn't create a new Passkey"),
-            message: t('You reached max number of passkeys.'),
-            enableBackdropDismiss: true,
-            actions: [
-              {
-                text: t('OK'),
-                action: () => {},
-              },
-            ],
-          }),
-        );
+      logManager.warn('[PasskeyScreen] Reached max number of passkeys');
+      dispatch(
+        showBottomNotificationModal({
+          type: 'warning',
+          title: t("Couldn't create a new Passkey"),
+          message: t('You reached max number of passkeys.'),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+            },
+          ],
+        }),
+      );
       return;
     }
     const isAuthorized = await checkUserAuthorized();
@@ -451,7 +450,7 @@ const PasskeyScreen: React.FC = () => {
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
-  }, []);
+  }, [dispatch]);
 
   const fetchCredentials = useCallback(async () => {
     if (loginRequired() || fetchingCredentials) {
@@ -477,10 +476,12 @@ const PasskeyScreen: React.FC = () => {
       setFetchingCredentials(false);
       logManager.error('[PasskeyScreen] ', err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loginRequired only reads user and session, which are already deps
   }, [dispatch, user, fetchingCredentials, session, network]);
 
   useEffect(() => {
     fetchCredentials();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-fetches credentials only when the user changes, not on every fetchCredentials identity change
   }, [user]);
 
   const renderPasskey = ({item, index}) => {

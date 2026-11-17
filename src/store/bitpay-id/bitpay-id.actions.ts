@@ -11,7 +11,6 @@ import {
   CreateAccountStatus,
   EmailPairingStatus,
   FetchBasicInfoStatus,
-  FetchDoshTokenStatus,
   FetchSessionStatus,
   LoginStatus,
   PairingBitPayIdStatus,
@@ -170,7 +169,6 @@ export const successInitializeStore = (
   payload: {
     network,
     user: data.basicInfo,
-    doshToken: data.doshToken,
   },
 });
 
@@ -203,25 +201,6 @@ export const updateFetchBasicInfoStatus = (
 export const bitPayIdDisconnected = (network: Network): BitPayIdActionType => ({
   type: BitPayIdActionTypes.BITPAY_ID_DISCONNECTED,
   payload: {network},
-});
-
-export const successFetchDoshToken = (
-  network: Network,
-  token: string,
-): BitPayIdActionType => ({
-  type: BitPayIdActionTypes.SUCCESS_FETCH_DOSH_TOKEN,
-  payload: {network, token},
-});
-
-export const failedFetchDoshToken = (): BitPayIdActionType => ({
-  type: BitPayIdActionTypes.FAILED_FETCH_DOSH_TOKEN,
-});
-
-export const updateFetchDoshTokenStatus = (
-  status: FetchDoshTokenStatus,
-): BitPayIdActionType => ({
-  type: BitPayIdActionTypes.UPDATE_FETCH_DOSH_TOKEN_STATUS,
-  payload: status,
 });
 
 export const forgotPasswordEmailStatus = (

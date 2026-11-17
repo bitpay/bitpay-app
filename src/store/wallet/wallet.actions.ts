@@ -298,7 +298,7 @@ export const removePendingJoinerSession = () => ({
   type: WalletActionTypes.REMOVE_PENDING_JOINER_SESSION,
 });
 
-export const setTssEnabled = (payload: boolean): WalletActionType => ({
-  type: WalletActionTypes.SET_TSS_ENABLED,
+export const setShowTestnetWallets = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_SHOW_TESTNET_WALLETS,
   payload,
 });

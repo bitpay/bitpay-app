@@ -20,6 +20,7 @@ import {
 import {getRangeLabelForFiatTimeframe} from './fiatTimeframes';
 import useRuntimeFiatRateSeriesCache from '../../portfolio/ui/hooks/useRuntimeFiatRateSeriesCache';
 import {getLastDayTimestampStartOfHourMs} from '../../utils/helper-methods';
+import {buildRuntimeFiatRateCacheRequestKey} from '../../portfolio/ui/fiatRateSeries';
 
 const EMPTY_DISABLED_RATES = {};
 
@@ -77,14 +78,18 @@ export const buildLegacyLastDayChangeRowData = (args: {
   });
 };
 
-const useLegacyLastDayChangeRowData = (args: {
+type UseLegacyLastDayChangeRowDataArgs = {
   wallets: Wallet[] | undefined;
   currentFiatBalance: number | undefined;
   quoteCurrency: string;
   enabled?: boolean;
   mode?: LegacyLastDayPnlMode;
   representativeAsset?: LegacyLastDayAssetIdentity;
-}): ChangeRowData | undefined => {
+};
+
+export const useLegacyLastDayChangeRowDataState = (
+  args: UseLegacyLastDayChangeRowDataArgs,
+): {data: ChangeRowData | undefined; isLoading: boolean} => {
   const {t} = useTranslation();
   const {
     currentFiatBalance,
@@ -122,7 +127,7 @@ const useLegacyLastDayChangeRowData = (args: {
 
     return buildLegacyLastDayRateRequestsForWallets({wallets});
   }, [enabled, mode, representativeAsset, wallets]);
-  const {cache: fiatRateSeriesCache} = useRuntimeFiatRateSeriesCache({
+  const {cache: fiatRateSeriesCache, loading} = useRuntimeFiatRateSeriesCache({
     quoteCurrency,
     requests: rateRequests,
     maxAgeMs: HISTORIC_RATES_CACHE_DURATION * 1000,
@@ -130,7 +135,20 @@ const useLegacyLastDayChangeRowData = (args: {
     clearOnRequestChange: true,
   });
 
-  return useMemo(() => {
+  const requestKey = buildRuntimeFiatRateCacheRequestKey({
+    quoteCurrency,
+    requests: rateRequests,
+  });
+  const startedLoadingKeyRef = useRef<string | undefined>(undefined);
+  if (loading) {
+    startedLoadingKeyRef.current = requestKey;
+  }
+  const isLoading =
+    enabled &&
+    rateRequests.length > 0 &&
+    (loading || startedLoadingKeyRef.current !== requestKey);
+
+  const data = useMemo(() => {
     if (!enabled) {
       return undefined;
     }
@@ -176,6 +194,12 @@ const useLegacyLastDayChangeRowData = (args: {
     representativeAsset,
     wallets,
   ]);
+
+  return {data, isLoading};
 };
+
+const useLegacyLastDayChangeRowData = (
+  args: UseLegacyLastDayChangeRowDataArgs,
+): ChangeRowData | undefined => useLegacyLastDayChangeRowDataState(args).data;
 
 export default useLegacyLastDayChangeRowData;

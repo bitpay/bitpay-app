@@ -524,6 +524,7 @@ const MoonpayDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getTransactionDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest transaction details; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

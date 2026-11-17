@@ -1,4 +1,4 @@
-import isEqual from 'lodash.isequal';
+import {isEqual} from '../../utils/object';
 import {
   Key,
   PendingJoinerSession,
@@ -43,7 +43,11 @@ export interface WalletState {
   accountSvmCreationMigrationComplete: boolean;
   svmAddressFixComplete: boolean;
   pendingJoinerSession: PendingJoinerSession | null;
-  tssEnabled: boolean;
+  /**
+   * Testnet mode. `null` until the user unlocks it with the title taps in
+   * Settings > Crypto; once set the toggle stays visible there.
+   */
+  showTestnetWallets: boolean | null;
   secretsMigrated: boolean;
 }
 
@@ -80,7 +84,7 @@ export const initialState: WalletState = {
   accountSvmCreationMigrationComplete: false,
   svmAddressFixComplete: false,
   pendingJoinerSession: null,
-  tssEnabled: false,
+  showTestnetWallets: null,
   secretsMigrated: false,
 };
 
@@ -679,6 +683,9 @@ export const walletReducer = (
             if (!status) {
               return;
             }
+            // Wallet screens check freshness per wallet, so record it here too;
+            // otherwise opening a wallet refetches what this refresh just got.
+            balanceCacheUpdates[wallet.id] = refreshedAt;
 
             if (!walletHasStatus(wallet, status)) {
               updatedWallets ??= [...currentKey.wallets];
@@ -775,11 +782,18 @@ export const walletReducer = (
         secretsMigrated: action.payload,
       };
 
-    case WalletActionTypes.SET_TSS_ENABLED:
+    case WalletActionTypes.SET_SHOW_TESTNET_WALLETS: {
+      // New key and wallets references so lists memoized on them re-filter.
+      const keys: WalletState['keys'] = {};
+      Object.entries(state.keys).forEach(([id, key]) => {
+        keys[id] = {...key, wallets: [...key.wallets]};
+      });
       return {
         ...state,
-        tssEnabled: action.payload,
+        keys,
+        showTestnetWallets: action.payload,
       };
+    }
 
     default:
       return state;

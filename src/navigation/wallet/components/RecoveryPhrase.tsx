@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   currencyContainer: {
     paddingHorizontal: 20,
-    height: 55,
+    minHeight: 55,
     borderWidth: 1,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
@@ -427,7 +427,7 @@ const RecoveryPhrase = () => {
     isMultisig: false,
   });
   const wordsRef = useRef<TextInput>(null);
-  const sensitiveInputRefs = useRef([wordsRef]).current;
+  const [sensitiveInputRefs] = useState(() => [wordsRef]);
   const {clearSensitive} = useSensitiveRefClear(sensitiveInputRefs);
 
   const {

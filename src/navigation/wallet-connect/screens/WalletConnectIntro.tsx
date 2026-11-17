@@ -53,9 +53,8 @@ const WalletConnectIntro = () => {
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
   // version 2
-  const proposal = useAppSelector(
-    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.proposal,
-  );
+  // value unused; selector kept so the screen still re-renders when the proposal changes
+  useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.proposal);
   const {
     params: {uri: _uri},
   } = useRoute<RouteProp<{params: WalletConnectIntroParamList}>>();

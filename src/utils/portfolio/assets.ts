@@ -16,6 +16,7 @@ import {
   getWalletStableDeduplicationId,
   isWalletVisibleForKey,
 } from '../../store/wallet/utils/wallet';
+import {isKeyVisibleForTestnetMode} from '../../store/wallet/utils/testnet';
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
@@ -860,6 +861,41 @@ export const isPopulateLoadingForWallets = (args: {
   });
 };
 
+export type PortfolioPopulateProgress = {
+  completed: number;
+  total: number;
+};
+
+/**
+ * Progress of the running populate restricted to the given wallets (e.g. a
+ * chart's scope). Returns undefined when no populate is running for them, so
+ * callers can fall back to an uncaptioned loading state.
+ */
+export const getPopulateProgressForWallets = (args: {
+  populateStatus: PortfolioPopulateStatus | undefined;
+  wallets: Wallet[] | undefined;
+}): PortfolioPopulateProgress | undefined => {
+  const populateStatus = args.populateStatus;
+  if (!populateStatus?.inProgress) {
+    return undefined;
+  }
+
+  const inScopeWalletIds = getActivePopulateScopeWalletIds(populateStatus);
+  const relevantWalletIds = getUniquePopulateWalletIds(
+    (args.wallets || []).map(getPortfolioWalletId),
+  ).filter(wid => inScopeWalletIds.has(wid));
+  if (!relevantWalletIds.length) {
+    return undefined;
+  }
+
+  const statusById = populateStatus.walletStatusById || {};
+  const completed = relevantWalletIds.filter(wid =>
+    isTerminalWalletPopulateState(statusById[wid]),
+  ).length;
+
+  return {completed, total: relevantWalletIds.length};
+};
+
 const arePopulateWalletIdsComplete = (args: {
   populateStatus: PortfolioPopulateStatus | undefined;
   walletIds: string[];
@@ -983,7 +1019,9 @@ export const getVisibleKeysFromKeys = (
   keys: Record<string, Key> | undefined,
   homeCarouselConfig?: HomeCarouselConfig[] | undefined,
 ): Key[] => {
-  const all = Object.values(keys || {}) as Key[];
+  const all = (Object.values(keys || {}) as Key[]).filter(key =>
+    isKeyVisibleForTestnetMode(key),
+  );
   if (!homeCarouselConfig?.length) {
     return all;
   }

@@ -1,5 +1,6 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
+import {MMKV} from 'react-native-mmkv';
 import {Token} from '../../wallet.models';
 import {
   failedGetTokenOptions,
@@ -20,55 +21,330 @@ import {
 import {GetProtocolPrefix} from '../../utils/currency';
 import {AppActions} from '../../../app';
 import {buildWalletObj, mapAbbreviationAndName} from '../../utils/wallet';
-import merge from 'lodash.merge';
+import {merge} from '../../../../utils/object';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 
-export const startGetTokenOptions =
-  (): Effect<Promise<void>> => async dispatch => {
-    try {
-      logManager.info('starting [startGetTokenOptions]');
-      let tokenOptionsByAddress: {[key in string]: Token} = {};
-      let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
+// The 1inch token lists are public data, about 5 MB of JSON across the
+// supported chains. They are cached in their own MMKV instance, away from
+// persist:root and the wallet vault, so launches don't download and parse
+// them every time. A failed fetch never replaces a cached list.
+const TOKEN_LISTS_STORAGE_ID = 'bitpay.token-lists.v1';
+export const TOKEN_LISTS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-      const chainResults = await Promise.all(
-        SUPPORTED_VM_TOKENS.map(async chain => {
-          try {
-            const {data} = await axios.get<Token[]>(
-              `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
-            );
-            if (!Array.isArray(data)) {
-              logManager.error(
-                `Unexpected response for ${chain} [startGetTokenOptions]: ${data}`,
-              );
-              return {chain, tokens: [] as Token[]};
-            }
-            return {chain, tokens: data};
-          } catch (error) {
-            logManager.info(
-              `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
-            );
-            return {chain, tokens: [] as Token[]};
-          }
-        }),
+type CachedTokenList = {savedAt: number; tokens: Token[]};
+
+// populateTokenInfo reads these fields; one malformed entry must not be able
+// to break every launch once it is cached.
+const isUsableToken = (token: any): token is Token =>
+  !!token &&
+  typeof token.address === 'string' &&
+  typeof token.symbol === 'string' &&
+  typeof token.name === 'string' &&
+  typeof token.decimals === 'number';
+
+let tokenListsStorage: MMKV | undefined;
+const getTokenListsStorage = () =>
+  (tokenListsStorage ??= new MMKV({id: TOKEN_LISTS_STORAGE_ID}));
+
+const readCachedTokenList = (chain: string): CachedTokenList | undefined => {
+  try {
+    const raw = getTokenListsStorage().getString(chain);
+    if (!raw) {
+      return undefined;
+    }
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.savedAt !== 'number' || !Array.isArray(parsed.tokens)) {
+      return undefined;
+    }
+    const tokens = parsed.tokens.filter(isUsableToken);
+    // An entry that filters down to nothing is as good as missing: using it
+    // would leave the chain with no tokens (0 fiat) until the TTL expires.
+    if (tokens.length === 0) {
+      return undefined;
+    }
+    return {
+      savedAt: parsed.savedAt,
+      tokens,
+    };
+  } catch {
+    logManager.warn(
+      `[startGetTokenOptions] ignoring unreadable cached token list for ${chain}`,
+    );
+    return undefined;
+  }
+};
+
+// requestIdleCallback when the platform has it, else a macrotask — the same
+// scheduler accountListCache uses, so a large serialize+write never blocks the
+// caller that is awaiting the fetch.
+const scheduleIdle = (task: () => void): void => {
+  const idleCallback = (global as any).requestIdleCallback;
+  if (typeof idleCallback === 'function') {
+    idleCallback(task, {timeout: 2000});
+    return;
+  }
+  setTimeout(task, 0);
+};
+
+const writeCachedTokenList = (
+  chain: string,
+  tokens: Token[],
+  savedAt: number,
+) => {
+  try {
+    const entry: CachedTokenList = {savedAt, tokens};
+    getTokenListsStorage().set(chain, JSON.stringify(entry));
+  } catch {
+    logManager.warn(
+      `[startGetTokenOptions] could not cache token list for ${chain}`,
+    );
+  }
+};
+
+const isTokenListStale = ({savedAt}: CachedTokenList, now: number) =>
+  savedAt > now || now - savedAt > TOKEN_LISTS_CACHE_TTL_MS;
+
+// undefined = the request failed or returned something other than a list.
+const fetchTokenList = async (chain: string): Promise<Token[] | undefined> => {
+  try {
+    const {data} = await axios.get<Token[]>(
+      `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
+    );
+    if (!Array.isArray(data)) {
+      logManager.error(
+        `Unexpected response for ${chain} [startGetTokenOptions]: ${data}`,
       );
+      return undefined;
+    }
+    const tokens = data.filter(isUsableToken);
+    if (tokens.length !== data.length) {
+      logManager.warn(
+        `[startGetTokenOptions] dropped ${
+          data.length - tokens.length
+        } malformed token(s) for ${chain}`,
+      );
+    }
+    // Nothing usable came back. Returning [] here would overwrite a good
+    // cached list with an empty one (fresh savedAt) and wipe the chain's
+    // tokens for 24h, so report it as a failed fetch and keep the cache.
+    if (tokens.length === 0) {
+      logManager.warn(
+        `[startGetTokenOptions] no usable tokens returned for ${chain}; treating as a failed fetch`,
+      );
+      return undefined;
+    }
+    return tokens;
+  } catch {
+    logManager.info(
+      `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
+    );
+    return undefined;
+  }
+};
 
-      for (const {chain, tokens} of chainResults) {
-        tokens.forEach(token => {
-          if (
-            BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
-          ) {
-            return;
-          } // remove bitpay supported tokens and currencies
+// Applying ~21k cached tokens takes a few hundred ms on a mid-range phone.
+// It runs inside startWalletStoreInit, which startAppInit starts but does not
+// await, so done in one go it held the JS thread before SUCCESS_APP_INIT and
+// the first route. Process in slices that yield to the event loop, so app
+// init, routing and the first render interleave with it; the result is the
+// same maps, set once at the end.
+const TOKEN_APPLY_SLICE_MS = 8;
+const yieldToEventLoop = () =>
+  new Promise<void>(resolve => setTimeout(resolve, 0));
+
+// Token keys (getCurrencyAbbreviation) of the token wallets the user holds.
+// Their metadata is applied in one go before the sliced pass, so lookups for
+// the user's own tokens (GetPrecision, GetName) never wait on the ~21k list.
+let heldTokenKeys: ReadonlySet<string> = new Set();
+export const setHeldTokenKeysForTokenLists = (keys: Iterable<string>) => {
+  heldTokenKeys = new Set(keys);
+};
+
+const getHeldTokenKeys = (state: any): string[] => {
+  const out: string[] = [];
+  for (const key of Object.values(state?.WALLET?.keys || {}) as any[]) {
+    for (const wallet of key?.wallets || []) {
+      const address =
+        wallet?.credentials?.token?.address || wallet?.tokenAddress;
+      const chain = wallet?.chain || wallet?.credentials?.chain;
+      if (address && chain) {
+        out.push(getCurrencyAbbreviation(address, chain));
+      }
+    }
+  }
+  return out;
+};
+
+const applyTokenLists = async (
+  chainResults: Array<{chain: string; tokens: Token[]}>,
+) => {
+  let tokenOptionsByAddress: {[key in string]: Token} = {};
+  let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
+  if (heldTokenKeys.size) {
+    for (const {chain, tokens} of chainResults) {
+      for (const token of tokens) {
+        const key = getCurrencyAbbreviation(token.address, chain);
+        if (heldTokenKeys.has(key) && !BitpaySupportedTokens[key]) {
           populateTokenInfo({
             chain,
             token,
             tokenOptionsByAddress,
             tokenDataByAddress,
           });
+        }
+      }
+    }
+    const current = tokenManager.getTokenOptions();
+    const missing = Object.keys(tokenDataByAddress).some(
+      key => !current.tokenDataByAddress?.[key],
+    );
+    if (missing) {
+      // Merged over what is already set, so nothing already known is hidden.
+      tokenManager.setTokenOptions({
+        tokenOptionsByAddress: {
+          ...current.tokenOptionsByAddress,
+          ...tokenOptionsByAddress,
+        },
+        tokenDataByAddress: {
+          ...current.tokenDataByAddress,
+          ...tokenDataByAddress,
+        },
+      });
+    }
+    tokenOptionsByAddress = {};
+    tokenDataByAddress = {};
+  }
+  let sliceStart = Date.now();
+  for (const {chain, tokens} of chainResults) {
+    for (const token of tokens) {
+      if (
+        !BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
+      ) {
+        // bitpay supported tokens and currencies are skipped
+        populateTokenInfo({
+          chain,
+          token,
+          tokenOptionsByAddress,
+          tokenDataByAddress,
         });
       }
-      tokenManager.setTokenOptions({tokenOptionsByAddress, tokenDataByAddress});
+      if (Date.now() - sliceStart >= TOKEN_APPLY_SLICE_MS) {
+        await yieldToEventLoop();
+        sliceStart = Date.now();
+      }
+    }
+  }
+  tokenManager.setTokenOptions({tokenOptionsByAddress, tokenDataByAddress});
+};
+
+// Fetches every chain; a chain whose request fails keeps its cached list.
+const fetchTokenLists = async (
+  cached: Record<string, CachedTokenList | undefined>,
+) => {
+  const fetchedAt = Date.now();
+  const results = await Promise.all(
+    SUPPORTED_VM_TOKENS.map(async chain => {
+      const fetched = await fetchTokenList(chain);
+      if (fetched) {
+        // Serialize + write off the await path so a cold launch doesn't block
+        // init on ~5 MB of JSON; savedAt stays the fetch time for staleness.
+        scheduleIdle(() => writeCachedTokenList(chain, fetched, fetchedAt));
+      }
+      return {
+        chain,
+        fetched: !!fetched,
+        tokens: fetched ?? cached[chain]?.tokens ?? [],
+      };
+    }),
+  );
+  return {results, anyFetched: results.some(result => result.fetched)};
+};
+
+// A cache that can't be applied is discarded so the caller fetches fresh.
+const applyCachedTokenLists = async (
+  cached: Record<string, CachedTokenList | undefined>,
+): Promise<boolean> => {
+  try {
+    await applyTokenLists(
+      SUPPORTED_VM_TOKENS.map(chain => ({
+        chain,
+        tokens: cached[chain]!.tokens,
+      })),
+    );
+    return true;
+  } catch (error) {
+    const errorStr = error instanceof Error ? error.message : String(error);
+    logManager.warn(
+      `[startGetTokenOptions] discarding cached token lists: ${errorStr}`,
+    );
+    for (const chain of SUPPORTED_VM_TOKENS) {
+      cached[chain] = undefined;
+      try {
+        getTokenListsStorage().delete(chain);
+      } catch {}
+    }
+    return false;
+  }
+};
+
+let backgroundTokenListsRefresh: Promise<void> | undefined;
+
+const refreshTokenListsInBackground = (
+  cached: Record<string, CachedTokenList | undefined>,
+) => {
+  backgroundTokenListsRefresh ??= fetchTokenLists(cached)
+    .then(async ({results, anyFetched}) => {
+      if (anyFetched) {
+        await applyTokenLists(results);
+        logManager.info('successful [startGetTokenOptions] background refresh');
+      }
+    })
+    .catch(error => {
+      const errorStr = error instanceof Error ? error.message : String(error);
+      logManager.error(
+        `failed [startGetTokenOptions] background refresh: ${errorStr}`,
+      );
+    })
+    .finally(() => {
+      backgroundTokenListsRefresh = undefined;
+    });
+};
+
+export const startGetTokenOptions =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    try {
+      logManager.info('starting [startGetTokenOptions]');
+      setHeldTokenKeysForTokenLists(getHeldTokenKeys(getState()));
+      const cached: Record<string, CachedTokenList | undefined> = {};
+      // Each chain's cached list is a large JSON parse; yield between them
+      // so the first one does not run before startAppInit gets going.
+      for (const chain of SUPPORTED_VM_TOKENS) {
+        await yieldToEventLoop();
+        cached[chain] = readCachedTokenList(chain);
+      }
+
+      // Every chain cached: use it now, and refresh in the background when
+      // any list is older than the TTL.
+      if (
+        SUPPORTED_VM_TOKENS.every(chain => cached[chain]) &&
+        (await applyCachedTokenLists(cached))
+      ) {
+        logManager.info('successful [startGetTokenOptions] (cached)');
+        dispatch(AppActions.appTokensDataLoaded());
+        const now = Date.now();
+        if (
+          SUPPORTED_VM_TOKENS.some(chain =>
+            isTokenListStale(cached[chain]!, now),
+          )
+        ) {
+          refreshTokenListsInBackground(cached);
+        }
+        return;
+      }
+
+      const {results} = await fetchTokenLists(cached);
+      await applyTokenLists(results);
       logManager.info('successful [startGetTokenOptions]');
       dispatch(AppActions.appTokensDataLoaded());
     } catch (e) {
@@ -114,31 +390,20 @@ export const addCustomTokenOption =
     }
   };
 
-const populateTokenInfo = ({
-  chain,
-  token,
-  tokenOptionsByAddress,
-  tokenDataByAddress,
-}: {
-  chain: string;
-  token: Token;
-  tokenOptionsByAddress: {[key in string]: Token};
-  tokenDataByAddress: {[key in string]: CurrencyOpts};
-}) => {
-  const tokenAddressWithSuffix = addTokenChainSuffix(token.address, chain);
-  const tokenData = {
-    name: token.name.replace('(PoS)', '').trim(),
-    chain,
-    coin: token.symbol.toLowerCase(),
+// Everything in a token's CurrencyOpts that depends only on its chain, built
+// once per chain rather than once per token. Launch applies ~21k cached 1inch
+// tokens; rebuilding these nested objects (and re-deriving the protocol
+// prefixes and fee currency) for each one was most of that cost. The objects
+// are shared between a chain's tokens, which is safe because CurrencyOpts is
+// treated as read-only config throughout the app.
+type ChainTokenTemplate = Pick<
+  CurrencyOpts,
+  'feeCurrency' | 'properties' | 'paymentInfo' | 'feeInfo'
+>;
+const chainTokenTemplates: {[chain: string]: ChainTokenTemplate} = {};
+const buildChainTokenTemplate = (chain: string): ChainTokenTemplate => {
+  const template = {
     feeCurrency: getEVMFeeCurrency(chain),
-    logoURI: token.logoURI,
-    address: token.address,
-    unitInfo: {
-      unitName: token.symbol.toUpperCase(),
-      unitToSatoshi: 10 ** token.decimals,
-      unitDecimals: token.decimals,
-      unitCode: token.symbol,
-    },
     properties: {
       hasMultiSig: false,
       hasMultiSend: false,
@@ -165,9 +430,63 @@ const populateTokenInfo = ({
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+  } as ChainTokenTemplate;
+  if (__DEV__) {
+    // These sub-objects are shared by reference across a chain's ~21k tokens
+    // (see populateTokenInfo). Freeze them in dev so an accidental in-place
+    // mutation of this read-only config throws at the offending write instead
+    // of silently corrupting every token on the chain. Production is
+    // unaffected.
+    Object.freeze(template.properties);
+    Object.freeze(template.paymentInfo?.protocolPrefix);
+    Object.freeze(template.paymentInfo);
+    Object.freeze(template.feeInfo);
+    Object.freeze(template);
+  }
+  return template;
+};
+const getChainTokenTemplate = (chain: string): ChainTokenTemplate =>
+  (chainTokenTemplates[chain] ??= buildChainTokenTemplate(chain));
+
+/** Tests that swap the explorer or coin config must drop the cached templates. */
+export const clearChainTokenTemplatesForTests = (): void => {
+  Object.keys(chainTokenTemplates).forEach(chain => {
+    delete chainTokenTemplates[chain];
+  });
+};
+
+const populateTokenInfo = ({
+  chain,
+  token,
+  tokenOptionsByAddress,
+  tokenDataByAddress,
+}: {
+  chain: string;
+  token: Token;
+  tokenOptionsByAddress: {[key in string]: Token};
+  tokenDataByAddress: {[key in string]: CurrencyOpts};
+}) => {
+  const tokenAddressWithSuffix = addTokenChainSuffix(token.address, chain);
+  const template = getChainTokenTemplate(chain);
+  const tokenData = {
+    name: token.name.replace('(PoS)', '').trim(),
+    chain,
+    coin: token.symbol.toLowerCase(),
+    feeCurrency: template.feeCurrency,
+    logoURI: token.logoURI,
+    address: token.address,
+    unitInfo: {
+      unitName: token.symbol.toUpperCase(),
+      unitToSatoshi: 10 ** token.decimals,
+      unitDecimals: token.decimals,
+      unitCode: token.symbol,
+    },
+    properties: template.properties,
+    paymentInfo: template.paymentInfo,
+    feeInfo: template.feeInfo,
   };
   tokenOptionsByAddress[tokenAddressWithSuffix] = token;
-  tokenDataByAddress[tokenAddressWithSuffix] = tokenData;
+  tokenDataByAddress[tokenAddressWithSuffix] = tokenData as CurrencyOpts;
 };
 
 export const startCustomTokensMigration =

@@ -1,4 +1,3 @@
-import {cardFields} from '../card/card.queries';
 import {GqlQueryParams} from '../graphql/graphql.types';
 
 export const basicInfoFields = `
@@ -50,14 +49,6 @@ export const FETCH_ALL_USER_DATA = (token: string): GqlQueryParams => {
             ${basicInfoFields}
             ${basicInfoMethodFields}
           }
-          cards:debitCards {
-            ${cardFields}
-          }
-          cardBalances:debitCards {
-            id
-            balance:cardBalance
-          }
-          doshToken:getDoshToken
         }
       }
     `,
@@ -91,25 +82,9 @@ export const FETCH_BASIC_INFO = (
   };
 };
 
-const FETCH_DOSH_TOKEN = (token: string): GqlQueryParams => {
-  return {
-    query: `
-      query FETCH_DOSH_TOKEN ($token:String!) {
-        user:bitpayUser(token:$token) {
-          doshToken:getDoshToken
-        }
-      }
-    `,
-    variables: {
-      token,
-    },
-  };
-};
-
 const UserQueries = {
   FETCH_ALL_USER_DATA,
   FETCH_BASIC_INFO,
-  FETCH_DOSH_TOKEN,
 };
 
 export default UserQueries;

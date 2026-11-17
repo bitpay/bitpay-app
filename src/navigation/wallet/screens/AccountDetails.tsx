@@ -5,7 +5,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import _ from 'lodash';
+import {merge} from '../../../utils/object';
 import React, {
   ReactElement,
   useCallback,
@@ -142,9 +142,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import DropdownOption from '../components/DropdownOption';
-import TransactionRow, {
-  TRANSACTION_ROW_HEIGHT,
-} from '../../../components/list/TransactionRow';
+import TransactionRow from '../../../components/list/TransactionRow';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
   TRANSACTION_ICON_SIZE,
@@ -172,7 +170,7 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
-import debounce from 'lodash.debounce';
+import {debounce} from '../../../utils/debounce';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
@@ -201,7 +199,7 @@ import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg
 import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
-import uniqBy from 'lodash.uniqby';
+import {uniqBy} from '../../../utils/array';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -225,6 +223,10 @@ import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterIntera
 import {performanceLog} from '../../../utils/performanceDebug';
 import BalanceVisibilityButton from '../../../components/balance/BalanceVisibilityButton';
 import {getSinglePreloadCandidate} from '../../../utils/navigationPreload';
+import {
+  getAccountChainsOnNetwork,
+  isHiddenByTestnetMode,
+} from '../../../store/wallet/utils/testnet';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -274,12 +276,6 @@ export interface GroupedHistoryProps extends SearchableItem {
 
 const EMPTY_ASSETS_BY_CHAIN_LIST: AssetsByChainListProps[] = [];
 
-const transactionItemLayout = (_data: any, index: number) => ({
-  length: TRANSACTION_ROW_HEIGHT,
-  offset: TRANSACTION_ROW_HEIGHT * index,
-  index,
-});
-
 const styles = StyleSheet.create({
   borderBottom: {
     borderBottomWidth: 1,
@@ -297,7 +293,7 @@ const styles = StyleSheet.create({
   },
   copyToClipboardContainer: {
     justifyContent: 'center',
-    height: 20,
+    minHeight: 20,
   },
   headerContainer: {
     marginTop: 18,
@@ -305,7 +301,7 @@ const styles = StyleSheet.create({
   },
   transactionSectionHeaderContainer: {
     padding: parseInt(ScreenGutter, 10),
-    height: 55,
+    minHeight: 55,
     width: '100%',
     display: 'flex',
     flexDirection: 'row',
@@ -320,7 +316,7 @@ const styles = StyleSheet.create({
     padding: parseInt(ScreenGutter, 10),
     justifyContent: 'center',
     alignItems: 'center',
-    height: 75,
+    minHeight: 75,
   },
   description: {
     overflow: 'hidden',
@@ -518,7 +514,7 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
     <BadgeContainerTouchable
       onPress={copyToClipboard}
       activeOpacity={ActiveOpacity}
-      style={{alignSelf: 'center', width: 'auto', height: 25}}>
+      style={{alignSelf: 'center', width: 'auto', minHeight: 25}}>
       <Badge>{formatCryptoAddress(address)}</Badge>
       <CopyToClipboardContainer>
         {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
@@ -528,6 +524,12 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 };
 
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
+  // React Compiler opt-out: the compiler already skips this screen because of
+  // its existing exhaustive-deps lint suppressions, and
+  // accountDropdownList caches its last value in a ref read/written inside
+  // useMemo (keeps the previous list while the dropdown is closed), which has
+  // no behaviour-identical compiler-safe form. Keep it uncompiled explicitly.
+  'use no memo';
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
@@ -600,6 +602,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     if (!showPortfolioValue && activeTab === 'allocation') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- falls back to the wallets tab when the allocation tab becomes unavailable
       setActiveTab('wallets');
     }
   }, [activeTab, showPortfolioValue]);
@@ -642,7 +645,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     () =>
       uniqBy(
         key.wallets.filter(
-          (w: Wallet) => w.receiveAddress === selectedAccountAddress,
+          (w: Wallet) =>
+            w.receiveAddress === selectedAccountAddress &&
+            !isHiddenByTestnetMode(w),
         ),
         (wallet: Wallet) => {
           return wallet.id;
@@ -699,6 +704,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     }
 
     hasHydratedHistoryRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot hydration from the cached history once content is ready
     setAccountTransactionsHistory(cachedAccountHistory);
     setGroupedHistory(GroupTransactionHistory(transactions));
     setLoadMore(
@@ -742,6 +748,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleAccountBalanceChart,
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
+    populateProgress: accountChartPopulateProgress,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: cacheEligibleAccountWallets,
@@ -793,6 +800,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     useRef<typeof activeAccountList>(activeAccountList);
   const accountDropdownList = useMemo(() => {
     if (!showAccountDropdown) {
+      // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
       return accountDropdownListRef.current;
     }
 
@@ -804,6 +812,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       {filterByHideWallet: true},
     ).filter(({chains}) => IsVMChain(chains[0]));
 
+    // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
     accountDropdownListRef.current = accountsForDropdown;
     return accountsForDropdown;
   }, [defaultAltCurrency.isoCode, dispatch, key, rates, showAccountDropdown]);
@@ -946,7 +955,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 syncWallet.credentials.token?.address,
               ),
             );
-            return _.merge(
+            return merge(
               syncWallet,
               buildWalletObj(
                 {
@@ -1021,8 +1030,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   };
 
   const keyOptions: Array<Option> = [];
+  // Testnet wallets share the account, so count the chains on the network
+  // "Add Ethereum Networks" creates wallets for.
   const hasAllChains =
-    accountItem?.chains?.length ===
+    getAccountChainsOnNetwork(keyFullWalletObjs, network).length ===
     Object.keys(
       isSvmAccount ? BitpaySupportedSvmCoins : BitpaySupportedEvmCoins,
     ).length;
@@ -1052,7 +1063,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             },
           }),
         );
-        if (_.isEmpty(wallets)) {
+        if (wallets.length === 0) {
           if (!key.isPrivKeyEncrypted) {
             await startSyncWallets(key.properties!.mnemonic);
           } else {
@@ -1202,6 +1213,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const updateWalletStatusAndProfileBalanceRef = useRef(
     updateWalletStatusAndProfileBalance,
   );
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   updateWalletStatusAndProfileBalanceRef.current =
     updateWalletStatusAndProfileBalance;
 
@@ -1426,6 +1438,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       dispatch(
         showBottomNotificationModal(
           RbfTransaction(
+            // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
             () => speedupTransaction(transaction),
             () => goToTransactionDetails(transaction),
           ),
@@ -1695,6 +1708,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [keyFullWalletObjs],
   );
   const preloadWalletDetailsRef = useRef(preloadWalletDetails);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   preloadWalletDetailsRef.current = preloadWalletDetails;
   const stablePreloadWalletDetails = useCallback(
     (walletId: string) => preloadWalletDetailsRef.current(walletId),
@@ -1857,6 +1871,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       }),
     [defaultAltCurrency.isoCode, key, keyFullWalletObjs, rates],
   );
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
   const memorizedAssetsByChainList = useMemo(() => {
     if (!contentReady) {
       return (
@@ -1975,7 +1990,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   }
                 />
                 {shouldShowAccountChartPlaceholder ? (
-                  <BalanceChartLoadingPlaceholder />
+                  <BalanceChartLoadingPlaceholder
+                    populateProgress={accountChartPopulateProgress}
+                  />
                 ) : null}
                 {shouldRenderAccountBalanceChart ? (
                   <View
@@ -1983,6 +2000,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       shouldShowAccountChartPlaceholder
                         ? styles.hiddenChart
                         : undefined
+                    }
+                    accessibilityElementsHidden={
+                      shouldShowAccountChartPlaceholder
+                    }
+                    importantForAccessibility={
+                      shouldShowAccountChartPlaceholder
+                        ? 'no-hide-descendants'
+                        : 'auto'
                     }>
                     <BalanceHistoryChart
                       wallets={chartableAccountWallets}
@@ -2015,6 +2040,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       onRenderableSeriesChange={
                         onAccountChartRenderableSeriesChange
                       }
+                      populateProgress={accountChartPopulateProgress}
+                      // Only the visible placeholder animates while this chart is hidden.
+                      skeletonVariant={
+                        shouldShowAccountChartPlaceholder ? 'static' : 'drawing'
+                      }
+                      // Reveal the chart's own error state (with Retry).
+                      onErrorStateChange={onAccountChartRenderableSeriesChange}
                     />
                   </View>
                 ) : null}
@@ -2074,8 +2106,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             }}
             send={{
               cta: () => {
-                navigation.navigate('GlobalSelect', {
-                  context: 'send',
+                navigation.navigate('GlobalSendTo', {
                   selectedAccountAddress: accountItem?.receiveAddress,
                 });
               },
@@ -2186,6 +2217,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [
     activeTab,
+    accountChartPopulateProgress,
     accountChartPreContent,
     accountHeaderChangeRowData,
     accountItem?.fiatLockedBalanceFormat,
@@ -2367,9 +2399,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           maxToRenderPerBatch: 15,
         })}
         ListEmptyComponent={listEmptyComponentForTab}
-        getItemLayout={
-          activeTab === 'activity' ? transactionItemLayout : undefined
-        }
       />
 
       <SheetModal

@@ -181,7 +181,8 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
           </HeaderRightContainer>
         ) : null,
     });
-  }, [navigation, t, context]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- header is set when navigation, t or context change; gotoBackup and navigateToKeyOverview are read at that time
+  }, [navigation, t, context, dispatch]);
 
   useAndroidBackHandler(() => true);
 
