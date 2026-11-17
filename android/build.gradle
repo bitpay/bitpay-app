@@ -83,7 +83,10 @@ subprojects { subproject ->
                 }
             }
 
-            if (compileSdkVersion == null || (compileSdkVersion as String).replace("android-", "").toInteger() < 34) {
+            // AGP 9 reports compileSdkVersion as "37.0" (or "android-37" on older SDKs).
+            def rawSdk = compileSdkVersion == null ? "0" : (compileSdkVersion as String).replace("android-", "")
+            def sdkMajor = rawSdk.tokenize('.')[0].toInteger()
+            if (sdkMajor < 34) {
                 compileSdkVersion 36
             }
 

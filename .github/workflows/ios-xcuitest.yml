@@ -1,8 +1,9 @@
 name: iOS XCUITest
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 08 * * *' # every day at 08:00 UTC
+    - cron: '17 8 * * *' # every day at 08:17 UTC
 
 concurrency:
   group: e2e-ios-xcui-${{ github.ref }}
@@ -10,7 +11,7 @@ concurrency:
 
 jobs:
   ios-ui-tests:
-    if: ${{ github.event.schedule == '0 08 * * *' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '17 8 * * *' }}
     runs-on: macos-latest
     timeout-minutes: 180
 
