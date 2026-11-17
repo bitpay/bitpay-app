@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {Rect, Svg, Path} from 'react-native-svg';
 import {useTheme} from '../../contexts';
 import {LightBlack, NeutralSlate, Slate, SlateDark} from '../../styles/colors';
@@ -24,13 +25,18 @@ const SettingsSvg: React.FC<SettingsSvgProps> = ({color, background}) => {
 };
 
 const Settings = ({onPress}: {onPress: () => void}) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const color = theme.dark ? Slate : SlateDark;
   const background = theme.dark ? LightBlack : NeutralSlate;
 
   return (
     <HeaderRightContainer>
-      <TouchableOpacity activeOpacity={ActiveOpacity} onPress={onPress}>
+      <TouchableOpacity
+        activeOpacity={ActiveOpacity}
+        accessibilityRole="button"
+        accessibilityLabel={t('More')}
+        onPress={onPress}>
         <SettingsSvg color={color} background={background} />
       </TouchableOpacity>
     </HeaderRightContainer>

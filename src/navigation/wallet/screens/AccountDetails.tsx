@@ -2145,6 +2145,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               testID="account-details-wallets-tab"
               accessibilityRole="button"
               accessibilityLabel={t('Wallets')}
+              accessibilityState={{selected: isWalletsTab}}
               onPress={() => {
                 setActiveTab('wallets');
               }}>
@@ -2158,6 +2159,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 testID="account-details-allocation-tab"
                 accessibilityRole="button"
                 accessibilityLabel={t('Allocation')}
+                accessibilityState={{selected: isAllocationTab}}
                 onPress={() => {
                   setActiveTab('allocation');
                 }}>
@@ -2171,6 +2173,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               testID="account-details-activity-tab"
               accessibilityRole="button"
               accessibilityLabel={t('Activity')}
+              accessibilityState={{selected: isActivityTab}}
               onPress={async () => {
                 setActiveTab('activity');
                 await sleep(200);

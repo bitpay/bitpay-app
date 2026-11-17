@@ -142,6 +142,8 @@ const Blockie = ({
 
   return (
     <View
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
       style={{
         width: size,
         height: size,

@@ -221,6 +221,7 @@ const HomeCard: React.FC<HomeCardProps> = ({
     <TouchableOpacity
       style={styles.cardContainer}
       testID={testID}
+      accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       activeOpacity={ActiveOpacity}
       onPressIn={onCTAPressIn}

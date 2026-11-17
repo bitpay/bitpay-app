@@ -512,6 +512,7 @@ const SearchComponent = <T extends SearchableItem>({
   const _SearchFilterContainer = () => {
     return (
       <SearchFilterContainer
+        accessibilityRole="button"
         onPress={() => {
           dispatch(AppActions.showChainSelectorModal({context, chainsOptions}));
         }}>
@@ -559,6 +560,7 @@ const SearchComponent = <T extends SearchableItem>({
               <SearchRoundInput
                 placeholderTextColor={theme.dark ? Slate : Placeholder}
                 placeholder={t('Search')}
+                accessibilityLabel={t('Search')}
                 onChangeText={updateSearchResults}
               />
             </View>

@@ -1,4 +1,5 @@
 import React, {memo} from 'react';
+import {useTranslation} from 'react-i18next';
 import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../contexts';
 import {SlateDark, White} from '../../styles/colors';
@@ -177,6 +178,7 @@ const Cell: React.FC<CellProps> = ({
       <VirtualKeyboardButtonAnimation
         isSmallScreen={isSmallScreen}
         onPress={() => onCellPress?.(value)}
+        accessibilityLabel={value}
         backgroundColor={backgroundColor}
         context={context}>
         <>
@@ -248,6 +250,7 @@ const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
   context,
   isSmallScreen,
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const backgroundColor =
     darkModeOnly || theme.dark
@@ -372,7 +375,8 @@ const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
             isSmallScreen={_isSmallScreen}
             context={context}
             onLongPress={() => onCellPress?.('reset')}
-            onPress={() => onCellPress?.('backspace')}>
+            onPress={() => onCellPress?.('backspace')}
+            accessibilityLabel={t('Delete')}>
             <SymbolContainer showLetters={showLetters}>
               <DeleteIcon bgColor={bgColor} />
             </SymbolContainer>

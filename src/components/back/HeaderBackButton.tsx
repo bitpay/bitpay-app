@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import Svg, {Path} from 'react-native-svg';
@@ -36,10 +37,13 @@ const HeaderBackButton: React.FC<HeaderBackButtonProps> = ({onPress}) => {
     }
   };
 
+  const {t} = useTranslation();
   const arrowFill = theme.dark ? Slate : SlateDark;
   return (
     <TouchableOpacity
       style={styles.backTouchable}
+      accessibilityRole="button"
+      accessibilityLabel={t('Back')}
       onPress={handlePress}
       activeOpacity={ActiveOpacity}>
       <View
