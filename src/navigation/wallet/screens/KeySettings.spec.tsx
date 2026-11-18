@@ -2,7 +2,6 @@ import React from 'react';
 import {act, fireEvent, render} from '@test/render';
 import KeySettings from './KeySettings';
 import {deleteCloudBackupFiles} from '../../../utils/cloud-backup/storage';
-import {verifyIdentity} from '../../../store/wallet/effects/send/send';
 
 const mockDispatch = jest.fn();
 const mockNavigation = {
@@ -19,8 +18,6 @@ const mockState = {
   APP: {
     defaultAltCurrency: {isoCode: 'USD'},
     selectedChainFilterOption: undefined,
-    biometricLockActive: false,
-    pinLockActive: false,
   },
   WALLET: {
     customTokenOptionsByAddress: {},
@@ -53,11 +50,6 @@ jest.mock('../../../utils/hooks', () => ({
     selector(mockState),
 }));
 
-jest.mock('../../../utils/helper-methods', () => ({
-  ...jest.requireActual('../../../utils/helper-methods'),
-  sleep: jest.fn(() => Promise.resolve()),
-}));
-
 jest.mock('../../../contexts', () => ({
   ...jest.requireActual('../../../contexts'),
   useOngoingProcess: () => mockOngoingProcess,
@@ -72,115 +64,38 @@ jest.mock('./keySettingsAccountListCache', () => ({
   resolveKeySettingsAccountList: () => [],
 }));
 
-jest.mock('../../../store/wallet/effects/send/send', () => ({
-  verifyIdentity: jest.fn(() => ({type: 'TEST/VERIFY_IDENTITY'})),
-}));
-
 jest.mock('../../../utils/cloud-backup/storage', () => ({
   ...jest.requireActual('../../../utils/cloud-backup/storage'),
-  connectToCloud: jest.fn(() => Promise.resolve()),
   deleteCloudBackupFiles: jest.fn(),
 }));
-
-const mockDeleteCloudBackupFiles = deleteCloudBackupFiles as jest.Mock;
-
-const shownSheets = () =>
-  mockDispatch.mock.calls
-    .map(([action]) => action?.payload)
-    .filter(payload => payload?.actions);
-
-const pressSheetAction = async (sheetIndex: number, text: string) => {
-  const action = shownSheets()[sheetIndex].actions.find(
-    (sheetAction: {text: string}) => sheetAction.text === text,
-  );
-  await act(async () => {
-    await action.action();
-  });
-};
 
 describe('KeySettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockDispatch.mockImplementation(() => undefined);
-    mockState.APP.pinLockActive = false;
   });
 
-  it('warns before deleting only the key when no cloud backup file is found', async () => {
-    mockDeleteCloudBackupFiles.mockResolvedValue(0);
+  it('deletes only the key and leaves its cloud backup in place', async () => {
     const {getByText} = render(<KeySettings />);
 
     fireEvent.press(getByText('Delete Key'));
-    await pressSheetAction(0, 'Delete Key and Backup');
-    await pressSheetAction(1, 'Delete Key and Backup');
+    const sheet = mockDispatch.mock.calls
+      .map(([action]) => action?.payload)
+      .find(payload => payload?.actions);
 
-    expect(mockDeleteCloudBackupFiles).toHaveBeenCalledWith('fp-1');
-    expect(shownSheets()[2].title).toBe(
-      'Couldn’t find the {{cloudName}} backup',
+    expect(sheet.message).toBe(
+      'This removes it from this phone. You can restore it from your backup.',
     );
-    expect(mockNavigation.navigate).not.toHaveBeenCalled();
 
-    await pressSheetAction(2, 'Delete Key, Keep Backup');
+    await act(async () => {
+      await sheet.actions
+        .find((action: {text: string}) => action.text === 'Delete Key')
+        .action();
+    });
 
+    expect(deleteCloudBackupFiles).not.toHaveBeenCalled();
     expect(mockNavigation.navigate).toHaveBeenCalledWith('DeleteKey', {
       keyId: 'key-1',
       confirmed: true,
-    });
-  });
-
-  it('warns that the funds can be lost before deleting the key and its cloud backup', async () => {
-    const {getByText} = render(<KeySettings />);
-
-    fireEvent.press(getByText('Delete Key'));
-    await pressSheetAction(0, 'Delete Key and Backup');
-
-    expect(shownSheets()[1]).toMatchObject({
-      title: 'Delete the {{cloudName}} backup too?',
-      message:
-        'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.',
-    });
-    expect(mockDeleteCloudBackupFiles).not.toHaveBeenCalled();
-
-    await pressSheetAction(1, 'Cancel');
-
-    expect(mockDeleteCloudBackupFiles).not.toHaveBeenCalled();
-    expect(mockNavigation.navigate).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ['confirms who they are', () => Promise.resolve(), 1],
-    ['cancels the check', () => Promise.reject(new Error('cancelled')), 0],
-  ])(
-    'with an app lock, deletes the cloud backup only when the person %s',
-    async (_case, verify, deletions) => {
-      mockState.APP.pinLockActive = true;
-      mockDispatch.mockImplementation(action =>
-        action?.type === 'TEST/VERIFY_IDENTITY' ? verify() : undefined,
-      );
-      mockDeleteCloudBackupFiles.mockResolvedValue(2);
-      const {getByText} = render(<KeySettings />);
-
-      fireEvent.press(getByText('Delete Key'));
-      await pressSheetAction(0, 'Delete Key and Backup');
-      await pressSheetAction(1, 'Delete Key and Backup');
-
-      expect(verifyIdentity).toHaveBeenCalledTimes(1);
-      expect(mockDeleteCloudBackupFiles).toHaveBeenCalledTimes(deletions);
-    },
-  );
-
-  it('deletes the key after its cloud backup files are deleted', async () => {
-    mockDeleteCloudBackupFiles.mockResolvedValue(2);
-    const {getByText} = render(<KeySettings />);
-
-    fireEvent.press(getByText('Delete Key'));
-    await pressSheetAction(0, 'Delete Key and Backup');
-    await pressSheetAction(1, 'Delete Key and Backup');
-
-    expect(shownSheets()).toHaveLength(2);
-    expect(mockNavigation.navigate).toHaveBeenCalledWith('DeleteKey', {
-      keyId: 'key-1',
-      confirmed: true,
-      deletedCloudBackup: true,
     });
   });
 });

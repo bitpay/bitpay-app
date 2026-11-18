@@ -157,7 +157,6 @@ export type WalletGroupParamList = {
   DeleteKey: {
     keyId: string;
     confirmed?: boolean;
-    deletedCloudBackup?: boolean;
   };
   KeyInformation: undefined;
   ExportKey: {code: string; keyName: string | undefined};

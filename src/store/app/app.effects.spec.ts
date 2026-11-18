@@ -13,7 +13,9 @@ jest.mock('react-native', () => ({
     getInitialURL: jest.fn(() => Promise.resolve(null)),
     openURL: jest.fn(),
   },
-  NativeModules: {},
+  NativeModules: {
+    Timer: {getRelativeTime: jest.fn(() => Promise.resolve('1000'))},
+  },
   Platform: {OS: 'ios', select: jest.fn(options => options?.ios)},
   Share: {share: jest.fn()},
 }));
@@ -295,6 +297,10 @@ jest.mock('./app.actions', () => ({
   appIsReadyForDeeplinking: jest.fn(() => ({type: 'APP_READY'})),
   failedAppInit: jest.fn(() => ({type: 'FAILED_APP_INIT'})),
   failedGenerateAppIdentity: jest.fn(() => ({type: 'FAILED_IDENTITY'})),
+  lockAuthorizedUntil: jest.fn(payload => ({
+    payload,
+    type: 'LOCK_AUTHORIZED_UNTIL',
+  })),
   setAnnouncementsAccepted: jest.fn(() => ({type: 'SET_ANNOUNCEMENTS'})),
   setAppFirstOpenEventComplete: jest.fn(() => ({type: 'SET_FIRST_OPEN_DONE'})),
   setAppFirstOpenEventDate: jest.fn(date => ({
@@ -410,8 +416,28 @@ const makeState = () =>
   } as any);
 
 describe('requestNotificationsPermissions', () => {
+  const request = (dispatch = jest.fn()) =>
+    requestNotificationsPermissions()(dispatch, jest.fn(), undefined as any);
+
   beforeEach(() => {
     (requestNotifications as jest.Mock).mockReset();
+  });
+
+  it('extends the lock window before the system prompt makes the app inactive', async () => {
+    const dispatch = jest.fn();
+    (requestNotifications as jest.Mock).mockResolvedValueOnce({
+      status: RESULTS.GRANTED,
+    });
+
+    await request(dispatch);
+
+    expect(dispatch).toHaveBeenCalledWith({
+      payload: 1020,
+      type: 'LOCK_AUTHORIZED_UNTIL',
+    });
+    expect(dispatch.mock.invocationCallOrder[0]).toBeLessThan(
+      (requestNotifications as jest.Mock).mock.invocationCallOrder[0],
+    );
   });
 
   it.each([
@@ -421,7 +447,7 @@ describe('requestNotificationsPermissions', () => {
   ])('resolves %s notifications as %s', async (status, accepted) => {
     (requestNotifications as jest.Mock).mockResolvedValueOnce({status});
 
-    await expect(requestNotificationsPermissions()).resolves.toBe(accepted);
+    await expect(request()).resolves.toBe(accepted);
 
     expect(requestNotifications).toHaveBeenCalledWith([
       'alert',
@@ -435,7 +461,7 @@ describe('requestNotificationsPermissions', () => {
       new Error('Native notification request failed'),
     );
 
-    await expect(requestNotificationsPermissions()).resolves.toBe(false);
+    await expect(request()).resolves.toBe(false);
 
     expect(requestNotifications).toHaveBeenCalledWith([
       'alert',

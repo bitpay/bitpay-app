@@ -75,9 +75,10 @@ const DeleteKey = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const {
-    params: {keyId, confirmed, deletedCloudBackup},
+    params: {keyId, confirmed},
   } = useRoute<RouteProp<WalletGroupParamList, 'DeleteKey'>>();
   const [keyName] = useState(() => keys[keyId]?.keyName || '');
+  const [hadCloudBackup] = useState(() => !!keys[keyId]?.cloudBackupTimestamp);
   const [deleted, setDeleted] = useState(false);
   const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
 
@@ -156,11 +157,11 @@ const DeleteKey = () => {
         icon="check"
         title={t('Key deleted')}
         message={
-          deletedCloudBackup
-            ? t('{{keyName}} and its {{cloudName}} backup have been removed.', {
-                keyName,
-                cloudName,
-              })
+          hadCloudBackup
+            ? t(
+                '{{keyName}} was removed from this phone. Your {{cloudName}} backup is still there if you need it.',
+                {keyName, cloudName},
+              )
             : t('{{keyName}} has been removed from this phone.', {keyName})
         }
         primary={t('Done')}

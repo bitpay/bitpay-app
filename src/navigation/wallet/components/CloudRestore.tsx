@@ -287,6 +287,7 @@ export const useCloudBackupRestore = ({
     passphrase: string,
   ): Promise<'wrong_password' | 'unlocked' | 'failed'> => {
     showOngoingProcess('IMPORTING');
+    await sleep(1000);
     let text: string | undefined;
     let payload: CloudBackupPayload | undefined;
     let keyshare: string | undefined;

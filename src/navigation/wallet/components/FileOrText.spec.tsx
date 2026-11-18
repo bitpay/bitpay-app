@@ -1,4 +1,5 @@
 import React from 'react';
+import {AppState} from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {act, fireEvent, render} from '@test/render';
 import FileOrText from './FileOrText';
@@ -65,11 +66,51 @@ const paste = async (getByText: (text: string) => any, text: string) => {
   });
 };
 
+const mockAppStateChanges = () => {
+  const handlers = new Set<(state: string) => void>();
+  jest
+    .spyOn(AppState, 'addEventListener')
+    .mockImplementation((_event, handler: any) => {
+      handlers.add(handler);
+      return {remove: () => handlers.delete(handler)} as any;
+    });
+  return (state: string) =>
+    act(() => handlers.forEach(handler => handler(state)));
+};
+
 describe('FileOrText', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLockout.locked = false;
     mockRestoreBackup.mockResolvedValue('unlocked');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('keeps a pasted backup when the app becomes inactive, and clears it in background', async () => {
+    const changeAppState = mockAppStateChanges();
+    const {getByTestId, getByText, queryByText} = render(<FileOrText />);
+
+    await paste(getByText, await cloudBackup());
+    fireEvent.changeText(getByTestId('password-box-input'), password);
+    fireEvent.press(getByTestId('show-advanced-options'));
+    fireEvent.changeText(getByTestId('passphrase-input'), 'phrase-pw');
+    changeAppState('inactive');
+
+    expect(getByText('Clipboard')).toBeTruthy();
+    expect(getByTestId('password-box-input').props.value).toBe('');
+    expect(getByTestId('passphrase-input').props.value).toBe('');
+
+    changeAppState('background');
+    fireEvent.changeText(getByTestId('password-box-input'), password);
+    await act(async () => {
+      fireEvent.press(getByTestId('import-wallet-button'));
+    });
+
+    expect(queryByText('Clipboard')).toBeNull();
+    expect(getByText('Required')).toBeTruthy();
   });
 
   it('restores a pasted cloud backup with the password and the recovery phrase password', async () => {

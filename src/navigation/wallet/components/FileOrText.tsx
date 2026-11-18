@@ -486,7 +486,7 @@ const FileOrText = () => {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
-      if (state === 'inactive' || state === 'background') {
+      if (state === 'background') {
         clearSensitive();
       }
     });

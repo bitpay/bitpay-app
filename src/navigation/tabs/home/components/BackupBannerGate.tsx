@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -11,6 +11,7 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import type {Effect} from '../../../../store';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {isTransactMenuOpen} from '../../../../components/modal/transact-menu/TransactMenu';
+import {KeysToBackUpSheet} from './KeysToBackUpSheet';
 
 export const BACKUP_NUDGE_DELAY_MS = 2500;
 
@@ -60,14 +61,16 @@ const BackupBannerGate = ({active}: {active: boolean}) => {
     ),
   );
   const keyReady = onboardingKeyStatus === 'idle' && readyKeys.length > 0;
-  const keyToBackUpId = readyKeys.find(
+  const keysToBackUp = readyKeys.filter(
     key =>
       !key.backupComplete &&
       !key.isReadOnly &&
       !isTSSKey(key) &&
       !key.wallets.some(wallet => wallet.pendingTssSession) &&
       (key.properties?.mnemonic || key.properties?.mnemonicEncrypted),
-  )?.id;
+  );
+  const keyToBackUpId = keysToBackUp[0]?.id;
+  const [choosingKey, setChoosingKey] = useState(false);
 
   useEffect(() => {
     if (
@@ -79,7 +82,7 @@ const BackupBannerGate = ({active}: {active: boolean}) => {
       return;
     }
     askingNotificationsRef.current = true;
-    AppEffects.requestNotificationsPermissions().then(accepted => {
+    dispatch(AppEffects.requestNotificationsPermissions()).then(accepted => {
       dispatch(AppActions.setNotificationsInteractionDone());
       dispatch(AppEffects.setNotifications(accepted));
       dispatch(
@@ -176,24 +179,43 @@ const BackupBannerGate = ({active}: {active: boolean}) => {
     return null;
   }
 
+  const openBackup = (keyId: string) =>
+    navigation.navigate('BackupOnboarding', {keyId, context: 'home'});
+
   return (
     <View style={styles.banner}>
       <Banner
         type={'info'}
         title={t('Back up your recovery phrase')}
-        description={t('Needed before you can buy, send or receive.')}
+        description={
+          keysToBackUp.length > 1
+            ? t(
+                'Some of your keys aren’t backed up yet. Back them up before you buy, send or receive with them.',
+              )
+            : t(
+                'Back up the recovery phrase for {{keyName}} before you buy, send or receive with it. It only takes a few seconds.',
+                {keyName: keysToBackUp[0].keyName},
+              )
+        }
         link={{
           text: t('Back Up Now'),
           onPress: () => {
             dispatch(
               Analytics.track('Clicked Back Up Now', {context: 'banner'}),
             );
-            navigation.navigate('BackupOnboarding', {
-              keyId: keyToBackUpId,
-              context: 'home',
-            });
+            if (keysToBackUp.length > 1) {
+              setChoosingKey(true);
+              return;
+            }
+            openBackup(keyToBackUpId);
           },
         }}
+      />
+      <KeysToBackUpSheet
+        isVisible={choosingKey}
+        keys={keysToBackUp}
+        onClose={() => setChoosingKey(false)}
+        onSelectKey={key => openBackup(key.id)}
       />
     </View>
   );
