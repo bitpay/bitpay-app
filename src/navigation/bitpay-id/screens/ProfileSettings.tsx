@@ -3,7 +3,6 @@ import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useTheme} from '../../../contexts';
 import {
-  SafeAreaView,
   ScrollView as RNScrollView,
   ScrollViewProps,
   View,
@@ -12,6 +11,7 @@ import {
   TextProps,
   StyleSheet,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
   ActiveOpacity,

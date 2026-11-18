@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   Platform,
-  SafeAreaView,
   ScrollView as RNScrollView,
   ScrollViewProps,
   StyleSheet,
   View,
   ViewProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const styles = StyleSheet.create({

@@ -1,11 +1,11 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
-  SafeAreaView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
+import {SafeAreaView} from '../../safe-area/SafeAreaView';
 import {WebView, WebViewNavigation} from 'react-native-webview';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 import {useTranslation} from 'react-i18next';

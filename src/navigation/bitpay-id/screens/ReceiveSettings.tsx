@@ -2,7 +2,6 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {uniqBy} from '../../../utils/array';
 import {
-  SafeAreaView,
   ScrollView as RNScrollView,
   ScrollViewProps,
   View,
@@ -11,6 +10,7 @@ import {
   TextProps,
   StyleSheet,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';

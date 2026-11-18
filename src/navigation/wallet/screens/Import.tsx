@@ -1,5 +1,6 @@
 import React, {useLayoutEffect} from 'react';
-import {SafeAreaView, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import RecoveryPhrase from '../components/RecoveryPhrase';
 import FileOrText from '../components/FileOrText';

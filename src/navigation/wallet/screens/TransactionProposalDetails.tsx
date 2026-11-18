@@ -7,14 +7,11 @@ import {
   H4,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {StyleSheet, Text, TextProps, View, ViewProps} from 'react-native';
 import {
+  ALL_EDGES,
   SafeAreaView,
-  StyleSheet,
-  Text,
-  TextProps,
-  View,
-  ViewProps,
-} from 'react-native';
+} from '../../../components/safe-area/SafeAreaView';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -166,7 +163,11 @@ const TxpDetailsContainer = ({
   style,
   ...rest
 }: React.ComponentProps<typeof SafeAreaView>) => (
-  <SafeAreaView style={[styles.txpDetailsContainer, style]} {...rest} />
+  <SafeAreaView
+    style={[styles.txpDetailsContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
 );
 
 const ScrollView = ({

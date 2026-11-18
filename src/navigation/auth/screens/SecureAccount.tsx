@@ -1,7 +1,6 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
-  SafeAreaView,
   ScrollView as RNScrollView,
   View,
   ViewProps,
@@ -10,6 +9,7 @@ import {
   TextProps,
   StyleSheet,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {
   HeaderRightContainer,
   ScreenGutter,

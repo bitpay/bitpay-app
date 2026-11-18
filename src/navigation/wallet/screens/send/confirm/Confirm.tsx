@@ -39,6 +39,7 @@ import {
   SendingTo,
   SharedDetailRow,
 } from './Shared';
+import {ALL_EDGES} from '../../../../../components/safe-area/SafeAreaView';
 import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import {
   CustomErrorMessage,
@@ -544,7 +545,7 @@ const Confirm = () => {
 
   return (
     <>
-      <ConfirmContainer>
+      <ConfirmContainer edges={ALL_EDGES}>
         <ConfirmScrollView
           extraScrollHeight={50}
           contentContainerStyle={{paddingBottom: 50}}

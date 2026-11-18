@@ -1,7 +1,8 @@
 import {CommonActions} from '@react-navigation/native';
 import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../contexts';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';

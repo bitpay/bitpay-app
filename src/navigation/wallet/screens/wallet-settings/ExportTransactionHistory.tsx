@@ -13,13 +13,8 @@ import {WalletGroupParamList} from '../../WalletGroup';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {FromBaseUnits} from '../../../../store/wallet/effects/amount/amount';
 import RNFS from 'react-native-fs';
-import {
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {Platform, ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {ShareOptions} from 'react-native-share';
 import {shareFile as shareFileUtil} from '../../../../utils/share';
 import Papa from 'papaparse';

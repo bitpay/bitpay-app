@@ -13,12 +13,12 @@ import {
   ViewProps,
   ScrollView,
   ScrollViewProps,
-  SafeAreaView,
   Text,
   TextProps,
   Keyboard,
   StyleSheet,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import yup from '../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';

@@ -1,5 +1,6 @@
 import React, {useCallback} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {setEmailNotifications} from '../../../../../store/app/app.effects';

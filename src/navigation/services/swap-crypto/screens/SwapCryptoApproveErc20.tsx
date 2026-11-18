@@ -17,12 +17,15 @@ import {
 import {
   Image,
   ScrollView,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
   ViewProps,
 } from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../contexts';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';
@@ -95,7 +98,9 @@ const styles = StyleSheet.create({
 const SwapCryptoApproveErc20Container: React.FC<ViewProps> = ({
   style,
   ...rest
-}) => <SafeAreaView style={[styles.container, style]} {...rest} />;
+}) => (
+  <SafeAreaView style={[styles.container, style]} edges={ALL_EDGES} {...rest} />
+);
 
 const ViewContainer: React.FC<ViewProps> = ({style, ...rest}) => (
   <View style={[styles.viewContainer, style]} {...rest} />

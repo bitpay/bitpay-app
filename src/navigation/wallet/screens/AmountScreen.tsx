@@ -7,7 +7,8 @@ import React, {
   useState,
 } from 'react';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Amount from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';

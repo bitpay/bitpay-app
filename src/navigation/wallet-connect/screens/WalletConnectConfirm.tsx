@@ -37,6 +37,7 @@ import {
   SendingTo,
   SharedDetailRow,
 } from '../../wallet/screens/send/confirm/Shared';
+import {ALL_EDGES} from '../../../components/safe-area/SafeAreaView';
 import {GetFeeOptions} from '../../../store/wallet/effects/fee/fee';
 import {Trans, useTranslation} from 'react-i18next';
 import Banner from '../../../components/banner/Banner';
@@ -467,7 +468,7 @@ const WalletConnectConfirm = () => {
   }, [requestDismissed, navigation]);
 
   return (
-    <ConfirmContainer>
+    <ConfirmContainer edges={ALL_EDGES}>
       <DetailsList>
         <Header>{t('Summary')}</Header>
         {wallet && isTSSWallet(wallet) && (

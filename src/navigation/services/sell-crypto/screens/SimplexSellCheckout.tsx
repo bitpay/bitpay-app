@@ -1,11 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
+import {ScrollView, StyleSheet, View, ViewProps} from 'react-native';
 import {
-  ScrollView,
+  ALL_EDGES,
   SafeAreaView,
-  StyleSheet,
-  View,
-  ViewProps,
-} from 'react-native';
+} from '../../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {
@@ -139,7 +137,13 @@ const styles = StyleSheet.create({
 export const SellCheckoutContainer: React.FC<ViewProps> = ({
   style,
   ...rest
-}) => <SafeAreaView style={[styles.sellCheckoutContainer, style]} {...rest} />;
+}) => (
+  <SafeAreaView
+    style={[styles.sellCheckoutContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
+);
 
 const InputContainer: React.FC<ViewProps & {hideInput?: boolean}> = ({
   style,

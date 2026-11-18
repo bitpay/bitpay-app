@@ -17,13 +17,8 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {
-  View,
-  ScrollView,
-  FlatList,
-  SafeAreaView,
-  StyleSheet,
-} from 'react-native';
+import {View, ScrollView, FlatList, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ActiveOpacity,

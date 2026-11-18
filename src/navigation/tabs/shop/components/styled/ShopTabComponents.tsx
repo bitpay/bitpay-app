@@ -1,13 +1,13 @@
 import {Theme} from '@react-navigation/native';
 import React from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   TouchableHighlight,
   TouchableHighlightProps,
   View,
   ViewProps,
 } from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {useTheme} from '../../../../../contexts';
 import BoxInput from '../../../../../components/form/BoxInput';
 import {HEIGHT, WIDTH} from '../../../../../components/styled/Containers';

@@ -1,5 +1,6 @@
 import React, {useLayoutEffect} from 'react';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MerchantScreens, MerchantGroupParamList} from '../MerchantGroup';

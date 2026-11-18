@@ -10,7 +10,8 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import ErrorIcon from '../../../../assets/img/error.svg';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import Banner from '../../../components/banner/Banner';
 
 const gutter = parseInt(ScreenGutter, 10);

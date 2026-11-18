@@ -14,12 +14,8 @@ import {
   IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {FromBaseUnits} from '../../../../store/wallet/effects/amount/amount';
-import {
-  ScrollView as RNScrollView,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import {ScrollView as RNScrollView, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
 import {formatCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {useAppDispatch, useLogger} from '../../../../utils/hooks';

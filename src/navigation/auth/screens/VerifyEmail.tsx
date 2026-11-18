@@ -19,13 +19,13 @@ import AuthFormContainer, {
 } from '../components/AuthFormContainer';
 import {
   BackHandler,
-  SafeAreaView,
   View,
   ViewProps,
   Text,
   TextProps,
   StyleSheet,
 } from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';

@@ -12,7 +12,8 @@ import {
   ScreenGutter,
   Setting,
 } from '../../../../components/styled/Containers';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {SafeAreaView} from '../../../../components/safe-area/SafeAreaView';
 import {useTranslation} from 'react-i18next';
 import ContactRow from '../../../../components/list/ContactRow';
 import {SettingsDetailsParamList} from '../SettingsDetails';

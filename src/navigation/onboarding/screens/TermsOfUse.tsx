@@ -2,13 +2,8 @@ import {CommonActions, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {ReactElement, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  DeviceEventEmitter,
-  ScrollView,
-  SafeAreaView,
-  View,
-  StyleSheet,
-} from 'react-native';
+import {DeviceEventEmitter, ScrollView, View, StyleSheet} from 'react-native';
+import {SafeAreaView} from '../../../components/safe-area/SafeAreaView';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import Button from '../../../components/button/Button';
 import {CtaContainerAbsolute} from '../../../components/styled/Containers';

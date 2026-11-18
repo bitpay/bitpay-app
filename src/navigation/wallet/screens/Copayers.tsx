@@ -8,10 +8,13 @@ import {
   Image,
   ScrollView,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   View,
 } from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../components/safe-area/SafeAreaView';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   Paragraph,
@@ -76,7 +79,13 @@ const styles = StyleSheet.create({
 const ViewContainer: React.FC<React.ComponentProps<typeof SafeAreaView>> = ({
   style,
   ...rest
-}) => <SafeAreaView style={[styles.viewContainer, style]} {...rest} />;
+}) => (
+  <SafeAreaView
+    style={[styles.viewContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
+);
 
 const JoinCopayersContainer: React.FC<React.ComponentProps<typeof View>> = ({
   style,

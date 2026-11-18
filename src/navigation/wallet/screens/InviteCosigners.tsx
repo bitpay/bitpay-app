@@ -5,9 +5,12 @@ import {
   useWindowDimensions,
   StyleSheet,
   View,
-  SafeAreaView,
   TouchableOpacity as RNTouchableOpacity,
 } from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../components/safe-area/SafeAreaView';
 import {shareNative} from '../../../utils/share';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -1210,7 +1213,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   }
 
   return (
-    <Container>
+    <Container edges={ALL_EDGES}>
       <Content>
         <HeaderContainer>
           <Subtitle>

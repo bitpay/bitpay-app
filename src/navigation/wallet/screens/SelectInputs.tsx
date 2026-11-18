@@ -8,7 +8,11 @@ import React, {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {FlashList} from '@shopify/flash-list';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {
+  ALL_EDGES,
+  SafeAreaView,
+} from '../../../components/safe-area/SafeAreaView';
 import {
   Recipient,
   TransactionOptionsContext,
@@ -139,7 +143,11 @@ const ItemRowContainer: React.FC<React.ComponentProps<typeof View>> = ({
 const SelectInputsContainer: React.FC<
   React.ComponentProps<typeof SafeAreaView>
 > = ({style, ...rest}) => (
-  <SafeAreaView style={[styles.selectInputsContainer, style]} {...rest} />
+  <SafeAreaView
+    style={[styles.selectInputsContainer, style]}
+    edges={ALL_EDGES}
+    {...rest}
+  />
 );
 
 const AvailableInputsTitle: React.FC<React.ComponentProps<typeof H5>> = ({
