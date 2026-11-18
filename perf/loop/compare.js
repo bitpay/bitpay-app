@@ -45,6 +45,9 @@ const POSITIONAL =
   /(_start_ms|_end_ms|_done_ms|_checked_ms|_route_ms|_success_ms|_render_ms|_commit_ms|^process_start_ms|^content_appeared_ms|^js_entry_ms|^store_ready_ms|^rehydrate_ms|^app_init_ms|^nav_ready_ms)$/;
 // Too noisy or harness-dominated to judge on.
 const IGNORE = new Set(['wall_clock_ms', 'am_wait_time_ms', 'visible_ms']);
+// Process state, not cost: printed so a memory-mode mismatch between the two
+// runs is visible, never counted as a regression or a win.
+const CONTEXT = new Set(['unknown_mb_start']);
 // Small absolute moves in these never matter, whatever the noise says.
 const MIN_ABS = {_ms: 5, _mb: 1, _kb: 2, _pct: 0.5};
 // CPU totals are ~10 ms-granular (clock ticks); ignore single-tick moves.
@@ -151,8 +154,20 @@ function compareRuns(accepted, candidate, targets = []) {
     if (!base) {
       return;
     }
-    Object.entries(cand.metrics || {}).forEach(([key, c]) => {
-      const b = (base.metrics || {})[key];
+    // Per-screen transitions (and the app's spans, which report the same
+    // way) compare as transition_<screen>_ms.
+    const withScreens = run => ({
+      ...(run.metrics || {}),
+      ...Object.fromEntries(
+        Object.entries(run.perScreen || {}).map(([screen, v]) => [
+          `transition_${screen}_ms`,
+          v.transition_ms,
+        ]),
+      ),
+    });
+    const baseMetrics = withScreens(base);
+    Object.entries(withScreens(cand)).forEach(([key, c]) => {
+      const b = baseMetrics[key];
       if (IGNORE.has(key) || !b || c.median == null || b.median == null) {
         return;
       }
@@ -180,7 +195,9 @@ function compareRuns(accepted, candidate, targets = []) {
         real,
         better,
         // phase_* are durations, whatever their names end in.
-        positional: !key.startsWith('phase_') && POSITIONAL.test(key),
+        positional:
+          CONTEXT.has(key) ||
+          (!key.startsWith('phase_') && POSITIONAL.test(key)),
         target: targets.includes(key),
       });
     });
