@@ -149,7 +149,7 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE: {
-      const {keyId, timestamp} = action.payload;
+      const {keyId, timestamp, label} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (!keyToUpdate) {
         return state;
@@ -158,6 +158,7 @@ export const walletReducer = (
         ...keyToUpdate,
         backupComplete: true,
         cloudBackupTimestamp: timestamp,
+        cloudBackupLabel: label,
       };
 
       return {

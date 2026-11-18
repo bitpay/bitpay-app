@@ -31,7 +31,9 @@ import {
   getCloudAccountEmail,
   getCloudBackupGroupId,
   listCloudBackups,
+  readCloudBackupFile,
 } from '../../../utils/cloud-backup/storage';
+import {readCloudBackupHeader} from '../../../utils/cloud-backup/codec';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 
 type RestoreFromCloudProps = NativeStackScreenProps<
@@ -43,7 +45,7 @@ type SearchResult = 'noBackups' | 'icloudOff' | 'signIn' | 'offline' | 'other';
 
 type SearchState =
   | {status: 'searching'}
-  | {status: 'found'; groups: CloudBackupGroup[]}
+  | {status: 'found'; groups: (CloudBackupGroup & {label?: string})[]}
   | {status: 'result'; result: SearchResult};
 
 const styles = StyleSheet.create({
@@ -56,6 +58,18 @@ const styles = StyleSheet.create({
 });
 
 const IS_IOS = Platform.OS === 'ios';
+
+const readBackupLabel = async (group: CloudBackupGroup) => {
+  if (group.kind === 'keyshare') {
+    return undefined;
+  }
+  try {
+    return readCloudBackupHeader(await readCloudBackupFile(group.files[0].name))
+      .label;
+  } catch {
+    return undefined;
+  }
+};
 
 const RestoreFromCloud = ({navigation, route}: RestoreFromCloudProps) => {
   const {t} = useTranslation();
@@ -100,7 +114,13 @@ const RestoreFromCloud = ({navigation, route}: RestoreFromCloudProps) => {
     try {
       await connectToCloud({chooseAccount});
       setBusy(true);
-      const groups = await listCloudBackups();
+      const found = await listCloudBackups();
+      const groups = await Promise.all(
+        found.map(async group => ({
+          ...group,
+          label: await readBackupLabel(group),
+        })),
+      );
       dispatch(
         Analytics.track('Cloud Restore Backups Found', {count: groups.length}),
       );
@@ -279,9 +299,10 @@ const RestoreFromCloud = ({navigation, route}: RestoreFromCloudProps) => {
         {groups.map(group => {
           const onPhone = groupIdsOnPhone.has(group.groupId);
           const title =
-            group.kind === 'keyshare'
+            group.label ||
+            (group.kind === 'keyshare'
               ? t('BitPay Keyshare')
-              : t('BitPay Backup');
+              : t('BitPay Backup'));
           return (
             <SelectableCard
               key={groupKey(group)}

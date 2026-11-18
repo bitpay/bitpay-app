@@ -404,6 +404,9 @@ const BackupOnboarding: React.FC = () => {
                 <BannerLink onPress={() => onCloudBackupPress('change')}>
                   {t('Change Backup Password')}
                 </BannerLink>
+                <BannerLink onPress={() => onCloudBackupPress('rename')}>
+                  {t('Rename Backup')}
+                </BannerLink>
               </>
             ) : null
           }

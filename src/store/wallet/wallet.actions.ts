@@ -59,6 +59,7 @@ export const setBackupComplete = (keyId: string): WalletActionType => ({
 export const setCloudBackupComplete = (payload: {
   keyId: string;
   timestamp: number;
+  label: string;
 }): WalletActionType => ({
   type: WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE,
   payload,

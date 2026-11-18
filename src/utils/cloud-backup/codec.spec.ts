@@ -14,6 +14,7 @@ const header = {
   keyId: 'key-1',
   fingerPrint: 'abcd1234',
   createdAt: 1793836800000,
+  label: 'Savings',
 };
 const payload = {
   mnemonic: 'demo fake words not a real phrase never use these for funds',
@@ -112,6 +113,7 @@ describe('cloud backup codec', () => {
     ['keyId', (file: any) => (file.keyId = 'key-2')],
     ['fingerPrint', (file: any) => (file.fingerPrint = 'ffff0000')],
     ['createdAt', (file: any) => (file.createdAt += 1)],
+    ['label', (file: any) => (file.label = 'Other')],
     [
       'salt',
       (file: any) => (file.kdf.salt = flipLastBase64Char(file.kdf.salt)),
@@ -147,6 +149,7 @@ describe('cloud backup codec', () => {
   it.each([
     ['an unknown field', (file: any) => (file.extra = true)],
     ['a missing field', (file: any) => delete file.fingerPrint],
+    ['a label that is not text', (file: any) => (file.label = 1)],
     ['a different version', (file: any) => (file.version = 2)],
     ['weaker Argon2 parameters', (file: any) => (file.kdf.memory = 1024)],
     ['a short IV', (file: any) => (file.cipher.iv = 'AAAA')],

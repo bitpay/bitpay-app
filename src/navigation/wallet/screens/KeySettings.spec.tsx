@@ -89,6 +89,14 @@ const shownSheets = () =>
     .map(([action]) => action?.payload)
     .filter(payload => payload?.actions);
 
+const fundsWarning =
+  'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.';
+
+const checkDeleteCloudBackup = (sheetIndex: number) => {
+  const {getByText} = render(shownSheets()[sheetIndex].message2);
+  fireEvent.press(getByText('Also delete the {{cloudName}} backup'));
+};
+
 const pressSheetAction = async (sheetIndex: number, text: string) => {
   const action = shownSheets()[sheetIndex].actions.find(
     (sheetAction: {text: string}) => sheetAction.text === text,
@@ -105,45 +113,75 @@ describe('KeySettings', () => {
     mockState.APP.pinLockActive = false;
   });
 
-  it('warns before deleting only the key when no cloud backup file is found', async () => {
-    mockDeleteCloudBackupFiles.mockResolvedValue(0);
+  it('deletes only the key when the cloud backup box is left unchecked', async () => {
     const {getByText} = render(<KeySettings />);
 
     fireEvent.press(getByText('Delete Key'));
-    await pressSheetAction(0, 'Delete Key and Backup');
-    await pressSheetAction(1, 'Delete Key and Backup');
+    await pressSheetAction(0, 'Delete Key');
 
-    expect(mockDeleteCloudBackupFiles).toHaveBeenCalledWith('fp-1');
-    expect(shownSheets()[2].title).toBe(
-      'Couldn’t find the {{cloudName}} backup',
-    );
-    expect(mockNavigation.navigate).not.toHaveBeenCalled();
-
-    await pressSheetAction(2, 'Delete Key, Keep Backup');
-
+    expect(mockDeleteCloudBackupFiles).not.toHaveBeenCalled();
     expect(mockNavigation.navigate).toHaveBeenCalledWith('DeleteKey', {
       keyId: 'key-1',
       confirmed: true,
     });
   });
 
-  it('warns that the funds can be lost before deleting the key and its cloud backup', async () => {
+  it('starts with the cloud backup box unchecked when the sheet is reopened before its content unmounts', async () => {
     const {getByText} = render(<KeySettings />);
 
     fireEvent.press(getByText('Delete Key'));
-    await pressSheetAction(0, 'Delete Key and Backup');
+    const option = render(shownSheets()[0].message2);
+    fireEvent.press(option.getByText('Also delete the {{cloudName}} backup'));
+    expect(option.getByText(fundsWarning)).toBeTruthy();
 
-    expect(shownSheets()[1]).toMatchObject({
-      title: 'Delete the {{cloudName}} backup too?',
-      message:
-        'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.',
+    await pressSheetAction(0, 'Cancel');
+    fireEvent.press(getByText('Delete Key'));
+    option.rerender(shownSheets()[1].message2);
+
+    expect(option.queryByText(fundsWarning)).toBeNull();
+
+    await pressSheetAction(1, 'Delete Key');
+
+    expect(mockDeleteCloudBackupFiles).not.toHaveBeenCalled();
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('DeleteKey', {
+      keyId: 'key-1',
+      confirmed: true,
     });
-    expect(mockDeleteCloudBackupFiles).not.toHaveBeenCalled();
+  });
 
-    await pressSheetAction(1, 'Cancel');
+  it('shows that the funds can be lost once the person chooses to delete the cloud backup', () => {
+    const {getByText} = render(<KeySettings />);
 
-    expect(mockDeleteCloudBackupFiles).not.toHaveBeenCalled();
+    fireEvent.press(getByText('Delete Key'));
+    const option = render(shownSheets()[0].message2);
+
+    expect(option.queryByText(fundsWarning)).toBeNull();
+
+    fireEvent.press(option.getByText('Also delete the {{cloudName}} backup'));
+
+    expect(option.getByText(fundsWarning)).toBeTruthy();
+  });
+
+  it('warns before deleting only the key when no cloud backup file is found', async () => {
+    mockDeleteCloudBackupFiles.mockResolvedValue(0);
+    const {getByText} = render(<KeySettings />);
+
+    fireEvent.press(getByText('Delete Key'));
+    checkDeleteCloudBackup(0);
+    await pressSheetAction(0, 'Delete Key');
+
+    expect(mockDeleteCloudBackupFiles).toHaveBeenCalledWith('fp-1');
+    expect(shownSheets()[1].title).toBe(
+      'Couldn’t find the {{cloudName}} backup',
+    );
     expect(mockNavigation.navigate).not.toHaveBeenCalled();
+
+    await pressSheetAction(1, 'Delete Key, Keep Backup');
+
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('DeleteKey', {
+      keyId: 'key-1',
+      confirmed: true,
+    });
   });
 
   it.each([
@@ -160,8 +198,8 @@ describe('KeySettings', () => {
       const {getByText} = render(<KeySettings />);
 
       fireEvent.press(getByText('Delete Key'));
-      await pressSheetAction(0, 'Delete Key and Backup');
-      await pressSheetAction(1, 'Delete Key and Backup');
+      checkDeleteCloudBackup(0);
+      await pressSheetAction(0, 'Delete Key');
 
       expect(verifyIdentity).toHaveBeenCalledTimes(1);
       expect(mockDeleteCloudBackupFiles).toHaveBeenCalledTimes(deletions);
@@ -173,10 +211,10 @@ describe('KeySettings', () => {
     const {getByText} = render(<KeySettings />);
 
     fireEvent.press(getByText('Delete Key'));
-    await pressSheetAction(0, 'Delete Key and Backup');
-    await pressSheetAction(1, 'Delete Key and Backup');
+    checkDeleteCloudBackup(0);
+    await pressSheetAction(0, 'Delete Key');
 
-    expect(shownSheets()).toHaveLength(2);
+    expect(shownSheets()).toHaveLength(1);
     expect(mockNavigation.navigate).toHaveBeenCalledWith('DeleteKey', {
       keyId: 'key-1',
       confirmed: true,

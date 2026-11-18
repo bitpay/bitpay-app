@@ -4,6 +4,7 @@ import {act, fireEvent, render} from '@test/render';
 import CloudBackupPassword from './CloudBackupPassword';
 import {startCloudBackup} from '../../../store/wallet/effects/cloud-backup/cloud-backup';
 import {CloudBackupError} from '../../../utils/cloud-backup/storage';
+import {updateKeyName} from '../../../store/wallet/wallet.actions';
 
 const mockDispatch = jest.fn();
 const mockCheckBackupPassword = jest.fn();
@@ -397,6 +398,196 @@ describe('CloudBackupPassword', () => {
 
     expect(mockStartCloudBackup).toHaveBeenCalledWith(
       expect.objectContaining({password: suggested}),
+    );
+  });
+
+  it.each([
+    ['the key name when left as it is', null, 'Savings'],
+    ['the name the person types, trimmed', '  Trip money  ', 'Trip money'],
+  ])('saves the backup under %s', async (_case, typed, label) => {
+    mockRoute.params = {keyId, words: ['abandon'], mode: 'create'};
+    mockState.WALLET.keys = {[keyId]: {id: keyId, keyName: 'Savings'}};
+    const {getByTestId} = render(<CloudBackupPassword />);
+
+    if (typed !== null) {
+      fireEvent.changeText(getByTestId('cloud-backup-name-input'), typed);
+    }
+    fireEvent.changeText(getByTestId('cloud-backup-password-input'), password);
+    fireEvent.changeText(
+      getByTestId('cloud-backup-confirm-password-input'),
+      password,
+    );
+    await act(async () => {
+      fireEvent.press(getByTestId('cloud-backup-save-button'));
+    });
+
+    expect(mockStartCloudBackup).toHaveBeenCalledWith(
+      expect.objectContaining({label}),
+    );
+  });
+
+  it('offers to update the key name only while the backup name differs from it', () => {
+    mockRoute.params = {keyId, words: ['abandon'], mode: 'create'};
+    mockState.WALLET.keys = {[keyId]: {id: keyId, keyName: 'Savings'}};
+    const {getByTestId, queryByText} = render(<CloudBackupPassword />);
+
+    expect(queryByText('Update the key name too')).toBeNull();
+
+    fireEvent.changeText(getByTestId('cloud-backup-name-input'), 'Trip money');
+
+    expect(queryByText('Update the key name too')).toBeTruthy();
+
+    fireEvent.changeText(getByTestId('cloud-backup-name-input'), ' Savings ');
+
+    expect(queryByText('Update the key name too')).toBeNull();
+  });
+
+  it.each([
+    ['updates', true, 'Trip money'],
+    ['keeps', false, 'Savings'],
+  ])(
+    '%s the key name with the backup name when the box is checked: %s',
+    async (_action, checked, keyName) => {
+      mockRoute.params = {keyId, words: ['abandon'], mode: 'create'};
+      mockState.WALLET.keys = {[keyId]: {id: keyId, keyName: 'Savings'}};
+      const {getByTestId, getByText} = render(<CloudBackupPassword />);
+
+      fireEvent.changeText(
+        getByTestId('cloud-backup-name-input'),
+        'Trip money',
+      );
+      if (checked) {
+        fireEvent.press(getByText('Update the key name too'));
+      }
+      fireEvent.changeText(
+        getByTestId('cloud-backup-password-input'),
+        password,
+      );
+      fireEvent.changeText(
+        getByTestId('cloud-backup-confirm-password-input'),
+        password,
+      );
+      await act(async () => {
+        fireEvent.press(getByTestId('cloud-backup-save-button'));
+      });
+
+      expect(mockStartCloudBackup).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: expect.objectContaining({keyName}),
+          label: 'Trip money',
+        }),
+      );
+      const keyRenames = mockDispatch.mock.calls.filter(
+        ([action]) => action?.type === updateKeyName({keyId, name: ''}).type,
+      );
+      expect(keyRenames).toEqual(
+        checked ? [[updateKeyName({keyId, name: 'Trip money'})]] : [],
+      );
+    },
+  );
+
+  it("starts with the name of the key's last cloud backup", () => {
+    mockRoute.params = {keyId, words: ['abandon'], mode: 'again'};
+    mockState.WALLET.keys = {
+      [keyId]: {id: keyId, keyName: 'Savings', cloudBackupLabel: 'Family'},
+    };
+    const {getByTestId} = render(<CloudBackupPassword />);
+
+    expect(getByTestId('cloud-backup-name-input').props.value).toBe('Family');
+  });
+
+  it.each([
+    ['is saved', true, [[updateKeyName({keyId, name: 'Trip money'})]]],
+    ['fails', false, []],
+  ])(
+    'updates the key name only once the backup %s',
+    async (_case, saves, renames) => {
+      let finishSave: () => void = () => {};
+      mockDispatch.mockImplementation(action =>
+        action?.type === 'TEST/CLOUD_BACKUP'
+          ? new Promise<void>((resolve, reject) => {
+              finishSave = () =>
+                saves ? resolve() : reject(new CloudBackupError('network'));
+            })
+          : undefined,
+      );
+      mockRoute.params = {keyId, words: ['abandon'], mode: 'create'};
+      mockState.WALLET.keys = {[keyId]: {id: keyId, keyName: 'Savings'}};
+      const {getByTestId, getByText} = render(<CloudBackupPassword />);
+      const keyRenames = () =>
+        mockDispatch.mock.calls.filter(
+          ([action]) => action?.type === updateKeyName({keyId, name: ''}).type,
+        );
+
+      fireEvent.changeText(
+        getByTestId('cloud-backup-name-input'),
+        'Trip money',
+      );
+      fireEvent.press(getByText('Update the key name too'));
+      fireEvent.changeText(
+        getByTestId('cloud-backup-password-input'),
+        password,
+      );
+      fireEvent.changeText(
+        getByTestId('cloud-backup-confirm-password-input'),
+        password,
+      );
+      await act(async () => {
+        fireEvent.press(getByTestId('cloud-backup-save-button'));
+      });
+
+      expect(keyRenames()).toEqual([]);
+
+      await act(async () => finishSave());
+
+      expect(keyRenames()).toEqual(renames);
+    },
+  );
+
+  it.each([
+    ['again', true],
+    ['rename', false],
+  ])(
+    'in %s mode, offers to write the phrase down after saving: %s',
+    async (mode, offered) => {
+      mockCheckBackupPassword.mockResolvedValue('match');
+      mockRoute.params = {keyId, words: ['abandon'], mode};
+      mockState.WALLET.keys = {[keyId]: {id: keyId, keyName: 'Savings'}};
+      const {getByTestId} = render(<CloudBackupPassword />);
+
+      fireEvent.changeText(
+        getByTestId('cloud-backup-password-input'),
+        password,
+      );
+      await act(async () => {
+        fireEvent.press(getByTestId('cloud-backup-save-button'));
+      });
+
+      expect(
+        mockDispatch.mock.calls.some(
+          ([action]) => action?.payload?.title === 'Backup complete',
+        ),
+      ).toBe(offered);
+    },
+  );
+
+  it('renames the backup with the current password and removes its older copies', async () => {
+    mockCheckBackupPassword.mockResolvedValue('match');
+    mockRoute.params = {keyId, words: ['abandon'], mode: 'rename'};
+    mockState.WALLET.keys = {[keyId]: {id: keyId, keyName: 'Savings'}};
+    const {getByTestId, queryByTestId} = render(<CloudBackupPassword />);
+
+    expect(queryByTestId('cloud-backup-confirm-password-input')).toBeNull();
+
+    fireEvent.changeText(getByTestId('cloud-backup-name-input'), 'Trip money');
+    fireEvent.changeText(getByTestId('cloud-backup-password-input'), password);
+    await act(async () => {
+      fireEvent.press(getByTestId('cloud-backup-save-button'));
+    });
+
+    expect(mockCheckBackupPassword).toHaveBeenCalledWith(password, keyId);
+    expect(mockStartCloudBackup).toHaveBeenCalledWith(
+      expect.objectContaining({label: 'Trip money', revokeOlder: true}),
     );
   });
 

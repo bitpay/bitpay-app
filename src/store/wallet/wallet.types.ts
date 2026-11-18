@@ -124,7 +124,7 @@ interface setBackupComplete {
 
 interface setCloudBackupComplete {
   type: typeof WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE;
-  payload: {keyId: string; timestamp: number};
+  payload: {keyId: string; timestamp: number; label: string};
 }
 
 interface successEncryptOrDecryptPassword {

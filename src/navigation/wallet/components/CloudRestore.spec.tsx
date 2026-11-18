@@ -403,6 +403,7 @@ describe('useCloudBackupRestore', () => {
       keyId: 'key-1',
       fingerPrint: 'fp-1',
       createdAt: 1,
+      label: 'Family',
     });
   });
 
@@ -515,6 +516,38 @@ describe('useCloudBackupRestore', () => {
     expect(backupRedirect).toHaveBeenCalledWith(
       expect.objectContaining({key: expect.objectContaining({id: 'key-2'})}),
     );
+  });
+
+  it('remembers the time and name of the cloud backup a key on this phone is restored from', async () => {
+    (decryptNewestCloudBackup as jest.Mock).mockResolvedValue({
+      text: 'backup',
+      payload: {mnemonic: 'abandon', keyName: 'My Key'},
+    });
+    const initialState = configureTestStore({}).getState();
+    const store = configureTestStore({
+      WALLET: {
+        ...initialState.WALLET,
+        keys: {
+          'key-2': {
+            id: 'key-2',
+            keyName: 'My Key',
+            properties: {fingerPrint: 'fp-1'},
+            wallets: [],
+          },
+        },
+      },
+    } as any);
+
+    const result = await restoreWith(store, {
+      source: 'cloud',
+      files: [{name: 'BitPay-Backup-1.json', createdAt: 1}],
+    });
+
+    expect(result).toBe('unlocked');
+    expect(store.getState().WALLET.keys['key-2']).toMatchObject({
+      cloudBackupTimestamp: 1,
+      cloudBackupLabel: 'Family',
+    });
   });
 
   it('reports a damaged backup when its recovery phrase cannot make a key', async () => {

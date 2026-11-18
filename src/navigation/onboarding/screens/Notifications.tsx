@@ -119,7 +119,9 @@ const NotificationsScreen = ({
       return;
     }
 
-    const accepted = await AppEffects.requestNotificationsPermissions();
+    const accepted = await dispatch(
+      AppEffects.requestNotificationsPermissions(),
+    );
     setAndNavigate(accepted);
   };
 

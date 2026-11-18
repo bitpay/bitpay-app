@@ -6,7 +6,9 @@ import {
   connectToCloud,
   getCloudBackupGroupId,
   listCloudBackups,
+  readCloudBackupFile,
 } from '../../../utils/cloud-backup/storage';
+import {encryptCloudBackup} from '../../../utils/cloud-backup/codec';
 
 const mockDispatch = jest.fn();
 const mockNavigation = {
@@ -48,9 +50,11 @@ jest.mock('../../../utils/cloud-backup/storage', () => ({
   connectToCloud: jest.fn(() => Promise.resolve()),
   getCloudAccountEmail: jest.fn(),
   listCloudBackups: jest.fn(),
+  readCloudBackupFile: jest.fn(),
 }));
 
 const mockListCloudBackups = listCloudBackups as jest.Mock;
+const mockReadCloudBackupFile = readCloudBackupFile as jest.Mock;
 
 describe('RestoreFromCloud', () => {
   beforeEach(() => {
@@ -81,6 +85,42 @@ describe('RestoreFromCloud', () => {
         kind: 'phrase',
       },
     );
+  });
+
+  it('shows each backup by the name saved with it, or as a BitPay Backup when its file cannot be read', async () => {
+    const labeled = await encryptCloudBackup(
+      {keyId: 'key-2', fingerPrint: 'fp-2', createdAt: 2, label: 'Savings'},
+      {mnemonic: 'demo fake words', keyName: 'My Key'},
+      'Str0ng!Backup-Pw',
+    );
+    mockListCloudBackups.mockResolvedValue([
+      {
+        kind: 'phrase',
+        groupId: getCloudBackupGroupId('fp-2'),
+        files: [{name: 'BitPay-Backup-2.json', createdAt: 2}],
+      },
+      {
+        kind: 'phrase',
+        groupId: getCloudBackupGroupId('fp-3'),
+        files: [{name: 'BitPay-Backup-3.json', createdAt: 3}],
+      },
+    ]);
+    mockReadCloudBackupFile.mockImplementation((name: string) =>
+      name === 'BitPay-Backup-2.json'
+        ? Promise.resolve(labeled)
+        : Promise.reject(new CloudBackupError('unknown')),
+    );
+    const {getByText} = render(
+      <RestoreFromCloud
+        navigation={mockNavigation as any}
+        route={{key: 'RestoreFromCloud', name: 'RestoreFromCloud'} as any}
+      />,
+    );
+
+    await act(async () => {});
+
+    expect(getByText('Savings')).toBeTruthy();
+    expect(getByText('BitPay Backup')).toBeTruthy();
   });
 
   it('restores the keyshare backup the person picks, even when a phrase backup shares its key', async () => {

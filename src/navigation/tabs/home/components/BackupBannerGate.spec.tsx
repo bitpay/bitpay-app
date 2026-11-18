@@ -27,6 +27,17 @@ jest.mock('../../../../components/modal/transact-menu/TransactMenu', () => ({
   isTransactMenuOpen: jest.fn(() => false),
 }));
 
+jest.mock('../../../../components/modal/base/sheet/SheetModal', () => ({
+  __esModule: true,
+  default: ({
+    isVisible,
+    children,
+  }: {
+    isVisible: boolean;
+    children: React.ReactNode;
+  }) => (isVisible ? children : null),
+}));
+
 const mockAppEffects = jest.requireMock('../../../../store/app').AppEffects;
 const mockIsTransactMenuOpen = jest.requireMock(
   '../../../../components/modal/transact-menu/TransactMenu',
@@ -34,7 +45,10 @@ const mockIsTransactMenuOpen = jest.requireMock(
 
 const BANNER_TITLE = 'Back up your recovery phrase';
 const OTHER_SHEET_TITLE = 'Back up your recovery phrase first';
-const BANNER_DESCRIPTION = 'Needed before you can buy, send or receive.';
+const BANNER_DESCRIPTION =
+  'Back up the recovery phrase for {{keyName}} before you buy, send or receive with it. It only takes a few seconds.';
+const SEVERAL_KEYS_DESCRIPTION =
+  'Some of your keys aren’t backed up yet. Back them up before you buy, send or receive with them.';
 
 const buildStore = ({
   onboardingKeyStatus = 'idle',
@@ -42,12 +56,14 @@ const buildStore = ({
   backupNudgeShown = false,
   backupComplete = false,
   wallets = [{isComplete: () => true}],
+  otherKeys = {},
 }: {
   onboardingKeyStatus?: string;
   notificationsInteractionDone?: boolean;
   backupNudgeShown?: boolean;
   backupComplete?: boolean;
   wallets?: Array<{isComplete: () => boolean; pendingTssSession?: boolean}>;
+  otherKeys?: Record<string, unknown>;
 } = {}) =>
   configureTestStore({
     APP: {
@@ -60,11 +76,13 @@ const buildStore = ({
       keys: {
         'key-1': {
           id: 'key-1',
+          keyName: 'My Key',
           backupComplete,
           isReadOnly: false,
           properties: {mnemonic: 'mnemonic'},
           wallets,
         },
+        ...otherKeys,
       },
     },
   });
@@ -82,7 +100,9 @@ describe('BackupBannerGate', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
-    mockAppEffects.requestNotificationsPermissions.mockResolvedValue(true);
+    mockAppEffects.requestNotificationsPermissions.mockReturnValue(() =>
+      Promise.resolve(true),
+    );
     mockIsTransactMenuOpen.mockReturnValue(false);
   });
 
@@ -228,6 +248,49 @@ describe('BackupBannerGate', () => {
 
     expect(queryByText(BANNER_DESCRIPTION)).toBeNull();
     expect(store.getState().APP.showBottomNotificationModal).toBe(false);
+  });
+
+  it('lets the person choose which of the keys without a backup to open', () => {
+    const store = buildStore({
+      notificationsInteractionDone: true,
+      backupNudgeShown: true,
+      otherKeys: {
+        'key-2': {
+          id: 'key-2',
+          keyName: 'Personal Key',
+          backupComplete: true,
+          isReadOnly: false,
+          properties: {mnemonic: 'mnemonic'},
+          wallets: [{isComplete: () => true}],
+        },
+        'key-3': {
+          id: 'key-3',
+          keyName: 'My Key',
+          backupComplete: false,
+          isReadOnly: false,
+          properties: {mnemonic: 'mnemonic'},
+          wallets: [{isComplete: () => true}, {isComplete: () => true}],
+        },
+      },
+    });
+    const {getByText, getByTestId, queryByTestId} = renderGate(store);
+
+    expect(getByText(SEVERAL_KEYS_DESCRIPTION)).toBeTruthy();
+    expect(queryByTestId('key-to-back-up-key-1')).toBeNull();
+
+    fireEvent.press(getByText('Back Up Now'));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(getByTestId('key-to-back-up-key-1')).toBeTruthy();
+    expect(queryByTestId('key-to-back-up-key-2')).toBeNull();
+
+    fireEvent.press(getByTestId('key-to-back-up-key-3'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('BackupOnboarding', {
+      keyId: 'key-3',
+      context: 'home',
+    });
+    expect(queryByTestId('key-to-back-up-key-1')).toBeNull();
   });
 
   it('shows the banner without nudging again after the nudge was shown', () => {

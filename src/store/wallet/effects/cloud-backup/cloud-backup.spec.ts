@@ -1,6 +1,9 @@
 import configureTestStore from '@test/store';
 import {BwcProvider} from '../../../../lib/bwc';
-import {decryptCloudBackup} from '../../../../utils/cloud-backup/codec';
+import {
+  decryptCloudBackup,
+  readCloudBackupHeader,
+} from '../../../../utils/cloud-backup/codec';
 import {
   CloudBackupError,
   deleteCloudBackupFiles,
@@ -27,6 +30,7 @@ jest.mock('../../../../utils/cloud-backup/storage', () => ({
 }));
 
 const password = 'Str0ng!Backup-Pw';
+const label = 'Savings';
 const words =
   'demo fake words not a real phrase never use these for funds'.split(' ');
 const key = {
@@ -56,7 +60,9 @@ describe('startCloudBackup', () => {
     );
     const store = configureTestStore({WALLET: {keys: {[key.id]: key}}});
 
-    const backup = store.dispatch(startCloudBackup({key, words, password}));
+    const backup = store.dispatch(
+      startCloudBackup({key, words, password, label}),
+    );
     await waitForSave();
 
     expect(store.getState().WALLET.keys[key.id].backupComplete).toBe(false);
@@ -73,6 +79,8 @@ describe('startCloudBackup', () => {
       mnemonic: words.join(' '),
       keyName: 'My Key',
     });
+    expect(readCloudBackupHeader(contents).label).toBe(label);
+    expect(savedKey.cloudBackupLabel).toBe(label);
   });
 
   it.each([
@@ -86,7 +94,7 @@ describe('startCloudBackup', () => {
       const store = configureTestStore({WALLET: {keys: {[key.id]: key}}});
 
       await store.dispatch(
-        startCloudBackup({key, words, password, revokeOlder}),
+        startCloudBackup({key, words, password, label, revokeOlder}),
       );
 
       const [name] = mockSaveCloudBackupFile.mock.calls[0];
@@ -102,7 +110,7 @@ describe('startCloudBackup', () => {
     const store = configureTestStore({WALLET: {keys: {[key.id]: key}}});
 
     await store.dispatch(
-      startCloudBackup({key, words, password, onConfirmingUpload}),
+      startCloudBackup({key, words, password, label, onConfirmingUpload}),
     );
 
     expect(mockSaveCloudBackupFile).toHaveBeenCalledWith(
@@ -118,7 +126,7 @@ describe('startCloudBackup', () => {
 
     await expect(
       store.dispatch(
-        startCloudBackup({key, words, password, revokeOlder: true}),
+        startCloudBackup({key, words, password, label, revokeOlder: true}),
       ),
     ).rejects.toMatchObject({reason: 'network'});
 
@@ -136,7 +144,7 @@ describe('startCloudBackup', () => {
     });
 
     await store.dispatch(
-      startCloudBackup({key: passphraseKey, words, password}),
+      startCloudBackup({key: passphraseKey, words, password, label}),
     );
 
     const [, contents] = mockSaveCloudBackupFile.mock.calls[0];
@@ -152,7 +160,7 @@ describe('startCloudBackup', () => {
     const store = configureTestStore({WALLET: {keys: {[key.id]: key}}});
 
     await expect(
-      store.dispatch(startCloudBackup({key, words, password})),
+      store.dispatch(startCloudBackup({key, words, password, label})),
     ).rejects.toMatchObject({reason: 'network'});
 
     expect(store.getState().WALLET.keys[key.id].backupComplete).toBe(false);

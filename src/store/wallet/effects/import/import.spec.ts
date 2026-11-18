@@ -449,7 +449,7 @@ describe('startImportMnemonic – key already on the phone', () => {
     bwcImport.mockReset();
   });
 
-  it('keeps the cloud backup date of the key it updates', async () => {
+  it('keeps the cloud backup date and name of the key it updates', async () => {
     bwcImport.mockImplementation((_opts, _clientOpts, events) =>
       events.emit('done', {
         key: {id: 'k1'},
@@ -460,15 +460,22 @@ describe('startImportMnemonic – key already on the phone', () => {
     const store = configureTestStore({
       WALLET: {
         ...initialState.WALLET,
-        keys: {k1: {id: 'k1', wallets: [], cloudBackupTimestamp: 123}},
+        keys: {
+          k1: {
+            id: 'k1',
+            wallets: [],
+            cloudBackupTimestamp: 123,
+            cloudBackupLabel: 'Family',
+          },
+        },
       },
     } as any);
 
     await store.dispatch(startImportMnemonic({words: 'w'}, {}));
 
-    expect(
-      (store.getState() as any).WALLET.keys['test-key-id'].cloudBackupTimestamp,
-    ).toBe(123);
+    const importedKey = (store.getState() as any).WALLET.keys['test-key-id'];
+    expect(importedKey.cloudBackupTimestamp).toBe(123);
+    expect(importedKey.cloudBackupLabel).toBe('Family');
   });
 });
 

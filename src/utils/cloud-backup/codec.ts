@@ -16,6 +16,7 @@ const FILE_FIELDS = [
   'keyId',
   'fingerPrint',
   'createdAt',
+  'label',
   'kdf',
   'cipher',
   'ciphertext',
@@ -27,6 +28,7 @@ export interface CloudBackupHeader {
   keyId: string;
   fingerPrint: string;
   createdAt: number;
+  label: string;
 }
 
 export interface CloudBackupPayload {
@@ -104,6 +106,7 @@ const authenticatedHeader = (file: CloudBackupFile): Buffer =>
       file.keyId,
       file.fingerPrint,
       file.createdAt,
+      file.label,
       file.kdf.name,
       file.kdf.memory,
       file.kdf.passes,
@@ -139,8 +142,16 @@ const parseCloudBackup = (text: string): CloudBackupFile => {
   if (!isRecord(file) || file.format !== CLOUD_BACKUP_FORMAT) {
     throw new InvalidCloudBackupError('not_bitpay');
   }
-  const {version, keyId, fingerPrint, createdAt, kdf, cipher, ciphertext} =
-    file;
+  const {
+    version,
+    keyId,
+    fingerPrint,
+    createdAt,
+    label,
+    kdf,
+    cipher,
+    ciphertext,
+  } = file;
   if (
     !hasExactFields(file, FILE_FIELDS) ||
     version !== CLOUD_BACKUP_VERSION ||
@@ -150,6 +161,7 @@ const parseCloudBackup = (text: string): CloudBackupFile => {
     typeof createdAt !== 'number' ||
     !Number.isSafeInteger(createdAt) ||
     createdAt <= 0 ||
+    typeof label !== 'string' ||
     !isRecord(kdf) ||
     !hasExactFields(kdf, KDF_FIELDS) ||
     kdf.name !== 'argon2id' ||
@@ -172,6 +184,7 @@ const parseCloudBackup = (text: string): CloudBackupFile => {
     keyId,
     fingerPrint,
     createdAt,
+    label,
     kdf: {name: 'argon2id', ...ARGON2_PARAMS, salt: kdf.salt as string},
     cipher: {
       name: 'aes-256-gcm',
@@ -187,8 +200,8 @@ const parseCloudBackup = (text: string): CloudBackupFile => {
 };
 
 export const readCloudBackupHeader = (text: string): CloudBackupHeader => {
-  const {keyId, fingerPrint, createdAt} = parseCloudBackup(text);
-  return {keyId, fingerPrint, createdAt};
+  const {keyId, fingerPrint, createdAt, label} = parseCloudBackup(text);
+  return {keyId, fingerPrint, createdAt, label};
 };
 
 export const encryptCloudBackup = async (
@@ -204,6 +217,7 @@ export const encryptCloudBackup = async (
     keyId: header.keyId,
     fingerPrint: header.fingerPrint,
     createdAt: header.createdAt,
+    label: header.label,
     kdf: {name: 'argon2id', ...ARGON2_PARAMS, salt: salt.toString('base64')},
     cipher: {name: 'aes-256-gcm', iv: iv.toString('base64'), tag: ''},
     ciphertext: '',

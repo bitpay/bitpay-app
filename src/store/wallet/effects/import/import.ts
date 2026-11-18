@@ -936,6 +936,7 @@ export const startImportMnemonic =
             backupComplete: true,
           }),
           cloudBackupTimestamp: WALLET.keys[_key.id]?.cloudBackupTimestamp,
+          cloudBackupLabel: WALLET.keys[_key.id]?.cloudBackupLabel,
         };
 
         dispatch(

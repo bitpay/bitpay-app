@@ -27,6 +27,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {sleep} from '../../../utils/helper-methods';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {startCloudBackup} from '../../../store/wallet/effects/cloud-backup/cloud-backup';
+import {updateKeyName} from '../../../store/wallet/wallet.actions';
 import {
   CloudBackupError,
   CloudBackupErrorReason,
@@ -41,6 +42,7 @@ import {
   getPasswordStrength,
 } from '../../../components/backup/PasswordStrength';
 import {BusyOverlay} from '../../../components/backup/BrandLoader';
+import Checkbox from '../../../components/checkbox/Checkbox';
 import {ResultView} from '../../../components/backup/ResultView';
 import {showTopToast} from '../../../components/backup/TopToast';
 import {backupRedirect} from './Backup';
@@ -50,7 +52,7 @@ import {
 } from '../components/CloudRestore';
 import {WalletGroupParamList} from '../WalletGroup';
 
-export type CloudBackupPasswordMode = 'create' | 'again' | 'change';
+export type CloudBackupPasswordMode = 'create' | 'again' | 'change' | 'rename';
 
 export interface CloudBackupPasswordParamList {
   keyId: string;
@@ -73,6 +75,8 @@ const styles = StyleSheet.create({
   paragraph: {fontSize: 16, lineHeight: 25},
   note: {fontSize: 14, lineHeight: 20},
   footer: {paddingHorizontal: 12, paddingTop: 12},
+  renameKeyRow: {flexDirection: 'row', alignItems: 'center'},
+  renameKeyLabel: {fontSize: 16, marginLeft: 12, flexShrink: 1},
 });
 
 const CloudBackupPassword = () => {
@@ -90,11 +94,18 @@ const CloudBackupPassword = () => {
   );
   const isIOS = Platform.OS === 'ios';
   const cloudName = isIOS ? 'iCloud' : 'Google Drive';
+  const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
   const [passwordMode, setPasswordMode] = useState<'create' | 'enter'>(
-    mode === 'again' ? 'enter' : 'create',
+    mode === 'again' || mode === 'rename' ? 'enter' : 'create',
   );
   const creating = passwordMode === 'create';
+  const [label, setLabel] = useState(
+    key?.cloudBackupLabel || key?.keyName || '',
+  );
+  const [renameKey, setRenameKey] = useState(false);
+  const newName = label.trim();
+  const nameDiffers = !!newName && newName !== key?.keyName;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string>();
@@ -136,6 +147,8 @@ const CloudBackupPassword = () => {
       <HeaderTitle>
         {failure
           ? ''
+          : mode === 'rename'
+          ? t('Rename Backup')
           : mode === 'change'
           ? t('Change Backup Password')
           : creating
@@ -220,15 +233,20 @@ const CloudBackupPassword = () => {
           return;
         }
       }
+      const renamingKey = nameDiffers && renameKey;
       await dispatch(
         startCloudBackup({
-          key,
+          key: renamingKey ? {...key, keyName: newName} : key,
           words,
           password,
-          revokeOlder: mode === 'change',
+          label: newName,
+          revokeOlder: mode === 'change' || mode === 'rename',
           onConfirmingUpload: () => setConfirmingUpload(true),
         }),
       );
+      if (renamingKey) {
+        dispatch(updateKeyName({keyId: key.id, name: newName}));
+      }
       setSaving(false);
       dispatch(Analytics.track('Cloud Backup Completed', {mode}));
       await sleep(500);
@@ -243,7 +261,10 @@ const CloudBackupPassword = () => {
         durationMs: TOAST_DURATION_MS,
       });
       await sleep(TOAST_DURATION_MS);
-      if (navigationRef.getCurrentRoute()?.key !== destination) {
+      if (
+        mode === 'rename' ||
+        navigationRef.getCurrentRoute()?.key !== destination
+      ) {
         return;
       }
       offerWriteItDown();
@@ -291,6 +312,12 @@ const CloudBackupPassword = () => {
     : t('Encrypting your recovery phrase and saving it to {{cloudName}}…', {
         cloudName,
       });
+
+  const submitLabel = creating
+    ? t('Save Backup')
+    : mode === 'rename'
+    ? t('Save')
+    : t('Back Up');
 
   const offline = failure === 'network';
   const storageFull = failure === 'storage_full';
@@ -374,7 +401,32 @@ const CloudBackupPassword = () => {
                     )}
               </BaseText>
               <BoxInput
+                testID="cloud-backup-name-input"
+                label={t('BACKUP NAME')}
+                value={label}
+                maxLength={40}
+                onChangeText={setLabel}
+                returnKeyType={'next'}
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+              {nameDiffers ? (
+                <View style={styles.renameKeyRow}>
+                  <Checkbox
+                    accessibilityLabel={t('Update the key name too')}
+                    checked={renameKey}
+                    onPress={() => setRenameKey(!renameKey)}
+                  />
+                  <BaseText
+                    style={styles.renameKeyLabel}
+                    onPress={() => setRenameKey(!renameKey)}>
+                    {t('Update the key name too')}
+                  </BaseText>
+                </View>
+              ) : null}
+              <BoxInput
                 testID="cloud-backup-password-input"
+                ref={passwordRef}
                 label={t('PASSWORD')}
                 type={'password'}
                 textContentType={creating ? 'newPassword' : 'password'}
@@ -451,10 +503,10 @@ const CloudBackupPassword = () => {
             <View style={styles.footer}>
               <Button
                 testID="cloud-backup-save-button"
-                accessibilityLabel={creating ? t('Save Backup') : t('Back Up')}
+                accessibilityLabel={submitLabel}
                 disabled={locked}
                 onPress={onSubmit}>
-                {creating ? t('Save Backup') : t('Back Up')}
+                {submitLabel}
               </Button>
             </View>
           </KeyboardAvoidingView>

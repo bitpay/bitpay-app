@@ -36,7 +36,7 @@ const mockReadCloudBackupFile = readCloudBackupFile as jest.Mock;
 
 const backup = (createdAt: number, keyRef: string, filePassword: string) =>
   encryptCloudBackup(
-    {keyId: keyRef, fingerPrint: keyRef, createdAt},
+    {keyId: keyRef, fingerPrint: keyRef, createdAt, label: 'My Key'},
     payload,
     filePassword,
   );

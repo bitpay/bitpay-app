@@ -98,7 +98,7 @@ const PushNotifications = () => {
       const permissionGranted =
         systemEnabled ||
         (nextPreference
-          ? await AppEffects.requestNotificationsPermissions()
+          ? await dispatch(AppEffects.requestNotificationsPermissions())
           : true);
 
       if (permissionGranted) {

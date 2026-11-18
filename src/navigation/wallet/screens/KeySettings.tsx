@@ -83,6 +83,7 @@ import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
 import {resolveKeySettingsAccountList} from './keySettingsAccountListCache';
 import Banner from '../../../components/banner/Banner';
+import Checkbox from '../../../components/checkbox/Checkbox';
 import {StatusTag} from '../../../components/backup/BackupCards';
 import {verifyIdentity} from '../../../store/wallet/effects/send/send';
 import {
@@ -136,6 +137,24 @@ const styles = StyleSheet.create({
   },
   deleteKeySetting: {
     marginBottom: 50,
+  },
+  deleteCloudBackupOption: {
+    gap: 15,
+    marginBottom: 20,
+  },
+  deleteCloudBackupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteCloudBackupLabel: {
+    fontSize: 16,
+    marginLeft: SCREEN_GUTTER,
+    flexShrink: 1,
+  },
+  deleteCloudBackupWarning: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: Caution,
   },
 });
 
@@ -202,12 +221,47 @@ const SearchComponentContainer: React.FC<React.ComponentProps<typeof View>> = ({
   ...rest
 }) => <View style={[styles.searchComponentContainer, style]} {...rest} />;
 
+const DeleteCloudBackupOption = ({
+  label,
+  warning,
+  onChange,
+}: {
+  label: string;
+  warning: string;
+  onChange: (checked: boolean) => void;
+}) => {
+  const [checked, setChecked] = useState(false);
+  const toggle = () => {
+    setChecked(!checked);
+    onChange(!checked);
+  };
+  return (
+    <View style={styles.deleteCloudBackupOption}>
+      <View style={styles.deleteCloudBackupRow}>
+        <Checkbox
+          accessibilityLabel={label}
+          checked={checked}
+          onPress={toggle}
+        />
+        <BaseText style={styles.deleteCloudBackupLabel} onPress={toggle}>
+          {label}
+        </BaseText>
+      </View>
+      {checked ? (
+        <BaseText style={styles.deleteCloudBackupWarning}>{warning}</BaseText>
+      ) : null}
+    </View>
+  );
+};
+
 const KeySettings = () => {
   const {t} = useTranslation();
   const {
     params: {keyId, context},
   } = useRoute<RouteProp<WalletGroupParamList, 'KeySettings'>>();
   const scrollViewRef = useRef<ScrollView>(null);
+  const deleteCloudBackupRef = useRef(false);
+  const deleteSheetOpenings = useRef(0);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
@@ -534,6 +588,8 @@ const KeySettings = () => {
     };
     const title = t('Delete {{keyName}}?', {keyName});
     if (_key.cloudBackupTimestamp) {
+      deleteCloudBackupRef.current = false;
+      deleteSheetOpenings.current += 1;
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -542,52 +598,38 @@ const KeySettings = () => {
             'This removes it from this phone. Keep the {{cloudName}} backup to restore it later.',
             {cloudName},
           ),
+          message2: (
+            <DeleteCloudBackupOption
+              key={deleteSheetOpenings.current}
+              label={t('Also delete the {{cloudName}} backup', {cloudName})}
+              warning={t(
+                'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.',
+                {keyName, cloudName},
+              )}
+              onChange={checked => {
+                deleteCloudBackupRef.current = checked;
+              }}
+            />
+          ),
           enableBackdropDismiss: true,
           actions: [
             {
-              text: t('Delete Key, Keep Backup'),
+              text: t('Delete Key'),
               primary: true,
               destructive: true,
-              action: deleteOnlyKey,
-            },
-            {
-              text: t('Delete Key and Backup'),
-              destructive: true,
               action: async () => {
-                await sleep(500);
-                dispatch(
-                  showBottomNotificationModal({
-                    type: 'error',
-                    title: t('Delete the {{cloudName}} backup too?', {
-                      cloudName,
-                    }),
-                    message: t(
-                      'You won’t be able to restore {{keyName}} from {{cloudName}}. If you didn’t write down its recovery phrase, any funds in it are gone for good.',
-                      {keyName, cloudName},
-                    ),
-                    enableBackdropDismiss: true,
-                    actions: [
-                      {
-                        text: t('Delete Key and Backup'),
-                        destructive: true,
-                        action: async () => {
-                          if (hasAppLock) {
-                            try {
-                              await dispatch(verifyIdentity());
-                            } catch {
-                              return;
-                            }
-                          }
-                          await deleteKeyAndCloudBackup();
-                        },
-                      },
-                      {
-                        text: t('Cancel'),
-                        action: () => {},
-                      },
-                    ],
-                  }),
-                );
+                if (!deleteCloudBackupRef.current) {
+                  deleteOnlyKey();
+                  return;
+                }
+                if (hasAppLock) {
+                  try {
+                    await dispatch(verifyIdentity());
+                  } catch {
+                    return;
+                  }
+                }
+                await deleteKeyAndCloudBackup();
               },
             },
             {

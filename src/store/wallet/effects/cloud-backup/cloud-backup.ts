@@ -23,12 +23,14 @@ export const startCloudBackup =
     key,
     words,
     password,
+    label,
     revokeOlder = false,
     onConfirmingUpload,
   }: {
     key: Key;
     words: string[];
     password: string;
+    label: string;
     revokeOlder?: boolean;
     onConfirmingUpload?: () => void;
   }): Effect<Promise<void>> =>
@@ -39,7 +41,7 @@ export const startCloudBackup =
     const keyRef = fingerPrint || key.id;
     const name = getCloudBackupFileName(createdAt, keyRef);
     const contents = await encryptCloudBackup(
-      {keyId: key.id, fingerPrint, createdAt},
+      {keyId: key.id, fingerPrint, createdAt, label},
       {
         mnemonic: words.join(' '),
         keyName: key.keyName || '',
@@ -50,7 +52,9 @@ export const startCloudBackup =
       password,
     );
     await saveCloudBackupFile(name, contents, onConfirmingUpload);
-    dispatch(setCloudBackupComplete({keyId: key.id, timestamp: createdAt}));
+    dispatch(
+      setCloudBackupComplete({keyId: key.id, timestamp: createdAt, label}),
+    );
     if (revokeOlder) {
       await deleteCloudBackupFiles(keyRef, name);
     }
