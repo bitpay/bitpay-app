@@ -2,7 +2,7 @@ import React, {memo} from 'react';
 import {useTranslation} from 'react-i18next';
 import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../contexts';
-import {SlateDark, White} from '../../styles/colors';
+import {Slate30, SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
@@ -120,15 +120,20 @@ const CellValue: React.FC<
   );
 };
 
-const CellLetter: React.FC<React.ComponentProps<typeof BaseText>> = ({
-  style,
-  ...rest
-}) => {
+const CellLetter: React.FC<
+  Pick<CellValueProps, 'darkModeOnly'> & React.ComponentProps<typeof BaseText>
+> = ({darkModeOnly, style, ...rest}) => {
   const theme = useTheme();
   return (
     <BaseText
       maxFontSizeMultiplier={1.3}
-      style={[styles.cellLetter, {color: theme.colors.description}, style]}
+      style={[
+        styles.cellLetter,
+        // Dark-only keypads (PIN) always sit on a dark background, so they use
+        // the dark-mode secondary text colour in both themes.
+        {color: darkModeOnly ? Slate30 : theme.colors.description},
+        style,
+      ]}
       {...rest}
     />
   );
@@ -188,7 +193,9 @@ const Cell: React.FC<CellProps> = ({
             context={context}>
             {value}
           </CellValue>
-          {letters ? <CellLetter>{letters}</CellLetter> : null}
+          {letters ? (
+            <CellLetter darkModeOnly={darkModeOnly}>{letters}</CellLetter>
+          ) : null}
         </>
       </VirtualKeyboardButtonAnimation>
     </View>

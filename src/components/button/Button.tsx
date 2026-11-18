@@ -461,7 +461,7 @@ const getPillTextColor = ({
         ? Caution50
         : Caution60
       : theme.dark
-      ? Caution60
+      ? Caution70
       : White;
   }
   return theme?.dark ? White : Action;

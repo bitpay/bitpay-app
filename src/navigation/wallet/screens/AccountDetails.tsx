@@ -464,9 +464,15 @@ const AssetsDataContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
 }) => <View style={styles.assetsDataContainer}>{children}</View>;
 
+// The Wallets / Allocation / Activity row is a tab bar for screen readers
+// ("tab 1 of 3").
 const HeaderListContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
-}) => <View style={styles.headerListContainer}>{children}</View>;
+}) => (
+  <View style={styles.headerListContainer} accessibilityRole="tablist">
+    {children}
+  </View>
+);
 
 const AddCustomTokenContainer: React.FC<TouchableOpacityProps> = ({
   style,
@@ -2148,7 +2154,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             <WalletListHeader
               activeOpacity={1}
               testID="account-details-wallets-tab"
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityLabel={t('Wallets')}
               accessibilityState={{selected: isWalletsTab}}
               onPress={() => {
@@ -2162,7 +2168,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               <WalletListHeader
                 activeOpacity={1}
                 testID="account-details-allocation-tab"
-                accessibilityRole="button"
+                accessibilityRole="tab"
                 accessibilityLabel={t('Allocation')}
                 accessibilityState={{selected: isAllocationTab}}
                 onPress={() => {
@@ -2176,7 +2182,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             <WalletListHeader
               activeOpacity={1}
               testID="account-details-activity-tab"
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityLabel={t('Activity')}
               accessibilityState={{selected: isActivityTab}}
               onPress={async () => {
