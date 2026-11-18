@@ -1346,24 +1346,48 @@ describe('findWalletByIdHashed', () => {
     expect(result.keyId).toBeUndefined();
   });
 
-  it('uses walletId without token suffix when tokenAddress provided', async () => {
-    const crypto = require('crypto');
-    // walletId has a token suffix after last hyphen
+  describe('when tokenAddress provided', () => {
     const walletIdBase = 'wallet-main';
-    const walletId = `${walletIdBase}-tokenpart`;
-    const hash = crypto.createHash('sha256');
-    hash.update(walletIdBase);
-    const hashed = hash.digest('hex');
+    const crypto = require('crypto');
+    const hashed = crypto
+      .createHash('sha256')
+      .update(walletIdBase)
+      .digest('hex');
+    const baseWallet = makeCompleteWallet(walletIdBase);
+    const tokenWallet = makeWallet({
+      id: `${walletIdBase}-0xsometoken`,
+      keyId: 'key-1',
+      credentials: makeCredentials({
+        walletId: `${walletIdBase}-0xsometoken`,
+        token: {address: '0xsometoken'},
+        isComplete: jest.fn(() => true),
+      }),
+      pendingTssSession: undefined,
+    });
 
-    const wallet = makeCompleteWallet(walletId);
-    const keys: any = {'key-1': {wallets: [wallet]}};
-    const result = await findWalletByIdHashed(
-      keys,
-      hashed,
-      '0xSomeToken',
-      undefined,
-    );
-    expect(result.wallet).toBeDefined();
+    it('resolves with the token wallet of the hashed base wallet', async () => {
+      const keys: any = {'key-1': {wallets: [baseWallet, tokenWallet]}};
+      const result = await findWalletByIdHashed(
+        keys,
+        hashed,
+        '0xSomeToken',
+        undefined,
+      );
+      expect(result.wallet).toBe(tokenWallet);
+      expect(result.keyId).toBe('key-1');
+    });
+
+    it('resolves with undefined wallet when the token wallet does not exist', async () => {
+      const keys: any = {'key-1': {wallets: [baseWallet]}};
+      const result = await findWalletByIdHashed(
+        keys,
+        hashed,
+        '0xSomeToken',
+        undefined,
+      );
+      expect(result.wallet).toBeUndefined();
+      expect(result.keyId).toBeUndefined();
+    });
   });
 });
 

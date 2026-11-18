@@ -54,6 +54,7 @@ import {
 } from '../../../navigation/wallet/screens/AccountDetails';
 import {logManager} from '../../../managers/LogManager';
 import {areTestnetWalletsVisible, isTestnetWallet} from './testnet';
+import {buildTokenWalletId, findByTokenWalletId} from './token-wallet-id';
 
 export const mapAbbreviationAndName =
   (
@@ -797,10 +798,7 @@ export const findWalletByIdHashed = (
   return new Promise(resolve => {
     getAllWalletClients(keys).then(wallets => {
       const wallet = wallets.find(w => {
-        if (
-          (tokenAddress && tokenAddress !== 'null') ||
-          (multisigContractAddress && multisigContractAddress !== 'null')
-        ) {
+        if (multisigContractAddress && multisigContractAddress !== 'null') {
           const walletId = w.credentials.walletId;
           const lastHyphenPosition = walletId.lastIndexOf('-');
           const walletIdWithoutTokenAddress = walletId.substring(
@@ -817,6 +815,18 @@ export const findWalletByIdHashed = (
         }
         return walletIdHashed === walletIdHash;
       });
+
+      if (wallet && tokenAddress && tokenAddress !== 'null') {
+        const tokenWallet = findByTokenWalletId(
+          keys[wallet.keyId]?.wallets,
+          buildTokenWalletId(wallet.credentials.walletId, tokenAddress),
+          (w: Wallet) => w.credentials.walletId,
+        );
+        return resolve({
+          wallet: tokenWallet,
+          keyId: tokenWallet ? wallet.keyId : undefined,
+        });
+      }
 
       return resolve({wallet, keyId: wallet?.keyId});
     });

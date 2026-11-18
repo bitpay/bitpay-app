@@ -338,6 +338,7 @@ jest.mock('../../utils/sessionLogs', () => ({
 }));
 
 import {
+  handleBwsEvent,
   incomingLink,
   openExternalUrl,
   openUrlWithInAppBrowser,
@@ -352,7 +353,8 @@ import {Linking} from 'react-native';
 import {requestNotifications, RESULTS} from 'react-native-permissions';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {navigationRef} from '../../Root';
-import {findWalletByIdHashed} from '../wallet/utils/wallet';
+import {findKeyByKeyId, findWalletByIdHashed} from '../wallet/utils/wallet';
+import {startUpdateWalletStatus} from '../wallet/effects/status/status';
 import {migrateWalletSecrets} from '../wallet-secrets/wallet-secrets.effects';
 import {flushPersistor} from '../persistor';
 import {
@@ -939,5 +941,82 @@ describe('incomingLink', () => {
         expect.anything(),
       );
     });
+  });
+});
+
+describe('handleBwsEvent', () => {
+  const key = {id: 'key-1'};
+  const makeWallet = (id: string) => ({
+    id,
+    keyId: 'key-1',
+    credentials: {walletId: id, addressType: 'P2PKH', coin: 'eth'},
+  });
+
+  const runBwsEvent = async (
+    wallet: ReturnType<typeof makeWallet>,
+    notification_type: string,
+  ) => {
+    (findWalletByIdHashed as jest.Mock).mockResolvedValue({
+      wallet,
+      keyId: 'key-1',
+    });
+    const getState = jest.fn(() => ({WALLET: {keys: {'key-1': key}}} as any));
+    const dispatch: any = jest.fn(action =>
+      typeof action === 'function' ? action(dispatch, getState) : action,
+    );
+    await handleBwsEvent({walletId: 'hashed', notification_type})(
+      dispatch,
+      getState,
+      undefined as any,
+    );
+    await flushMicrotasks();
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    (findKeyByKeyId as jest.Mock).mockResolvedValue(key);
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  it('refreshes the wallet again when the incoming tx confirms inside the throttle window', async () => {
+    const wallet = makeWallet('wallet-1');
+
+    await runBwsEvent(wallet, 'NewIncomingTx');
+    await runBwsEvent(wallet, 'IncomingTxConfirmed');
+    expect(startUpdateWalletStatus).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(5000);
+    expect(startUpdateWalletStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps refreshing the wallet while events keep arriving', async () => {
+    const wallet = makeWallet('wallet-4');
+
+    for (let i = 0; i < 6; i++) {
+      await runBwsEvent(wallet, 'TxConfirmation');
+      jest.advanceTimersByTime(1000);
+    }
+
+    expect(startUpdateWalletStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshes each wallet when events for different wallets arrive together', async () => {
+    const first = makeWallet('wallet-2');
+    const second = makeWallet('wallet-3');
+
+    await runBwsEvent(first, 'TxConfirmation');
+    await runBwsEvent(second, 'TxConfirmation');
+
+    expect(startUpdateWalletStatus).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: first}),
+    );
+    expect(startUpdateWalletStatus).toHaveBeenCalledWith(
+      expect.objectContaining({wallet: second}),
+    );
   });
 });
