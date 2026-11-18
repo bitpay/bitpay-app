@@ -116,6 +116,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const usesBottomSheetRef = useRef(modalLibrary === 'bottom-sheet');
   const mountedRef = useRef(false);
   const reopenAnimationFrameRef = useRef<number | null>(null);
+  const dismissWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   desiredVisibleRef.current = isVisible;
   usesBottomSheetRef.current = modalLibrary === 'bottom-sheet';
   const [shouldRenderBottomSheetContent, setShouldRenderBottomSheetContent] =
@@ -153,6 +154,24 @@ const SheetModal: React.FC<SheetModalProps> = ({
         (phase === 'presenting' && nativeReadyRef.current))
     ) {
       phaseRef.current = 'dismissing';
+      // Safety net: if native never reports onDismiss (e.g. dismissed while the
+      // sheet was still animating in), the phase would stay 'dismissing' forever
+      // and the sheet could never be presented again.
+      if (dismissWatchdogRef.current) {
+        clearTimeout(dismissWatchdogRef.current);
+      }
+      dismissWatchdogRef.current = setTimeout(() => {
+        dismissWatchdogRef.current = null;
+        if (mountedRef.current && phaseRef.current === 'dismissing') {
+          phaseRef.current = 'idle';
+          nativeReadyRef.current = false;
+          if (desiredVisibleRef.current) {
+            reconcileBottomSheet();
+          } else {
+            setShouldRenderBottomSheetContent(false);
+          }
+        }
+      }, 1500);
       try {
         modal.dismiss();
       } catch (error) {
@@ -175,6 +194,10 @@ const SheetModal: React.FC<SheetModalProps> = ({
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (dismissWatchdogRef.current) {
+        clearTimeout(dismissWatchdogRef.current);
+        dismissWatchdogRef.current = null;
+      }
       if (reopenAnimationFrameRef.current !== null) {
         cancelAnimationFrame(reopenAnimationFrameRef.current);
         reopenAnimationFrameRef.current = null;
@@ -269,6 +292,10 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
 
   const handleDismiss = useCallback(() => {
+    if (dismissWatchdogRef.current) {
+      clearTimeout(dismissWatchdogRef.current);
+      dismissWatchdogRef.current = null;
+    }
     if (phaseRef.current === 'idle') {
       return;
     }
