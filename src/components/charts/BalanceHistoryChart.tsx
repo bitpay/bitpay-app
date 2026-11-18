@@ -64,6 +64,8 @@ export type BalanceHistoryChartProps = {
   preChartContent?: React.ReactNode;
   preChartContentTopMargin?: number;
   postChartContent?: React.ReactNode;
+  /** Rendered below the timeframe selector and fades together with it. */
+  postTimeframeContent?: React.ReactNode;
   changeRowStyle?: StyleProp<ViewStyle>;
   showChangeRow?: boolean;
   showTimeframeSelector?: boolean;
@@ -133,6 +135,7 @@ const BalanceHistoryChart = ({
   preChartContent,
   preChartContentTopMargin = 22,
   postChartContent,
+  postTimeframeContent,
   changeRowStyle,
   showChangeRow = true,
   showTimeframeSelector = true,
@@ -415,15 +418,18 @@ const BalanceHistoryChart = ({
 
       {postChartContent}
 
-      {showTimeframeSelector ? (
+      {showTimeframeSelector || postTimeframeContent ? (
         <Animated.View style={timeframeSelectorAnimatedStyle}>
-          <TimeframeSelector
-            options={getFiatChartTimeframeOptions(t)}
-            selected={displayModel.selectedTimeframe}
-            width={timeframeSelectorWidth}
-            horizontalInset={timeframeSelectorHorizontalInset}
-            onSelect={displayModel.onTimeframeSelect}
-          />
+          {showTimeframeSelector ? (
+            <TimeframeSelector
+              options={getFiatChartTimeframeOptions(t)}
+              selected={displayModel.selectedTimeframe}
+              width={timeframeSelectorWidth}
+              horizontalInset={timeframeSelectorHorizontalInset}
+              onSelect={displayModel.onTimeframeSelect}
+            />
+          ) : null}
+          {postTimeframeContent}
         </Animated.View>
       ) : null}
     </>

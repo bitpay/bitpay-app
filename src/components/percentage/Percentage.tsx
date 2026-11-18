@@ -20,6 +20,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     flexShrink: 1,
   },
   rangeLabel: {
@@ -40,6 +41,7 @@ export interface PercentageProps {
   suffix?: string;
   textStyle?: any;
   fractionDigits?: number;
+  maxFontSizeMultiplier?: number;
 }
 
 export const getDifferenceColor = (isPositive: boolean, isDarkMode: boolean) =>
@@ -65,6 +67,7 @@ const Percentage = ({
   suffix,
   textStyle,
   fractionDigits,
+  maxFontSizeMultiplier,
 }: PercentageProps) => {
   const theme = useTheme();
   const isDarkMode = theme.dark;
@@ -114,6 +117,7 @@ const Percentage = ({
       ) : null}
       {shouldShowPriceChange ? (
         <BaseText
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
           style={[
             styles.percentageContainer,
             {color: percentageColor},
@@ -124,6 +128,7 @@ const Percentage = ({
         </BaseText>
       ) : null}
       <BaseText
+        maxFontSizeMultiplier={maxFontSizeMultiplier}
         style={[
           styles.percentageContainer,
           {color: percentageColor},
@@ -134,6 +139,7 @@ const Percentage = ({
       </BaseText>
       {rangeLabel ? (
         <BaseText
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
           style={[
             styles.rangeLabel,
             {color: getNeutralChangeColor(theme.dark)},

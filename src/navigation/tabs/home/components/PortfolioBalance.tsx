@@ -159,11 +159,13 @@ const headerStyles = StyleSheet.create({
   unchartedNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 8,
+    alignSelf: 'flex-end',
+    marginTop: 4,
+    paddingRight: 12,
   },
   unchartedNoteText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 14,
     marginRight: 3,
   },
 });
@@ -200,6 +202,9 @@ const PortfolioBalanceText: React.FC<{
   return (
     <BaseText
       maxFontSizeMultiplier={1.5}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.5}
       style={[
         headerStyles.portfolioBalanceText,
         {
@@ -261,7 +266,7 @@ const UnchartedAssetsNote = ({
         ]}>
         {t('Some assets not charted')}
       </BaseText>
-      <InfoSvg width={13} height={13} />
+      <InfoSvg width={11} height={11} />
     </TouchableOpacity>
   );
 };
@@ -295,6 +300,7 @@ const PortfolioBalanceChangeRow = ({
         priceChange={displayedDelta}
         rangeLabel={rangeLabel}
         fractionDigits={2}
+        maxFontSizeMultiplier={1.2}
       />
       {trailing}
     </PortfolioBalanceChangeRowContainer>
@@ -476,6 +482,18 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
             (collapseButtonLayout.x + collapseButtonLayout.width),
         )
       : 12;
+  // Width the mini chart occupies next to the balance once collapsed, minus the
+  // top section's own gutter, so a long amount shrinks instead of running
+  // under (or being cut by) the chart.
+  const collapsedChartReservedWidth = chartStageWidth
+    ? Math.max(
+        0,
+        chartStageWidth * collapsedScale +
+          targetChartRightInset +
+          8 -
+          parseInt(ScreenGutter, 10),
+      )
+    : 0;
   const collapsedTranslateX =
     chartStageWidth > 0
       ? chartStageWidth * ((1 - collapsedScale) / 2) - targetChartRightInset
@@ -810,7 +828,14 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
         <BalanceVisibilityButton
           testID="portfolio-balance-toggle"
           style={
-            shouldLeftAlignTopSection ? {alignItems: 'flex-start'} : undefined
+            shouldLeftAlignTopSection
+              ? {
+                  alignItems: 'flex-start',
+                  marginRight: isChartCollapsed
+                    ? collapsedChartReservedWidth
+                    : 0,
+                }
+              : undefined
           }
           hidden={hideAllBalances}
           onToggle={() => {
@@ -837,11 +862,6 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
           deltaFiatFormatted={displayedChangeRowData?.deltaFiatFormatted}
           rangeLabel={displayedChangeRowData?.rangeLabel}
           visible={!!displayedChangeRowData}
-          trailing={
-            unchartedWallets.length && displayedChangeRowData ? (
-              <UnchartedAssetsNote onPress={showUnchartedAssetsModal} />
-            ) : null
-          }
           style={{
             width: '100%',
             justifyContent: shouldLeftAlignTopSection ? 'flex-start' : 'center',
@@ -892,6 +912,13 @@ const PortfolioBalanceContent = ({active = true}: PortfolioBalanceProps) => {
                 showChangeRow={false}
                 timeframeSelectorOpacity={timeframeSelectorOpacity}
                 disablePanGesture={isChartCollapsed}
+                postTimeframeContent={
+                  unchartedWallets.length &&
+                  displayedChangeRowData &&
+                  !isChartCollapsed ? (
+                    <UnchartedAssetsNote onPress={showUnchartedAssetsModal} />
+                  ) : null
+                }
               />
               {isChartCollapsed && canCollapseChart ? (
                 <TouchableOpacity

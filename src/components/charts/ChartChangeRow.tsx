@@ -59,6 +59,7 @@ const ChartChangeRow = ({
         priceChange={displayedDelta}
         rangeLabel={rangeLabel}
         fractionDigits={2}
+        maxFontSizeMultiplier={1.2}
       />
     </Animated.View>
   );
