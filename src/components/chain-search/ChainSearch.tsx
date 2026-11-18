@@ -6,7 +6,13 @@ import {
   SearchRoundInput,
 } from '../../components/styled/Containers';
 import {groupBy} from '../../utils/array';
-import {Action, LightBlue, Slate, White} from '../../styles/colors';
+import {
+  Action,
+  LightBlue,
+  Slate,
+  White,
+  Placeholder,
+} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
@@ -506,6 +512,8 @@ const SearchComponent = <T extends SearchableItem>({
   const _SearchFilterContainer = () => {
     return (
       <SearchFilterContainer
+        accessibilityRole="button"
+        hitSlop={{top: 6, bottom: 6}}
         onPress={() => {
           dispatch(AppActions.showChainSelectorModal({context, chainsOptions}));
         }}>
@@ -551,8 +559,9 @@ const SearchComponent = <T extends SearchableItem>({
             </SearchIconContainer>
             <View>
               <SearchRoundInput
-                placeholderTextColor={Slate}
+                placeholderTextColor={theme.dark ? Slate : Placeholder}
                 placeholder={t('Search')}
+                accessibilityLabel={t('Search')}
                 onChangeText={updateSearchResults}
               />
             </View>

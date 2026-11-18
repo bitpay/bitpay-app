@@ -135,6 +135,7 @@ export const WalletSelector: React.FC<
   const theme = useTheme();
   return (
     <TouchableOpacity
+      hitSlop={{top: 4, bottom: 4}}
       style={[
         styles.walletSelector,
         {backgroundColor: theme.dark ? LightBlack : NeutralSlate},

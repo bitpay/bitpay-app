@@ -897,6 +897,7 @@ const Crypto = ({active = true}: CryptoProps) => {
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               testID="my-crypto-add-button"
+              accessibilityRole="button"
               accessibilityLabel={translate('Add crypto wallet')}
               onPress={() => {
                 haptic('soft');
@@ -907,6 +908,7 @@ const Crypto = ({active = true}: CryptoProps) => {
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               testID="my-crypto-customize-button"
+              accessibilityRole="button"
               accessibilityLabel={translate('Customize Home')}
               onPress={() => {
                 haptic('soft');

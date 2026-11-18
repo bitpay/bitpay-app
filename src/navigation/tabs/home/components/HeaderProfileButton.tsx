@@ -19,6 +19,7 @@ const ProfileButton: React.FC = () => {
     <HeaderButtonContainer>
       <TouchableOpacity
         testID="profile-button"
+        accessibilityRole="button"
         accessibilityLabel={t('Profile')}
         onPress={() => {
           user

@@ -22,6 +22,7 @@ import {
   ProgressBlue,
   Slate,
   White,
+  Placeholder,
 } from '../../styles/colors';
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
@@ -102,12 +103,12 @@ const InputContainer: React.FC<
     <View
       style={[
         styles.inputContainer,
-        {borderColor: theme.dark ? LuckySevens : Slate},
+        {borderColor: LuckySevens},
         paddingRight ? {paddingRight} : null,
         isFocused
           ? {
               backgroundColor: theme.dark ? 'transparent' : '#fafbff',
-              borderColor: theme.dark ? LuckySevens : Slate,
+              borderColor: LuckySevens,
               borderBottomColor: ProgressBlue,
             }
           : null,
@@ -256,6 +257,7 @@ const BoxInput = React.forwardRef<
     },
     ref,
   ) => {
+    const theme = useTheme();
     const isPassword = type === 'password';
     const isSearch = type === 'search';
     const [isFocused, setIsFocused] = useState(false);
@@ -315,7 +317,7 @@ const BoxInput = React.forwardRef<
 
           <Input
             keyboardType={_keyboardType}
-            placeholderTextColor={Slate}
+            placeholderTextColor={theme.dark ? Slate : Placeholder}
             {...props}
             editable={!disabled}
             ref={ref}

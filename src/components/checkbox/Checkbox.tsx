@@ -3,7 +3,7 @@ import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import {RoundedCheckbox} from 'react-native-rounded-checkbox';
 import Check from '../../../assets/img/check.svg';
-import {Action, SlateDark} from '../../styles/colors';
+import {Action, SlateDark, Slate} from '../../styles/colors';
 import {useTheme} from '../../contexts';
 
 interface Props {
@@ -36,8 +36,8 @@ const Border: React.FC<BorderProps & React.ComponentProps<typeof View>> = ({
     : checked
     ? Action
     : theme?.dark
-    ? SlateDark
-    : '#E5E5F2';
+    ? Slate
+    : SlateDark;
   return (
     <View
       style={[

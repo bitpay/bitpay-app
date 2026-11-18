@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import {useTheme} from '../../../contexts';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
+import {LightBlack, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
@@ -61,13 +61,13 @@ const OnGoingProcessModalContent: React.FC = React.memo(() => {
           {backgroundColor: theme.dark ? LightBlack : White},
         ]}>
         <View style={styles.activityIndicatorContainer}>
-          <ActivityIndicator color={SlateDark} />
+          <ActivityIndicator color={theme.colors.description} />
         </View>
         <BaseText style={styles.message}>{message}</BaseText>
         <BlurContainer />
       </View>
     ),
-    [message, theme.dark],
+    [message, theme.dark, theme.colors.description],
   );
 
   return (

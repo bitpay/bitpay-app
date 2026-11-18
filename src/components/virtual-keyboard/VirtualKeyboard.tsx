@@ -1,7 +1,8 @@
 import React, {memo} from 'react';
+import {useTranslation} from 'react-i18next';
 import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../contexts';
-import {SlateDark, White} from '../../styles/colors';
+import {Slate30, SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
@@ -119,16 +120,24 @@ const CellValue: React.FC<
   );
 };
 
-const CellLetter: React.FC<React.ComponentProps<typeof BaseText>> = ({
-  style,
-  ...rest
-}) => (
-  <BaseText
-    maxFontSizeMultiplier={1.3}
-    style={[styles.cellLetter, style]}
-    {...rest}
-  />
-);
+const CellLetter: React.FC<
+  Pick<CellValueProps, 'darkModeOnly'> & React.ComponentProps<typeof BaseText>
+> = ({darkModeOnly, style, ...rest}) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      maxFontSizeMultiplier={1.3}
+      style={[
+        styles.cellLetter,
+        // Dark-only keypads (PIN) always sit on a dark background, so they use
+        // the dark-mode secondary text colour in both themes.
+        {color: darkModeOnly ? Slate30 : theme.colors.description},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+};
 
 const SymbolContainer: React.FC<
   SymbolContainerProps & React.ComponentProps<typeof View>
@@ -174,6 +183,7 @@ const Cell: React.FC<CellProps> = ({
       <VirtualKeyboardButtonAnimation
         isSmallScreen={isSmallScreen}
         onPress={() => onCellPress?.(value)}
+        accessibilityLabel={value}
         backgroundColor={backgroundColor}
         context={context}>
         <>
@@ -183,7 +193,9 @@ const Cell: React.FC<CellProps> = ({
             context={context}>
             {value}
           </CellValue>
-          {letters ? <CellLetter>{letters}</CellLetter> : null}
+          {letters ? (
+            <CellLetter darkModeOnly={darkModeOnly}>{letters}</CellLetter>
+          ) : null}
         </>
       </VirtualKeyboardButtonAnimation>
     </View>
@@ -245,6 +257,7 @@ const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
   context,
   isSmallScreen,
 }) => {
+  const {t} = useTranslation();
   const theme = useTheme();
   const backgroundColor =
     darkModeOnly || theme.dark
@@ -369,7 +382,8 @@ const VirtualKeyboardContent: React.FC<ResolvedVirtualKeyboardProps> = ({
             isSmallScreen={_isSmallScreen}
             context={context}
             onLongPress={() => onCellPress?.('reset')}
-            onPress={() => onCellPress?.('backspace')}>
+            onPress={() => onCellPress?.('backspace')}
+            accessibilityLabel={t('Delete')}>
             <SymbolContainer showLetters={showLetters}>
               <DeleteIcon bgColor={bgColor} />
             </SymbolContainer>

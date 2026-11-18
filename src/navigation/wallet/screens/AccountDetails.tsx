@@ -89,7 +89,7 @@ import {
 } from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White, Slate} from '../../../styles/colors';
 import {
   createMultipleWallets,
   getActiveWalletStoreInitPromise,
@@ -370,6 +370,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 8,
+    // Room for the address badge's 19pt hitSlop (taken from the 22pt gap
+    // above via contentTopMargin), so touches there reach the badge.
+    paddingTop: 19,
   },
 });
 
@@ -398,9 +401,14 @@ const WalletListHeader: React.FC<TouchableOpacityProps> = ({
 const WalletListHeaderLabel: React.FC<{
   isActive: boolean;
   children?: React.ReactNode;
-}> = ({isActive, children}) => (
-  <View style={{opacity: isActive ? 1 : 0.4}}>{children}</View>
-);
+}> = ({isActive, children}) => {
+  const theme = useTheme();
+  return (
+    <H5 style={isActive ? undefined : {color: theme.dark ? Slate : SlateDark}}>
+      {children}
+    </H5>
+  );
+};
 
 const CopyToClipboardContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
@@ -456,9 +464,15 @@ const AssetsDataContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
 }) => <View style={styles.assetsDataContainer}>{children}</View>;
 
+// The Wallets / Allocation / Activity row is a tab bar for screen readers
+// ("tab 1 of 3").
 const HeaderListContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
-}) => <View style={styles.headerListContainer}>{children}</View>;
+}) => (
+  <View style={styles.headerListContainer} accessibilityRole="tablist">
+    {children}
+  </View>
+);
 
 const AddCustomTokenContainer: React.FC<TouchableOpacityProps> = ({
   style,
@@ -512,6 +526,7 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 
   return (
     <BadgeContainerTouchable
+      hitSlop={{top: 19, bottom: 0}}
       onPress={copyToClipboard}
       activeOpacity={ActiveOpacity}
       style={{alignSelf: 'center', width: 'auto', minHeight: 25}}>
@@ -1984,6 +1999,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <BalanceHeaderSupplement
                   changeRowData={accountHeaderChangeRowData}
                   content={accountChartPreContent}
+                  contentTopMargin={3}
                   reserveChangeRowSpace={
                     shouldRenderAccountBalanceChart ||
                     shouldShowAccountChartPlaceholder
@@ -2138,41 +2154,44 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             <WalletListHeader
               activeOpacity={1}
               testID="account-details-wallets-tab"
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityLabel={t('Wallets')}
+              accessibilityState={{selected: isWalletsTab}}
               onPress={() => {
                 setActiveTab('wallets');
               }}>
               <WalletListHeaderLabel isActive={isWalletsTab}>
-                <H5>{t('Wallets')}</H5>
+                {t('Wallets')}
               </WalletListHeaderLabel>
             </WalletListHeader>
             {showPortfolioValue ? (
               <WalletListHeader
                 activeOpacity={1}
                 testID="account-details-allocation-tab"
-                accessibilityRole="button"
+                accessibilityRole="tab"
                 accessibilityLabel={t('Allocation')}
+                accessibilityState={{selected: isAllocationTab}}
                 onPress={() => {
                   setActiveTab('allocation');
                 }}>
                 <WalletListHeaderLabel isActive={isAllocationTab}>
-                  <H5>{t('Allocation')}</H5>
+                  {t('Allocation')}
                 </WalletListHeaderLabel>
               </WalletListHeader>
             ) : null}
             <WalletListHeader
               activeOpacity={1}
               testID="account-details-activity-tab"
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityLabel={t('Activity')}
+              accessibilityState={{selected: isActivityTab}}
               onPress={async () => {
                 setActiveTab('activity');
                 await sleep(200);
                 loadInitialHistory();
               }}>
               <WalletListHeaderLabel isActive={isActivityTab}>
-                <H5>{t('Activity')}</H5>
+                {t('Activity')}
               </WalletListHeaderLabel>
             </WalletListHeader>
           </HeaderListContainer>

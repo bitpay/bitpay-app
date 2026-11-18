@@ -4322,7 +4322,7 @@ const BuyAndSellRoot = ({
               <SpinnerContainer
                 isSmallScreen={_isSmallScreen}
                 addMarginBottom={!!(context === 'sellCrypto' && fromWallet)}>
-                <ActivityIndicator color={SlateDark} />
+                <ActivityIndicator color={theme.colors.description} />
               </SpinnerContainer>
             ) : (
               <>

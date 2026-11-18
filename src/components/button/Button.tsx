@@ -26,6 +26,7 @@ import {
   SlateDark,
   Success,
   White,
+  Caution70,
 } from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {ActiveOpacity} from '../styled/Containers';
@@ -273,7 +274,7 @@ const getButtonTextColor = ({
         ? Caution50
         : Caution60
       : theme.dark
-      ? Caution60
+      ? Caution70
       : White;
   }
   return White;
@@ -460,7 +461,7 @@ const getPillTextColor = ({
         ? Caution50
         : Caution60
       : theme.dark
-      ? Caution60
+      ? Caution70
       : White;
   }
   return theme?.dark ? White : Action;

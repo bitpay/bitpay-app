@@ -6,11 +6,18 @@ import {useTheme} from '../../../../../contexts';
 import {Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
+  Caution,
+  Caution25,
   Slate30,
   SlateDark,
   LightBlack,
   LinkBlue,
   LightBlue,
+  Success25,
+  SuccessDark,
+  Warning25,
+  WarningDark,
+  White,
 } from '../../../../../styles/colors';
 import {
   BillPayAccount,
@@ -33,17 +40,17 @@ interface BillStatusStyleProps {
 
 const statusFields = {
   dueNow: {
-    backgroundColor: '#ffd8de',
-    color: '#b51b16',
+    backgroundColor: Caution25,
+    color: Caution,
     text: () => t('Due in 1 day'),
   },
   dueSoon: {
-    backgroundColor: '#FEECD4',
-    color: '#A05708',
+    backgroundColor: Warning25,
+    color: WarningDark,
     text: () => t('Due in 1 day'),
   },
   dueLater: {
-    backgroundColor: '#ffffff',
+    backgroundColor: White,
     color: SlateDark,
     text: () => t('Due in 15 days'),
     darkTheme: {
@@ -52,33 +59,33 @@ const statusFields = {
     },
   },
   failed: {
-    backgroundColor: '#ffd8de',
-    color: '#b51b16',
+    backgroundColor: Caution25,
+    color: Caution,
     text: () => t('Failed'),
   },
   canceled: {
-    backgroundColor: '#ffd8de',
-    color: '#b51b16',
+    backgroundColor: Caution25,
+    color: Caution,
     text: () => t('Canceled'),
   },
   reversed: {
-    backgroundColor: '#ffd8de',
-    color: '#b51b16',
+    backgroundColor: Caution25,
+    color: Caution,
     text: () => t('Failed'),
   },
   reversalRequired: {
-    backgroundColor: '#ffd8de',
-    color: '#b51b16',
+    backgroundColor: Caution25,
+    color: Caution,
     text: () => t('Failed'),
   },
   reversalProcessing: {
-    backgroundColor: '#ffd8de',
-    color: '#b51b16',
+    backgroundColor: Caution25,
+    color: Caution,
     text: () => t('Failed'),
   },
   complete: {
-    backgroundColor: '#CBF3E8',
-    color: '#0B754A',
+    backgroundColor: Success25,
+    color: SuccessDark,
     text: () => t('Completed'),
     darkTheme: {
       backgroundColor: '#076A46',
@@ -86,8 +93,8 @@ const statusFields = {
     },
   },
   sent: {
-    backgroundColor: '#CBF3E8',
-    color: '#0B754A',
+    backgroundColor: Success25,
+    color: SuccessDark,
     text: () => t('Sent'),
     darkTheme: {
       backgroundColor: '#076A46',
