@@ -1,7 +1,14 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useMemo, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {useTheme} from '../../../contexts';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
@@ -18,6 +25,7 @@ import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../components/styled/Text';
 import TabContainer from '../../tabs/TabContainer';
+import useFloatingTabBarInset from '../useFloatingTabBarInset';
 import {useAppSelector} from '../../../utils/hooks';
 
 export type SettingsListType =
@@ -36,6 +44,8 @@ export type SettingsHomeProps = NativeStackScreenProps<
   SettingsScreens.SETTINGS_HOME
 >;
 
+const ANDROID_BOTTOM_PADDING = 100;
+
 const styles = StyleSheet.create({
   settingsContainer: {
     flex: 1,
@@ -47,9 +57,6 @@ const styles = StyleSheet.create({
   settingsHomeContainer: {
     flex: 1,
     paddingVertical: 10,
-  },
-  settingsHomeContent: {
-    paddingBottom: 100,
   },
   bitPayIdSettingsLink: {
     height: 'auto',
@@ -143,6 +150,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   );
   const hasContacts = useAppSelector(({CONTACT}) => CONTACT.list.length > 0);
   const listRef = useRef<ScrollView>(null);
+  const tabBarInset = useFloatingTabBarInset();
   useScrollToTop(listRef);
 
   const memoizedSettingsConfigs = useMemo<
@@ -259,7 +267,11 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
       <SettingsHomeContainer>
         <ScrollView
           ref={listRef}
-          contentContainerStyle={styles.settingsHomeContent}>
+          contentContainerStyle={{
+            paddingBottom:
+              Platform.OS === 'ios' ? tabBarInset : ANDROID_BOTTOM_PADDING,
+          }}
+          scrollIndicatorInsets={{bottom: tabBarInset}}>
           {listHeader}
           {memoizedSettingsConfigs.map(renderSettingItem)}
         </ScrollView>
