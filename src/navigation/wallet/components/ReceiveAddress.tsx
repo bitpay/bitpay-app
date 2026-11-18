@@ -66,13 +66,22 @@ import {
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
+const QR_BACKGROUND_SIZE = isNarrowHeight ? 190 : 225;
+const COPY_ROW_MIN_HEIGHT = 55;
+const QR_CONTAINER_MARGIN = 15;
+// Placeholder (loading/error) must be as tall as the loaded address + QR block,
+// otherwise the dynamically-sized bottom sheet resizes (re-animates) once the
+// address arrives.
+const ADDRESS_BLOCK_HEIGHT =
+  COPY_ROW_MIN_HEIGHT + QR_BACKGROUND_SIZE + QR_CONTAINER_MARGIN * 2;
+
 const styles = StyleSheet.create({
   copyToClipboard: {
     borderWidth: 1,
     borderColor: '#9ba3ae',
     borderRadius: 4,
     paddingHorizontal: 10,
-    minHeight: 55,
+    minHeight: COPY_ROW_MIN_HEIGHT,
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -89,18 +98,18 @@ const styles = StyleSheet.create({
   },
   qrCodeContainer: {
     alignItems: 'center',
-    margin: 15,
+    margin: QR_CONTAINER_MARGIN,
   },
   qrCodeBackground: {
     backgroundColor: White,
-    width: isNarrowHeight ? 190 : 225,
-    height: isNarrowHeight ? 190 : 225,
+    width: QR_BACKGROUND_SIZE,
+    height: QR_BACKGROUND_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
   },
   loadingContainer: {
-    minHeight: 300,
+    height: ADDRESS_BLOCK_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -162,7 +171,12 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   const [bchAddress, setBchAddress] = useState('');
   const [protocolPrefix, setProtocolPrefix] = useState('');
   const [wasInit, setWasInit] = useState(false);
-  const [singleAddress, setSingleAddress] = useState(false);
+  // Seed from the stored wallet status so the UTXO header is not rendered and
+  // then removed once getStatus resolves, which resizes the sheet and
+  // re-animates it. While unknown (undefined) the header stays hidden.
+  const [singleAddress, setSingleAddress] = useState<boolean | undefined>(
+    wallet?.singleAddress,
+  );
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -331,7 +345,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
           styles.receiveAddressContainer,
           {backgroundColor: theme.dark ? LightBlack : White},
         ]}>
-        {!singleAddress && isUtxo ? (
+        {singleAddress === false && isUtxo ? (
           <ReceiveAddressHeader
             onPressRefresh={() => createAddress(true)}
             contextHandlers={headerContextHandlers}
