@@ -96,9 +96,16 @@ const AmountScreen: React.FC<
   NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
-  const [buttonState, setButtonState] = useState<ButtonState>();
+  const [buttonState, setButtonStateValue] = useState<ButtonState>();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [isSendMax, setIsSendMax] = useState(false);
+  // A failed submit also clears send-max, so the button is usable again.
+  const setButtonState = useCallback((state: ButtonState) => {
+    setButtonStateValue(state);
+    if (state === 'failed') {
+      setIsSendMax(false);
+    }
+  }, []);
 
   const {
     wallet,
@@ -122,12 +129,6 @@ const AmountScreen: React.FC<
   useLayoutEffect(() => {
     onSendMaxPressedRef.current = onSendMaxPressed;
   });
-
-  useEffect(() => {
-    if (buttonState === 'failed') {
-      setIsSendMax(false);
-    }
-  }, [buttonState]);
 
   useEffect(
     () => navigation.addListener('focus', () => setIsSendMax(false)),

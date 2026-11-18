@@ -1,4 +1,11 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import {
   RouteProp,
@@ -90,7 +97,9 @@ const GlobalSendTo = () => {
   };
 
   const goToRecipientRef = useRef(goToRecipient);
-  goToRecipientRef.current = goToRecipient;
+  useLayoutEffect(() => {
+    goToRecipientRef.current = goToRecipient;
+  });
 
   const debouncedValidateSearchInput = useDebouncedSendToValidation(text => {
     const data = text.trim();
