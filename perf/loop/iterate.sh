@@ -42,6 +42,14 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+# One accepted baseline per scenario set: startup-load keeps accepted.json,
+# anything else gets accepted-<scenarios>.json.
+if [ "$SCENARIOS" = startup-load ]; then
+  ACCEPTED="$STATE/accepted.json"
+else
+  ACCEPTED="$STATE/accepted-${SCENARIOS//,/+}.json"
+fi
+
 cd "$ROOT"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 SHA="$(git rev-parse --short HEAD)$(git diff --quiet HEAD -- . ':!perf/loop' || echo '-dirty')"
@@ -67,8 +75,8 @@ if [ $RUN_EXIT -ne 0 ]; then
   exit 1
 fi
 
-if [ -f "$STATE/accepted.json" ]; then
-  node "$ROOT/perf/loop/compare.js" "$STATE/accepted.json" "$STATE/run-$STAMP-$SHA.json" \
+if [ -f "$ACCEPTED" ]; then
+  node "$ROOT/perf/loop/compare.js" "$ACCEPTED" "$STATE/run-$STAMP-$SHA.json" \
     ${TARGET:+--target "$TARGET"}
   VERDICT=$?
 else
@@ -78,8 +86,8 @@ else
 fi
 
 if [ "$ACCEPT" = 1 ]; then
-  cp "$STATE/run-$STAMP-$SHA.json" "$STATE/accepted.json"
-  echo "$STAMP $SHA" >> "$STATE/accepted.log"
+  cp "$STATE/run-$STAMP-$SHA.json" "$ACCEPTED"
+  echo "$STAMP $SHA $(basename "$ACCEPTED")" >> "$STATE/accepted.log"
   echo "▸ accepted run-$STAMP-$SHA.json"
 fi
 

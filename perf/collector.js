@@ -347,7 +347,71 @@ function bucketModulesByPhase(startupPayload, mods, moduleMap) {
   );
 }
 
+/**
+ * What one interaction flow loaded, from the app's post-settle 'activity'
+ * snapshots (PerfMonitor.flushActivity): the first snapshot of the iteration
+ * (taken while idle, before the flow starts) against the last.
+ */
+function extractActivity(payloads) {
+  const snaps = (payloads || [])
+    .filter(p => p.kind === 'activity')
+    .sort((a, b) => a.now - b.now);
+  if (snaps.length < 2) {
+    return {metrics: {}, profile: null};
+  }
+  const first = snaps[0];
+  const last = snaps[snaps.length - 1];
+  const reqs = snaps
+    .slice(1)
+    .flatMap(p => p.requests || [])
+    .filter(r => r.startMs >= first.now);
+  const round = v => Number(v.toFixed(1));
+  const metrics = {
+    requests_flow: last.requestsStarted - first.requestsStarted,
+    request_kb_flow: round(reqs.reduce((s, r) => s + (r.bytes || 0), 0) / 1024),
+    actions_flow: last.actionTotal - first.actionTotal,
+    action_ms_flow: round(last.actionMs - first.actionMs),
+  };
+  if (typeof last.modules === 'number' && typeof first.modules === 'number') {
+    metrics.modules_flow = last.modules - first.modules;
+  }
+  const heaps = snaps.map(p => p.heapMb).filter(Number.isFinite);
+  if (heaps.length) {
+    metrics.js_heap_mb_peak_flow = round(Math.max(...heaps));
+  }
+
+  const endpoints = {};
+  reqs.forEach(r => {
+    const key = `${r.method} ${r.url}`;
+    const e =
+      endpoints[key] ||
+      (endpoints[key] = {count: 0, totalMs: 0, bytes: 0, failed: 0});
+    e.count++;
+    e.totalMs += r.durationMs || 0;
+    e.bytes += r.bytes || 0;
+    if (!r.status || r.status >= 400) {
+      e.failed++;
+    }
+  });
+  // Per-type action deltas: the latest full map against the first one.
+  const firstActions = (snaps.find(p => p.actions) || {}).actions || {};
+  const lastActions =
+    ([...snaps].reverse().find(p => p.actions) || {}).actions || {};
+  const actions = {};
+  Object.entries(lastActions).forEach(([type, a]) => {
+    const before = firstActions[type] || {count: 0, ms: 0};
+    if (a.count > before.count) {
+      actions[type] = {
+        count: a.count - before.count,
+        ms: round(a.ms - before.ms),
+      };
+    }
+  });
+  return {metrics, profile: {requests: endpoints, actions}};
+}
+
 module.exports = {
+  extractActivity,
   collect,
   extractStartupTimeline,
   extractTransitions,
