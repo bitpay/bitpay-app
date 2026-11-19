@@ -414,6 +414,48 @@ export const getTransakHeadlessRedirectResult = (
   }
 };
 
+export const TRANSAK_HEADLESS_TERMS_IDS = [
+  'TRANSAK_TERMS_OF_SERVICE',
+  'COINME_USER_AGREEMENT',
+  'US_TERMS_RETURNING',
+  'ZEROHASH_USER_AGREEMENT',
+  'MICA_EEA_BUY',
+  'MICA_EEA_SELL',
+  'GB_INVESTMENT_RISK_WARNING',
+] as const;
+
+export const getTransakHeadlessUnsupportedTermsIds = (
+  termsIds: string[] | undefined,
+): string[] =>
+  (termsIds ?? []).filter(
+    termsId =>
+      !(TRANSAK_HEADLESS_TERMS_IDS as readonly string[]).includes(termsId),
+  );
+
+export const getTransakHeadlessConfirmButtonKind = (
+  termsIds: string[] | undefined,
+): 'agreeAndConfirm' | 'confirm' | undefined => {
+  const ids = termsIds ?? [];
+  if (
+    ids.includes('TRANSAK_TERMS_OF_SERVICE') ||
+    ids.includes('COINME_USER_AGREEMENT')
+  ) {
+    return 'agreeAndConfirm';
+  }
+  if (
+    ids.includes('US_TERMS_RETURNING') ||
+    ids.includes('ZEROHASH_USER_AGREEMENT')
+  ) {
+    return 'confirm';
+  }
+  return undefined;
+};
+
+export const isSameTransakHeadlessTermsIds = (
+  a: string[] | undefined,
+  b: string[] | undefined,
+): boolean => (a ?? []).join(',') === (b ?? []).join(',');
+
 export const getTransakCoinFormat = (coin: string): string => {
   coin = externalServicesCoinMapping(coin);
   let formattedCoin: string = `${coin.toUpperCase()}`;
