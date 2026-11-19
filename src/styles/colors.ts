@@ -3,8 +3,11 @@
  *
  * - A step is a lightness level (OKLCH L), the same in every family:
  *   50 .97 · 100 .93 · 200 .87 · 300 .80 · 400 .72 · 500 .63 · 600 .55 ·
- *   700 .47 · 800 .38 · 900 .28 (±.04). So Green500 and Red500 look equally
- *   light, and contrast is predictable by step. colors.spec.ts checks this.
+ *   700 .47 · 800 .38 · 900 .28 (±.04), and each step is darker than the one
+ *   before. So Green500 and Red500 look equally light and contrast is similar
+ *   by step; exact ratios are checked per role in colorRoles.spec.ts. The
+ *   700 step varies most (Blue .45 to Green and Red .50) because existing
+ *   colors sit there. colors.spec.ts checks this.
  * - Tint steps (50, 100, 200 and the dark tint 900) also share one chroma
  *   (OKLCH C, how saturated) across families: 50 .014 · 100 .035 · 200 .063 ·
  *   900 .065. So a green and a red banner look equally strong. The middle
@@ -18,14 +21,15 @@
  *   in-between steps (450, 950).
  * - Components use the roles in src/themes/colorRoles.ts, not these directly.
  *
- * Each family has one hue, taken from its main shade (Action, SuccessDark,
- * WarningDark, Caution). Existing colors that sit on a step keep their exact
- * value there, and their older names further down are aliases
- * (Action = Blue700). Older colors that don't fit the ladder keep their values
- * for now: BitPay, Caution60, Caution70, CautionBright, Warning, LightBlue and
- * Midnight (more saturated than the shared tint chroma), and the light tints
- * Success25/50, Success, Caution25/50 and Warning25/75 (a different hue).
- * Both kinds will be retired as screens move to the roles.
+ * Each family keeps one hue, measured from its 700 shade (Action, SuccessDark,
+ * Caution; Amber700 shares WarningDark's hue). Existing colors that sit on a
+ * step keep their exact value there, and their older names further down are
+ * aliases (Action = Blue700). Older colors that don't fit the ladder keep
+ * their values for now: BitPay, NotificationPrimary, ProgressBlue, Caution60,
+ * Caution70, CautionBright, Warning, LightBlue and Midnight (more saturated
+ * than the shared tint chroma), and Success, Success25/50, Caution25/50 and
+ * Warning25/75 (a different hue). Both kinds will be retired as screens move
+ * to the roles.
  */
 
 /* Blue */

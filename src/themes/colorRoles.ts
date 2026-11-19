@@ -51,12 +51,19 @@ import {
  * - filled shapes with a white symbol or thumb (status icons, switch on): 700,
  *   dark 500
  * - buttons with white text: 700 in both modes
- * - soft danger button in dark mode: Red300 fill, Red800 text
+ * - soft danger button in dark mode: Red300 fill, Red800 text. Icons on it
+ *   use textOnDanger too (iconOnFill, White, is 1.95:1 there).
+ * - exception, Home quick actions: Blue700 circles in light mode and Blue900
+ *   (a dark tint) in dark mode, with a White icon (8.1:1 and 14.7:1); the label
+ *   under each circle is Blue900 in light mode.
  *
  * colorRoles.spec.ts checks the pairs listed there: text 4.5:1 and icons,
  * outlines, controls and spinners 3:1 on the backgrounds each one is used on.
- * Not checked: disabled and skeleton colors (exempt) and placeholders on
- * bgSubtle (light text fields sit on white).
+ * Not checked: disabled and skeleton colors (exempt); placeholders off white
+ * (light textPlaceholder is 4.53:1 on white but about 4.2-4.4:1 on tinted
+ * field fills, so fields that use it need a white fill); and switches and
+ * input borders on bgSubtleOnSheet / bgPressed (dark controlOff and
+ * borderInput are 2.82:1 on Graphite).
  *
  * This file only depends on colors.ts, so code outside React components
  * (helpers that take an isDarkMode flag) can use the roles too.

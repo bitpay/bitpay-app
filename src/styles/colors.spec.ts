@@ -22,6 +22,8 @@ const STEPS: [number, number][] = [
   [900, 0.28],
 ];
 const LIGHTNESS_TOLERANCE = 0.04;
+// Smallest lightness drop between neighboring steps.
+const MIN_STEP_GAP = 0.03;
 // Every shade within this many degrees of the family's 700 hue.
 const HUE_TOLERANCE = 10;
 
@@ -55,6 +57,16 @@ describe.each(FAMILIES)('%s ramp', family => {
     expect(Math.abs(lightness - target)).toBeLessThanOrEqual(
       LIGHTNESS_TOLERANCE,
     );
+  });
+
+  // The ±.04 band is wide, so also check the steps never overlap: each one is
+  // clearly darker than the one before.
+  it('each step is darker than the one before', () => {
+    for (let i = 1; i < STEPS.length; i++) {
+      const lighter = oklch(shade(family, STEPS[i - 1][0])).lightness;
+      const darker = oklch(shade(family, STEPS[i][0])).lightness;
+      expect(lighter - darker).toBeGreaterThanOrEqual(MIN_STEP_GAP);
+    }
   });
 
   it.each(TINT_CHROMA)('tint step %d is at chroma %s', (step, target) => {

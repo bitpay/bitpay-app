@@ -25,7 +25,7 @@ const RULES: [Role, Role[], number][] = [
   ['textWarning', NEUTRAL, 4.5],
   ['textGain', NEUTRAL, 4.5],
   ['textLoss', NEUTRAL, 4.5],
-  // Text fields sit on white in light mode, so placeholders are checked there.
+  // Placeholders are checked on white only (see the note in colorRoles.ts).
   ['textPlaceholder', ['bgScreen', 'bgCard', 'bgSheet'], 4.5],
   ['textQuickActionLabel', ['bgScreen'], 4.5],
   ['textOnHighlight', ['bgHighlight'], 4.5],
@@ -59,7 +59,8 @@ const RULES: [Role, Role[], number][] = [
   // Pressed rows keep their text readable.
   ['textPrimary', ['bgPressed'], 4.5],
   ['textSecondary', ['bgPressed'], 4.5],
-  // Switches: both states visible on every surface they sit on.
+  // Switches: both states visible on screen, card and sheet (not yet on
+  // bgSubtleOnSheet / bgPressed; see the note in colorRoles.ts).
   ['controlOn', ['bgScreen', 'bgCard', 'bgSheet'], 3],
   ['controlOff', ['bgScreen', 'bgCard', 'bgSheet'], 3],
   ['spinner', ['bgScreen', 'bgCard', 'bgSheet'], 3],
