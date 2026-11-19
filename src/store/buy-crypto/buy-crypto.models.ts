@@ -1195,6 +1195,7 @@ export interface TransakHeadlessQuoteData {
   feeBreakdown?: {name: string; value: number; id: string}[];
   nonce?: number;
   slippage?: number;
+  termsIds?: string[];
 }
 
 export type TransakHeadlessKycStatus =
@@ -1204,9 +1205,20 @@ export type TransakHeadlessKycStatus =
   | 'ADDITIONAL_FORMS_REQUIRED';
 
 export interface TransakHeadlessKycRequirementData {
-  isAllowedToPlaceOrder: boolean;
-  status: TransakHeadlessKycStatus | string;
+  isAllowedToPlaceOrder?: boolean;
+  status?: TransakHeadlessKycStatus | string;
   kycType?: 'SIMPLE' | 'STANDARD' | 'ENHANCED' | string;
+  kyc?: {
+    status?: TransakHeadlessKycStatus | string;
+    type?: 'SIMPLE' | 'STANDARD' | 'ENHANCED' | string;
+  };
+}
+
+export interface TransakHeadlessUserLimitsData {
+  limits?: {[days: string]: number};
+  spent?: {[days: string]: number};
+  remaining?: {[days: string]: number};
+  exceeded?: {[days: string]: boolean};
 }
 
 export interface TransakHeadlessSavedCard {

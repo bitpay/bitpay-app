@@ -132,6 +132,7 @@ import {
   TransakHeadlessUserAuthData,
   TransakPaymentData,
   TransakSignedUrlData,
+  TransakStatusKey,
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {cloneDeep} from '../../../utils/object';
 import {prepareTransakHeadlessCheckout} from '../../../store/buy-crypto/effects/transak/transak-headless';
@@ -708,6 +709,9 @@ const BuyAndSellRoot = ({
     useAppSelector(
       ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transakHeadlessUser?.[transakEnv],
     );
+  const transakPaymentRequests = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.transak,
+  );
   const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.opts,
   );
@@ -3642,10 +3646,32 @@ const BuyAndSellRoot = ({
     const startCheckout = async (
       userAuth: TransakHeadlessUserAuthData,
     ): Promise<'started' | 'unauthorized' | 'unavailable'> => {
+      const ownHeadlessOrders = Object.values(transakPaymentRequests).filter(
+        pr => pr.is_headless && pr.order_id,
+      );
       const preparation = await prepareTransakHeadlessCheckout(
         wallet,
         quoteRequestData,
         userAuth.accessToken,
+        {
+          ownOrderIds: ownHeadlessOrders.map(pr => pr.order_id as string),
+          onOwnOrderCancelled: (orderId: string, status: TransakStatusKey) => {
+            const cancelledOrder = ownHeadlessOrders.find(
+              pr => pr.order_id === orderId,
+            );
+            if (cancelledOrder) {
+              dispatch(
+                BuyCryptoActions.updatePaymentRequestTransak({
+                  transakIncomingData: {
+                    transakExternalId: cancelledOrder.external_id,
+                    status,
+                    order_id: orderId,
+                  },
+                }),
+              );
+            }
+          },
+        },
       );
       if (preparation.status !== 'ready') {
         logger.debug(

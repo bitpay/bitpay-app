@@ -8,8 +8,11 @@ import {
   TransakHeadlessQuoteData,
   TransakHeadlessSavedCard,
   TransakHeadlessSendOtpData,
+  TransakHeadlessUserLimitsData,
   TransakHeadlessVerifyOtpData,
+  TransakStatusKey,
 } from '../../buy-crypto.models';
+import {getTransakHeadlessUnsupportedTermsIds} from '../../../../navigation/services/buy-crypto/utils/transak-utils';
 
 // Transak's Whitelabel API answers errors with a body instead of a failed
 // request, and BWS passes it through, so it is turned into an error here.
@@ -37,6 +40,15 @@ export const TRANSAK_HEADLESS_ERROR_CODES = {
   KYC_NOT_APPROVED_FOR_TRANSACTION: 6012,
   LOCATION_DATA_REQUIRED: 6014,
 };
+
+export class TransakHeadlessUnavailableError extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'TransakHeadlessUnavailableError';
+  }
+}
+
+export const TRANSAK_HEADLESS_CANCEL_REASON = 'cancel';
 
 export const isTransakHeadlessUnauthorized = (err: unknown): boolean =>
   err instanceof TransakHeadlessError &&
@@ -80,7 +92,7 @@ export const transakHeadlessVerifyOtp = async (
 
 export const transakHeadlessGetQuote = async (
   wallet: Wallet,
-  requestData: TransakHeadlessGetQuoteRequestData,
+  requestData: TransakHeadlessGetQuoteRequestData & {userAccessToken: string},
 ): Promise<TransakHeadlessQuoteData> =>
   unwrap(await wallet.transakHeadlessGetQuote(requestData));
 
@@ -89,6 +101,38 @@ export const transakHeadlessGetKycRequirement = async (
   requestData: {env: TransakEnv; userAccessToken: string; quoteId: string},
 ): Promise<TransakHeadlessKycRequirementData> =>
   unwrap(await wallet.transakHeadlessGetKycRequirement(requestData));
+
+export const transakHeadlessGetUserLimits = async (
+  wallet: Wallet,
+  requestData: {
+    env: TransakEnv;
+    userAccessToken: string;
+    kycType: string;
+    fiatCurrency: string;
+  },
+): Promise<TransakHeadlessUserLimitsData> =>
+  unwrap(await wallet.transakHeadlessGetUserLimits(requestData));
+
+export const transakHeadlessGetActiveOrders = async (
+  wallet: Wallet,
+  requestData: {env: TransakEnv; userAccessToken: string},
+): Promise<TransakHeadlessOrderData[]> => {
+  const orders = unwrap<TransakHeadlessOrderData[]>(
+    await wallet.transakHeadlessGetActiveOrders(requestData),
+  );
+  return Array.isArray(orders) ? orders : [];
+};
+
+export const transakHeadlessCancelOrder = async (
+  wallet: Wallet,
+  requestData: {
+    env: TransakEnv;
+    userAccessToken: string;
+    orderId: string;
+    cancelReason: string;
+  },
+): Promise<TransakHeadlessOrderData> =>
+  unwrap(await wallet.transakHeadlessCancelOrder(requestData));
 
 export const transakHeadlessGetSavedCards = async (
   wallet: Wallet,
@@ -141,6 +185,65 @@ export const transakHeadlessGetOrderDetails = async (
 ): Promise<TransakHeadlessOrderData> =>
   unwrap(await wallet.transakHeadlessGetOrderDetails(requestData));
 
+export const getTransakHeadlessKycStatus = (
+  kyc: TransakHeadlessKycRequirementData | undefined,
+): string | undefined => kyc?.kyc?.status ?? kyc?.status;
+
+export const getTransakHeadlessKycType = (
+  kyc: TransakHeadlessKycRequirementData | undefined,
+): string | undefined => kyc?.kyc?.type ?? kyc?.kycType;
+
+export const isTransakHeadlessOverLimit = (
+  limits: TransakHeadlessUserLimitsData | undefined,
+  fiatAmount: number,
+): boolean =>
+  Object.values(limits?.exceeded ?? {}).some(exceeded => exceeded) ||
+  Object.values(limits?.remaining ?? {}).some(
+    remaining => typeof remaining === 'number' && remaining < fiatAmount,
+  );
+
+export const transakHeadlessGetOrderQuote = async (
+  wallet: Wallet,
+  quoteRequestData: TransakHeadlessGetQuoteRequestData,
+  userAccessToken: string,
+): Promise<{
+  quote: TransakHeadlessQuoteData;
+  kyc: TransakHeadlessKycRequirementData;
+}> => {
+  const quote = await transakHeadlessGetQuote(wallet, {
+    ...quoteRequestData,
+    userAccessToken,
+  });
+  if (!quote?.quoteId) {
+    throw new TransakHeadlessUnavailableError('quote: no quoteId');
+  }
+
+  const unsupportedTermsIds = getTransakHeadlessUnsupportedTermsIds(
+    quote.termsIds,
+  );
+  if (unsupportedTermsIds.length) {
+    throw new TransakHeadlessUnavailableError(
+      `terms: ${unsupportedTermsIds.join(', ')}`,
+    );
+  }
+
+  const kyc = await transakHeadlessGetKycRequirement(wallet, {
+    env: quoteRequestData.env,
+    userAccessToken,
+    quoteId: quote.quoteId,
+  });
+  const kycStatus = getTransakHeadlessKycStatus(kyc);
+  if (kycStatus !== 'APPROVED' || kyc?.isAllowedToPlaceOrder === false) {
+    throw new TransakHeadlessUnavailableError(
+      `kyc: ${kycStatus ?? 'unknown'} (${
+        getTransakHeadlessKycType(kyc) ?? '-'
+      })`,
+    );
+  }
+
+  return {quote, kyc};
+};
+
 export type TransakHeadlessPreparation =
   | {
       status: 'ready';
@@ -160,25 +263,64 @@ export const prepareTransakHeadlessCheckout = async (
   wallet: Wallet,
   quoteRequestData: TransakHeadlessGetQuoteRequestData,
   userAccessToken: string,
+  opts: {
+    ownOrderIds?: string[];
+    onOwnOrderCancelled?: (orderId: string, status: TransakStatusKey) => void;
+  } = {},
 ): Promise<TransakHeadlessPreparation> => {
   const env = quoteRequestData.env;
   try {
-    const quote = await transakHeadlessGetQuote(wallet, quoteRequestData);
-    if (!quote?.quoteId) {
-      return {status: 'unavailable', reason: 'quote: no quoteId'};
-    }
+    const {quote, kyc} = await transakHeadlessGetOrderQuote(
+      wallet,
+      quoteRequestData,
+      userAccessToken,
+    );
     const quoteFetchedAt = Date.now();
 
-    const kyc = await transakHeadlessGetKycRequirement(wallet, {
+    const kycType = getTransakHeadlessKycType(kyc);
+    if (kycType) {
+      try {
+        const limits = await transakHeadlessGetUserLimits(wallet, {
+          env,
+          userAccessToken,
+          kycType,
+          fiatCurrency: quoteRequestData.fiatCurrency,
+        });
+        if (isTransakHeadlessOverLimit(limits, quote.fiatAmount)) {
+          return {status: 'unavailable', reason: 'limits: exceeded'};
+        }
+      } catch (err) {
+        if (isTransakHeadlessUnauthorized(err)) {
+          throw err;
+        }
+      }
+    }
+
+    const activeOrders = await transakHeadlessGetActiveOrders(wallet, {
       env,
       userAccessToken,
-      quoteId: quote.quoteId,
     });
-    if (!kyc?.isAllowedToPlaceOrder) {
+    const ownOrderIds = opts.ownOrderIds ?? [];
+    const otherOrder = activeOrders.find(
+      order => !ownOrderIds.includes(order.orderId),
+    );
+    if (otherOrder) {
       return {
         status: 'unavailable',
-        reason: `kyc: ${kyc?.status ?? 'unknown'} (${kyc?.kycType ?? '-'})`,
+        reason: `active order: ${otherOrder.orderId}`,
       };
+    }
+    for (const order of activeOrders) {
+      const cancelled = await transakHeadlessCancelOrder(wallet, {
+        env,
+        userAccessToken,
+        orderId: order.orderId,
+        cancelReason: TRANSAK_HEADLESS_CANCEL_REASON,
+      });
+      opts.onOwnOrderCancelled?.(
+        order.orderId,
+        cancelled?.status ?? 'CANCELLED',
+      );
     }
 
     let savedCards: TransakHeadlessSavedCard[] = [];
@@ -198,6 +340,9 @@ export const prepareTransakHeadlessCheckout = async (
   } catch (err) {
     if (isTransakHeadlessUnauthorized(err)) {
       return {status: 'unauthorized'};
+    }
+    if (err instanceof TransakHeadlessUnavailableError) {
+      return {status: 'unavailable', reason: err.message};
     }
     const code =
       err instanceof TransakHeadlessError

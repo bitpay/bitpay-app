@@ -18,7 +18,7 @@ import {
 } from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import cloneDeep from 'lodash.clonedeep';
+import {cloneDeep} from '../../../utils/object';
 import {TransakCard, TransakCardRef} from '@transak/ui-components-rn';
 import {useTheme, usePaymentSent} from '../../../contexts';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
@@ -67,19 +67,24 @@ import {
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {
   isTransakHeadlessUnauthorized,
+  TRANSAK_HEADLESS_CANCEL_REASON,
   TransakHeadlessError,
+  transakHeadlessCancelOrder,
   transakHeadlessCreateCardSession,
   transakHeadlessCreateOrder,
   transakHeadlessGetOrderDetails,
-  transakHeadlessGetQuote,
+  transakHeadlessGetOrderQuote,
   TransakHeadlessPreparation,
 } from '../../../store/buy-crypto/effects/transak/transak-headless';
 import {
+  getTransakHeadlessConfirmButtonKind,
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
+  isSameTransakHeadlessTermsIds,
   transakEnv,
   transakHeadlessEnvironment,
 } from '../buy-crypto/utils/transak-utils';
+import TransakHeadlessDisclaimers from '../components/TransakHeadlessDisclaimers';
 import {PaymentMethod} from '../buy-crypto/constants/BuyCryptoConstants';
 import {CryptoOffer} from '../components/externalServicesOfferSelector';
 import {TransakSettingsProps} from '../../tabs/settings/external-services/screens/TransakSettings';
@@ -406,10 +411,11 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     if (Date.now() - quoteFetchedAtRef.current < QUOTE_MAX_AGE_MS) {
       return quote;
     }
-    const newQuote = await transakHeadlessGetQuote(wallet, quoteRequestData);
-    if (!newQuote?.quoteId) {
-      throw new Error('No quoteId returned');
-    }
+    const {quote: newQuote} = await transakHeadlessGetOrderQuote(
+      wallet,
+      quoteRequestData,
+      userAuth.accessToken,
+    );
     quoteFetchedAtRef.current = Date.now();
     if (mountedRef.current) {
       setQuote(newQuote);
@@ -525,6 +531,27 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     );
   };
 
+  const cancelAbandonedOrder = async (
+    orderId: string,
+  ): Promise<TransakStatusKey | undefined> => {
+    try {
+      const cancelled = await transakHeadlessCancelOrder(wallet, {
+        env: transakEnv,
+        userAccessToken: userAuth.accessToken,
+        orderId,
+        cancelReason: TRANSAK_HEADLESS_CANCEL_REASON,
+      });
+      return cancelled?.status ?? 'CANCELLED';
+    } catch (err) {
+      logger.warn(
+        `[TransakHeadlessCheckout] could not cancel order ${orderId}: ${getErrorString(
+          err,
+        )}`,
+      );
+      return undefined;
+    }
+  };
+
   const finalize = async (
     result: 'success' | 'failure' | 'cancelled' | 'unconfirmed',
   ) => {
@@ -554,6 +581,21 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       );
     }
 
+    // Closing the 3DS page after paying, but before Transak redirected, still
+    // leaves a paid order behind.
+    const paid =
+      !FINAL_FAILED_STATUSES.includes(status) &&
+      (result === 'success' ||
+        (result === 'cancelled' && status !== 'AWAITING_PAYMENT_FROM_USER'));
+
+    if (
+      !paid &&
+      result !== 'unconfirmed' &&
+      status === 'AWAITING_PAYMENT_FROM_USER'
+    ) {
+      status = (await cancelAbandonedOrder(order.orderId)) ?? status;
+    }
+
     dispatch(
       BuyCryptoActions.updatePaymentRequestTransak({
         transakIncomingData: {
@@ -568,13 +610,6 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       goToTransakSettings(status);
       return;
     }
-
-    // Closing the 3DS page after paying, but before Transak redirected, still
-    // leaves a paid order behind.
-    const paid =
-      !FINAL_FAILED_STATUSES.includes(status) &&
-      (result === 'success' ||
-        (result === 'cancelled' && status !== 'AWAITING_PAYMENT_FROM_USER'));
 
     if (paid) {
       const cryptoAmount = order.cryptoAmount ?? quote.cryptoAmount;
@@ -629,6 +664,20 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     ) {
       await sleep(ORDER_POLL_INTERVAL_MS);
       if (!mountedRef.current) {
+        if (status === 'AWAITING_PAYMENT_FROM_USER') {
+          const cancelledStatus = await cancelAbandonedOrder(order.orderId);
+          if (cancelledStatus) {
+            dispatch(
+              BuyCryptoActions.updatePaymentRequestTransak({
+                transakIncomingData: {
+                  transakExternalId,
+                  status: cancelledStatus,
+                  order_id: order.orderId,
+                },
+              }),
+            );
+          }
+        }
         return;
       }
       try {
@@ -660,6 +709,10 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     setButtonState('loading');
     try {
       const freshQuote = await getFreshQuote();
+      if (!isSameTransakHeadlessTermsIds(freshQuote.termsIds, quote.termsIds)) {
+        setButtonState(undefined);
+        return;
+      }
       const order = await transakHeadlessCreateOrder(wallet, {
         env: transakEnv,
         userAccessToken: userAuth.accessToken,
@@ -754,12 +807,18 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     !!buttonState ||
     (isNewCard ? !cardFormReady || !cardValid : !selectedCardId);
 
+  const confirmButtonKind = getTransakHeadlessConfirmButtonKind(quote.termsIds);
+
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.container}>
         <ScrollView
           keyboardShouldPersistTaps={'handled'}
           automaticallyAdjustKeyboardInsets={true}>
+          <TransakHeadlessDisclaimers
+            termsIds={quote.termsIds}
+            placement={'banner'}
+          />
           <View style={styles.headerContainer}>
             <View style={styles.iconRow}>
               <CurrencyImage
@@ -903,13 +962,21 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
         </ScrollView>
 
         <View style={styles.bottomSection}>
+          <TransakHeadlessDisclaimers
+            termsIds={quote.termsIds}
+            placement={'aboveButton'}
+          />
           <Button
             onPress={onPressBuy}
             disabled={buyDisabled}
             state={buttonState}
             borderRadius={100}
             height={50}>
-            {t('Buy')}
+            {confirmButtonKind === 'agreeAndConfirm'
+              ? t('Agree and Confirm order')
+              : confirmButtonKind === 'confirm'
+              ? t('Confirm order')
+              : t('Buy')}
           </Button>
           <View style={styles.poweredByContainer}>
             <ThemedText secondary style={styles.poweredByText}>
