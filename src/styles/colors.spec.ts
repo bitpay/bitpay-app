@@ -2,9 +2,9 @@ import * as colors from './colors';
 import {contrast, oklch} from './colorTestUtils';
 
 // Checks the color ramps described at the top of colors.ts: every step has
-// the same lightness in every family, each family keeps one hue, and every
-// scenario rule passes for every family. A new family or a changed shade has
-// to pass these too.
+// the same lightness in every family, tint steps share one chroma, each
+// family keeps one hue, and every scenario rule passes for every family. A
+// new family or a changed shade has to pass these too.
 
 const FAMILIES = ['Blue', 'Green', 'Amber', 'Red'] as const;
 
@@ -24,6 +24,16 @@ const STEPS: [number, number][] = [
 const LIGHTNESS_TOLERANCE = 0.04;
 // Every shade within this many degrees of the family's 700 hue.
 const HUE_TOLERANCE = 10;
+
+// Tint steps share one chroma (saturation) across families.
+// Step -> target OKLCH chroma.
+const TINT_CHROMA: [number, number][] = [
+  [50, 0.014],
+  [100, 0.035],
+  [200, 0.063],
+  [900, 0.065],
+];
+const CHROMA_TOLERANCE = 0.003;
 
 const palette = colors as unknown as Record<string, string>;
 const shade = (family: string, step: number): string => {
@@ -45,6 +55,11 @@ describe.each(FAMILIES)('%s ramp', family => {
     expect(Math.abs(lightness - target)).toBeLessThanOrEqual(
       LIGHTNESS_TOLERANCE,
     );
+  });
+
+  it.each(TINT_CHROMA)('tint step %d is at chroma %s', (step, target) => {
+    const {chroma} = oklch(shade(family, step));
+    expect(Math.abs(chroma - target)).toBeLessThanOrEqual(CHROMA_TOLERANCE);
   });
 
   it.each(STEPS)('step %d keeps the family hue', step => {

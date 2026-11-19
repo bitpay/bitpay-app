@@ -5,6 +5,11 @@
  *   50 .97 · 100 .93 · 200 .87 · 300 .80 · 400 .72 · 500 .63 · 600 .55 ·
  *   700 .47 · 800 .38 · 900 .28 (±.04). So Green500 and Red500 look equally
  *   light, and contrast is predictable by step. colors.spec.ts checks this.
+ * - Tint steps (50, 100, 200 and the dark tint 900) also share one chroma
+ *   (OKLCH C, how saturated) across families: 50 .014 · 100 .035 · 200 .063 ·
+ *   900 .065. So a green and a red banner look equally strong. The middle
+ *   steps keep each family's own chroma: screens can't show green or amber as
+ *   saturated as blue or red at the same lightness.
  * - Each scenario uses the same step in every family (see colorRoles.ts):
  *   tint background 100 / dark 900, colored text and outlines 700 / dark 400,
  *   status circles 700 / dark 500.
@@ -17,61 +22,62 @@
  * WarningDark, Caution). Existing colors that sit on a step keep their exact
  * value there, and their older names further down are aliases
  * (Action = Blue700). Older colors that don't fit the ladder keep their values
- * for now: BitPay, Caution60, Caution70, CautionBright, Warning, and the light
- * tints Success25/50, Success, Caution25/50 and Warning25/75 (a different hue).
+ * for now: BitPay, Caution60, Caution70, CautionBright, Warning, LightBlue and
+ * Midnight (more saturated than the shared tint chroma), and the light tints
+ * Success25/50, Success, Caution25/50 and Warning25/75 (a different hue).
  * Both kinds will be retired as screens move to the roles.
  */
 
 /* Blue */
 export const Blue50 = '#F1F5FF';
-export const Blue100 = '#ECEFFD';
-export const Blue200 = '#C2D4FE';
+export const Blue100 = '#E1E7FF';
+export const Blue200 = '#C2D4FF';
 export const Blue300 = '#A1BCFF';
 export const Blue400 = '#7CA0FE';
 export const Blue500 = '#4989FF';
 export const Blue600 = '#3B62E8';
 export const Blue700 = '#2240C4';
 export const Blue800 = '#19329E';
-export const Blue900 = '#0C204E';
+export const Blue900 = '#182749';
 
 /* Green */
-export const Green50 = '#E6FBEE';
-export const Green100 = '#D1F1DD';
-export const Green200 = '#AAE4C2';
+export const Green50 = '#EEF8F2';
+export const Green100 = '#D5EFDF';
+export const Green200 = '#B2E1C5';
 export const Green300 = '#7ED3A4';
 export const Green400 = '#51BD86';
 export const Green500 = '#2FA06C';
 export const Green600 = '#038755';
 export const Green700 = '#0B754A';
 export const Green800 = '#015030';
-export const Green900 = '#02321D';
+export const Green900 = '#00321D';
 
 /* Amber */
-export const Amber50 = '#FFF3EA';
-export const Amber100 = '#FFE2CC';
-export const Amber200 = '#F6CAAA';
+export const Amber50 = '#FDF3EC';
+export const Amber100 = '#FAE3D1';
+export const Amber200 = '#F5CBAC';
 export const Amber300 = '#F0AD7A';
 export const Amber400 = '#DE9050';
 export const Amber500 = '#C07432';
 export const Amber600 = '#A05708';
 export const Amber700 = '#884800';
 export const Amber800 = '#653401';
-export const Amber900 = '#401F00';
+export const Amber900 = '#401F01';
 
 /* Red */
 export const Red50 = '#FEF2F0';
-export const Red100 = '#FEE0DB';
-export const Red200 = '#FFC4BB';
+export const Red100 = '#FFE0DB';
+export const Red200 = '#FBC5BD';
 export const Red300 = '#FFA194';
 export const Red400 = '#FF7363';
 export const Red500 = '#E44F41';
 export const Red600 = '#C83228';
 export const Red700 = '#B51B16';
 export const Red800 = '#810103';
-export const Red900 = '#530102';
+export const Red900 = '#441A16';
 
 /* Primary */
-export const Midnight = Blue900;
+export const Midnight = '#0C204E';
 export const BitPay = '#1A3B8B';
 export const Action = Blue700;
 
@@ -146,6 +152,6 @@ export const DisabledTextDark = '#656565';
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
 export const LinkBlue = Blue500;
-export const LightBlue = Blue100;
+export const LightBlue = '#ECEFFD';
 
 export const Overlay = '#111111';

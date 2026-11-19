@@ -23,8 +23,11 @@ export const contrast = (a: string, b: string): number => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-// OKLCH lightness (0-1) and hue (degrees), from Björn Ottosson's Oklab.
-export const oklch = (hex: string): {lightness: number; hue: number} => {
+// OKLCH lightness (0-1), chroma (saturation, 0 = grey) and hue (degrees),
+// from Björn Ottosson's Oklab.
+export const oklch = (
+  hex: string,
+): {lightness: number; chroma: number; hue: number} => {
   const [r, g, b] = linearChannels(hex);
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
@@ -33,5 +36,5 @@ export const oklch = (hex: string): {lightness: number; hue: number} => {
   const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
   const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
   const hue = ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360;
-  return {lightness, hue};
+  return {lightness, chroma: Math.hypot(A, B), hue};
 };
