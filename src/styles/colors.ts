@@ -88,6 +88,9 @@ export const Action = Blue700;
 /* Secondary */
 export const SlateDark = '#434D5A';
 export const LuckySevens = '#777777';
+// Dark-mode field borders and off switches: 3:1 or more on every dark
+// surface, including Graphite, with a white switch knob on it at 3.5:1.
+export const Pewter = '#888888';
 /**
  * Placeholder text on light backgrounds (4.53:1 on White).
  */

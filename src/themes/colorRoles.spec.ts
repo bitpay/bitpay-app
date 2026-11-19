@@ -34,7 +34,7 @@ const RULES: [Role, Role[], number][] = [
   ['textDanger', ['bgDangerTint'], 4.5],
   ['textSuccess', ['bgSuccessTint'], 4.5],
   ['textWarning', ['bgWarningTint'], 4.5],
-  ['borderInput', ['bgScreen', 'bgCard', 'bgSheet'], 3],
+  ['borderInput', [...SURFACES, 'bgPressed'], 3],
   ['borderFocus', ['bgScreen', 'bgCard', 'bgSheet'], 3],
   ['borderSelected', ['bgScreen', 'bgCard', 'bgSheet'], 3],
   ['borderDanger', ['bgScreen', 'bgCard', 'bgSheet'], 3],
@@ -59,10 +59,11 @@ const RULES: [Role, Role[], number][] = [
   // Pressed rows keep their text readable.
   ['textPrimary', ['bgPressed'], 4.5],
   ['textSecondary', ['bgPressed'], 4.5],
-  // Switches: both states visible on screen, card and sheet (not yet on
-  // bgSubtleOnSheet / bgPressed; see the note in colorRoles.ts).
-  ['controlOn', ['bgScreen', 'bgCard', 'bgSheet'], 3],
-  ['controlOff', ['bgScreen', 'bgCard', 'bgSheet'], 3],
+  // Switches: both states visible on every surface and pressed row, and the
+  // white knob visible on both tracks.
+  ['controlOn', [...SURFACES, 'bgPressed'], 3],
+  ['controlOff', [...SURFACES, 'bgPressed'], 3],
+  ['iconOnFill', ['controlOn', 'controlOff'], 3],
   ['spinner', ['bgScreen', 'bgCard', 'bgSheet'], 3],
 ];
 

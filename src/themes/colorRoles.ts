@@ -25,6 +25,7 @@ import {
   LuckySevens,
   NeutralSlate,
   Overlay,
+  Pewter,
   Placeholder,
   Red100,
   Red300,
@@ -61,9 +62,7 @@ import {
  * outlines, controls and spinners 3:1 on the backgrounds each one is used on.
  * Not checked: disabled and skeleton colors (exempt); placeholders off white
  * (light textPlaceholder is 4.53:1 on white but about 4.2-4.4:1 on tinted
- * field fills, so fields that use it need a white fill); and switches and
- * input borders on bgSubtleOnSheet / bgPressed (dark controlOff and
- * borderInput are 2.82:1 on Graphite).
+ * field fills, so fields that use it need a white fill).
  *
  * This file only depends on colors.ts, so code outside React components
  * (helpers that take an isDarkMode flag) can use the roles too.
@@ -213,12 +212,12 @@ export const DarkColorRoles: ColorRoles = {
   textOnSubtle: White,
   textDisabled: DisabledTextDark,
   borderDefault: SlateDark,
-  borderInput: LuckySevens,
+  borderInput: Pewter,
   borderFocus: Blue400,
   borderSelected: Blue400,
   borderDanger: Red400,
   controlOn: Blue500,
-  controlOff: LuckySevens,
+  controlOff: Pewter,
   iconDefault: Slate,
   iconAccent: Blue400,
   iconOnFill: White,
