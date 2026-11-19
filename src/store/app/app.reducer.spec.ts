@@ -549,6 +549,29 @@ describe('PIN modal and flags', () => {
     });
     expect(cleared.pinFailedAttempts).toBe(0);
   });
+
+  it('BACKUP_PASSWORD_BANNED_UNTIL sets backupPasswordBannedUntil', () => {
+    const ts = Date.now() + 60000;
+    const state = appReducer(freshState(), {
+      type: AppActionTypes.BACKUP_PASSWORD_BANNED_UNTIL,
+      payload: ts,
+    });
+    expect(state.backupPasswordBannedUntil).toBe(ts);
+  });
+
+  it('BACKUP_PASSWORD_FAILED_ATTEMPTS sets and resets backupPasswordFailedAttempts', () => {
+    expect(freshState().backupPasswordFailedAttempts).toBe(0);
+    const bumped = appReducer(freshState(), {
+      type: AppActionTypes.BACKUP_PASSWORD_FAILED_ATTEMPTS,
+      payload: 4,
+    });
+    expect(bumped.backupPasswordFailedAttempts).toBe(4);
+    const cleared = appReducer(bumped, {
+      type: AppActionTypes.BACKUP_PASSWORD_FAILED_ATTEMPTS,
+      payload: 0,
+    });
+    expect(cleared.backupPasswordFailedAttempts).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -3,6 +3,7 @@ import {
   Action,
   Air,
   Black,
+  Grey,
   LightBlack,
   LightBlue,
   LinkBlue,
@@ -23,6 +24,7 @@ export const useBackupColors = () => {
     dark,
     textPrimary: dark ? White : Black,
     surfaceMuted: dark ? LightBlack : NeutralSlate,
+    surfaceAccent: dark ? Midnight : LightBlue,
     surfaceSuccess: Success25,
     surfaceCard: dark ? LightBlack : White,
     surfacePill: dark ? Midnight : Air,
@@ -43,6 +45,7 @@ export const useBackupColors = () => {
     inputErrorBg: dark ? '#090304' : '#EF476F0A',
     borderCard: dark ? LightBlack : Slate30,
     gain: '#004D27',
+    progressTrack: Grey,
     keyCardBg: dark ? '#111111' : White,
     screenBg: dark ? Black : White,
   };

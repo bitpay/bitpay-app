@@ -431,6 +431,8 @@ export default () => {
     WalletScreens.WALLET_DETAILS,
     WalletScreens.VERIFY_PHRASE,
     WalletScreens.EXTENDED_PRIVATE_KEY,
+    WalletScreens.CLOUD_BACKUP_PASSWORD,
+    WalletScreens.RESTORE_FROM_CLOUD_PASSWORD,
     AuthScreens.LOGIN,
     AuthScreens.CREATE_ACCOUNT,
     AuthScreens.SECURE_ACCOUNT,

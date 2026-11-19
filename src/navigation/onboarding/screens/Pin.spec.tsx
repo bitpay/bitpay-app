@@ -26,28 +26,6 @@ jest.mock('../../../utils/hooks', () => ({
   useMount: jest.requireActual('../../../utils/hooks/useMount').useMount,
 }));
 
-jest.mock('../../../utils/helper-methods', () => ({
-  sleep: () => Promise.resolve(),
-}));
-
-jest.mock(
-  '../../tabs/settings/security/components/EnableLockWarningModal',
-  () => {
-    const ReactLib = require('react');
-    const {Pressable} = require('react-native');
-    return {
-      __esModule: true,
-      default: ({isVisible, onConfirm}: any) =>
-        isVisible
-          ? ReactLib.createElement(Pressable, {
-              testID: 'lock-warning-confirm',
-              onPress: onConfirm,
-            })
-          : null,
-    };
-  },
-);
-
 jest.mock('../../../store/app', () => ({
   AppActions: {
     biometricLockActive: (active: boolean) => ({
@@ -99,10 +77,7 @@ describe('Pin', () => {
       };
       const {getByTestId} = renderPin(navigation);
       await act(async () => undefined);
-      fireEvent.press(getByTestId('biometric-button'));
-      await act(async () =>
-        fireEvent.press(getByTestId('lock-warning-confirm')),
-      );
+      await act(async () => fireEvent.press(getByTestId('biometric-button')));
 
       expect(mockCheckFaceIdPermissions).toHaveBeenCalledTimes(1);
       expect(mockSimplePrompt).toHaveBeenCalledWith({
@@ -121,16 +96,16 @@ describe('Pin', () => {
     },
   );
 
-  it('does not turn on biometrics until the warning is confirmed', async () => {
+  it('prompts for biometrics when tapped before sensor detection finishes', async () => {
+    mockIsSensorAvailable.mockReturnValueOnce(new Promise(() => {}));
+    mockSimplePrompt.mockResolvedValue({success: true});
     const navigation = {replace: jest.fn(), isFocused: () => true};
     const {getByTestId} = renderPin(navigation);
-    await act(async () => undefined);
 
     await act(async () => fireEvent.press(getByTestId('biometric-button')));
 
-    expect(getByTestId('lock-warning-confirm')).toBeTruthy();
-    expect(mockSimplePrompt).not.toHaveBeenCalled();
-    expect(mockDispatch).not.toHaveBeenCalled();
+    expect(mockSimplePrompt).toHaveBeenCalledTimes(1);
+    expect(navigation.replace).toHaveBeenCalledWith('TermsOfUse');
   });
 
   it('skips to the terms when the app lock is already set up', () => {

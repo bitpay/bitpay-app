@@ -68,6 +68,8 @@ export interface Key {
   properties: KeyProperties | undefined;
   methods: KeyMethods | undefined;
   backupComplete?: boolean;
+  cloudBackupTimestamp?: number;
+  cloudBackupLabel?: string;
   show?: boolean;
   totalBalance: number;
   totalBalanceLastDay: number;

@@ -19,5 +19,8 @@ module.exports = {
           ? {ios: null}
           : {ios: null, android: null},
     },
+    '@react-native-google-signin/google-signin': {
+      platforms: {ios: null},
+    },
   },
 };

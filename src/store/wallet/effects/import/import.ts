@@ -928,12 +928,16 @@ export const startImportMnemonic =
             ),
           );
         });
-        const key = buildKeyObj({
-          key: _key,
-          keyName,
-          wallets: resultWallets,
-          backupComplete: true,
-        });
+        const key = {
+          ...buildKeyObj({
+            key: _key,
+            keyName,
+            wallets: resultWallets,
+            backupComplete: true,
+          }),
+          cloudBackupTimestamp: WALLET.keys[_key.id]?.cloudBackupTimestamp,
+          cloudBackupLabel: WALLET.keys[_key.id]?.cloudBackupLabel,
+        };
 
         dispatch(
           successImport({

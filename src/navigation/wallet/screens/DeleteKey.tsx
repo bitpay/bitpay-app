@@ -3,7 +3,7 @@ import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {CommonActions, RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {SafeAreaView, StyleSheet} from 'react-native';
+import {Platform, SafeAreaView, StyleSheet} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -75,10 +75,11 @@ const DeleteKey = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const {
-    params: {keyId, confirmed},
+    params: {keyId, confirmed, deletedCloudBackup},
   } = useRoute<RouteProp<WalletGroupParamList, 'DeleteKey'>>();
   const [keyName] = useState(() => keys[keyId]?.keyName || '');
   const [deleted, setDeleted] = useState(false);
+  const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
 
   useLayoutEffect(() => {
     navigation.setOptions(
@@ -151,10 +152,17 @@ const DeleteKey = () => {
   if (confirmed) {
     return deleted ? (
       <ResultView
+        tone="neutral"
+        icon="check"
         title={t('Key deleted')}
-        message={t('{{keyName}} has been removed from this phone.', {
-          keyName,
-        })}
+        message={
+          deletedCloudBackup
+            ? t('{{keyName}} and its {{cloudName}} backup have been removed.', {
+                keyName,
+                cloudName,
+              })
+            : t('{{keyName}} has been removed from this phone.', {keyName})
+        }
         primary={t('Done')}
         onPrimary={goHome}
       />
