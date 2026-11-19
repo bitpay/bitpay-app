@@ -8,10 +8,14 @@ import {
   SlateDark,
   White,
 } from '../styles/colors';
+import {ColorRoles, DarkColorRoles, LightColorRoles} from './colorRoles';
+
+// The color roles live in colorRoles.ts; re-exported here for convenience.
+export type {ColorRoles} from './colorRoles';
+export {DarkColorRoles, LightColorRoles} from './colorRoles';
 
 export type BitPayTheme = Theme & {
-  colors: {
-    // TODO: add additional color use cases
+  colors: ColorRoles & {
     link: string;
     description: string;
   };
@@ -21,6 +25,7 @@ export const BitPayLightTheme: BitPayTheme = {
   dark: false,
   colors: {
     ...DefaultTheme.colors,
+    ...LightColorRoles,
 
     primary: BitPay,
     background: White,
@@ -38,6 +43,7 @@ export const BitPayDarkTheme: BitPayTheme = {
   dark: true,
   colors: {
     ...DarkTheme.colors,
+    ...DarkColorRoles,
 
     primary: BitPay,
     background: Black,
