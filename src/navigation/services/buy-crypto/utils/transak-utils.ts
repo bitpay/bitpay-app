@@ -1,6 +1,7 @@
 import {t} from 'i18next';
 import {
   TransakFiatCurrency,
+  TransakHeadlessQuoteData,
   TransakHeadlessUserAuthData,
   TransakPaymentOption,
   TransakPaymentType,
@@ -455,6 +456,23 @@ export const isSameTransakHeadlessTermsIds = (
   a: string[] | undefined,
   b: string[] | undefined,
 ): boolean => (a ?? []).join(',') === (b ?? []).join(',');
+
+// Whether an order can be placed with the fresh quote without showing it
+// first: same disclaimers and the same amounts the customer confirmed.
+export const isSameTransakHeadlessQuoteForCustomer = (
+  shown: Pick<
+    TransakHeadlessQuoteData,
+    'fiatAmount' | 'cryptoAmount' | 'totalFee' | 'termsIds'
+  >,
+  fresh: Pick<
+    TransakHeadlessQuoteData,
+    'fiatAmount' | 'cryptoAmount' | 'totalFee' | 'termsIds'
+  >,
+): boolean =>
+  isSameTransakHeadlessTermsIds(shown.termsIds, fresh.termsIds) &&
+  Number(shown.fiatAmount) === Number(fresh.fiatAmount) &&
+  Number(shown.cryptoAmount) === Number(fresh.cryptoAmount) &&
+  Number(shown.totalFee) === Number(fresh.totalFee);
 
 export const getTransakCoinFormat = (coin: string): string => {
   coin = externalServicesCoinMapping(coin);
