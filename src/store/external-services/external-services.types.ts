@@ -5,7 +5,7 @@ export type ExchangeConfig = {
   disabledMessage?: string;
   config?: {
     paymentMethods?: PaymentMethodsConfig;
-    // MoonPay embedded flow kill switch.
+    // MoonPay embedded and Transak headless flows kill switch.
     embeddedBuyDisabled?: boolean;
     [key: string]: any; // Other partner-specific configuration properties can be added here
   };

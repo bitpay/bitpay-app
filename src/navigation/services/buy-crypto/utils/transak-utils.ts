@@ -1,10 +1,13 @@
 import {t} from 'i18next';
 import {
   TransakFiatCurrency,
+  TransakHeadlessQuoteData,
+  TransakHeadlessUserAuthData,
   TransakPaymentOption,
   TransakPaymentType,
   TransakStatusKey,
 } from '../../../../store/buy-crypto/buy-crypto.models';
+import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod, PaymentMethodKey} from '../constants/BuyCryptoConstants';
@@ -348,6 +351,123 @@ export const getTransakSelectedPaymentMethodData = (
 export const getPassthroughUri = (): string => {
   return __DEV__ ? PASSTHROUGH_URI_DEV : PASSTHROUGH_URI_PROD;
 };
+
+// Transak headless
+
+export const transakHeadlessEnvironment: 'STAGING' | 'PRODUCTION' =
+  transakEnv === 'production' ? 'PRODUCTION' : 'STAGING';
+
+// embeddedBuyDisabled is a kill switch, as for MoonPay: headless is used unless
+// the config turns it off.
+export const isTransakHeadlessPaymentMethodEnabled = (
+  method: PaymentMethodKey | undefined,
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+  country: string | undefined,
+): boolean => {
+  if (buyCryptoConfig?.transak?.config?.embeddedBuyDisabled === true) {
+    return false;
+  }
+  // UK customers must go through Transak's FCA journey, which only the widget
+  // implements (headless orders fail with 4016).
+  if (country === 'GB') {
+    return false;
+  }
+  return method === 'creditCard' || method === 'debitCard';
+};
+
+// A session about to expire is treated as expired: Transak cannot refresh an
+// expired session, and a purchase must not fail halfway because of it.
+export const isTransakHeadlessUserAuthValid = (
+  userAuth: TransakHeadlessUserAuthData | undefined,
+): userAuth is TransakHeadlessUserAuthData =>
+  !!userAuth?.accessToken && userAuth.expiresAt - Date.now() > 10 * 60 * 1000;
+
+const TRANSAK_HEADLESS_RESULT_PARAM = 'headlessResult';
+
+// After 3DS Transak redirects to these. The in-app WebView intercepts them; if
+// one is ever opened in a browser, the passthrough page still sends the
+// customer back to the app with the partnerOrderId, as the widget flow does.
+export const getTransakHeadlessRedirectUrls = (
+  transakExternalId: string,
+): {successUrl: string; failureUrl: string} => {
+  const buildUrl = (result: 'success' | 'failure') =>
+    `${getPassthroughUri()}?${new URLSearchParams({
+      partnerOrderId: transakExternalId,
+      [TRANSAK_HEADLESS_RESULT_PARAM]: result,
+    }).toString()}`;
+  return {successUrl: buildUrl('success'), failureUrl: buildUrl('failure')};
+};
+
+export const getTransakHeadlessRedirectResult = (
+  url: string,
+): 'success' | 'failure' | undefined => {
+  if (
+    !url.startsWith(getPassthroughUri()) &&
+    !url.startsWith('bitpay://transak')
+  ) {
+    return undefined;
+  }
+  try {
+    const result = new URL(url).searchParams.get(TRANSAK_HEADLESS_RESULT_PARAM);
+    return result === 'success' || result === 'failure' ? result : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export const TRANSAK_HEADLESS_TERMS_IDS = [
+  'TRANSAK_TERMS_OF_SERVICE',
+  'COINME_USER_AGREEMENT',
+  'US_TERMS_RETURNING',
+  'ZEROHASH_USER_AGREEMENT',
+  'MICA_EEA_BUY',
+  'MICA_EEA_SELL',
+  'GB_INVESTMENT_RISK_WARNING',
+] as const;
+
+export const getTransakHeadlessUnsupportedTermsIds = (
+  termsIds: string[] | undefined,
+): string[] =>
+  (termsIds ?? []).filter(
+    termsId =>
+      !(TRANSAK_HEADLESS_TERMS_IDS as readonly string[]).includes(termsId),
+  );
+
+export const getTransakHeadlessConfirmButtonKind = (
+  termsIds: string[] | undefined,
+): 'agreeAndConfirm' | 'confirm' | undefined => {
+  const ids = termsIds ?? [];
+  if (
+    ids.includes('TRANSAK_TERMS_OF_SERVICE') ||
+    ids.includes('COINME_USER_AGREEMENT')
+  ) {
+    return 'agreeAndConfirm';
+  }
+  if (
+    ids.includes('US_TERMS_RETURNING') ||
+    ids.includes('ZEROHASH_USER_AGREEMENT')
+  ) {
+    return 'confirm';
+  }
+  return undefined;
+};
+
+export const isSameTransakHeadlessTermsIds = (
+  a: string[] | undefined,
+  b: string[] | undefined,
+): boolean => (a ?? []).join(',') === (b ?? []).join(',');
+
+// Whether an order can be placed with the fresh quote without showing it
+// first: same disclaimers, charge and fee the customer confirmed. The crypto
+// amount is an estimate that Transak refreshes every minute, so it is not
+// compared.
+export const isSameTransakHeadlessQuoteForCustomer = (
+  shown: Pick<TransakHeadlessQuoteData, 'fiatAmount' | 'totalFee' | 'termsIds'>,
+  fresh: Pick<TransakHeadlessQuoteData, 'fiatAmount' | 'totalFee' | 'termsIds'>,
+): boolean =>
+  isSameTransakHeadlessTermsIds(shown.termsIds, fresh.termsIds) &&
+  Number(shown.fiatAmount) === Number(fresh.fiatAmount) &&
+  Number(shown.totalFee) === Number(fresh.totalFee);
 
 export const getTransakCoinFormat = (coin: string): string => {
   coin = externalServicesCoinMapping(coin);
