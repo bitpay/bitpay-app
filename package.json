@@ -55,7 +55,7 @@
     "translation:check": "node --test scripts/check-translations.test.js scripts/translation-catalog.test.js scripts/merge-translations.test.js && node scripts/check-translations.js"
   },
   "dependencies": {
-    "@bitpay-labs/bitcore-wallet-client": "11.11.3",
+    "@bitpay-labs/bitcore-wallet-client": "11.11.7",
     "@braze/react-native-sdk": "20.1.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
