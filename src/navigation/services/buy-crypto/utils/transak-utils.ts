@@ -356,14 +356,14 @@ export const getPassthroughUri = (): string => {
 export const transakHeadlessEnvironment: 'STAGING' | 'PRODUCTION' =
   transakEnv === 'production' ? 'PRODUCTION' : 'STAGING';
 
-// Opt-in: headless only works once Transak has enabled it for our API key and
-// whitelisted the BWS IPs, so it stays off until the config turns it on.
+// embeddedBuyDisabled is a kill switch, as for MoonPay: headless is used unless
+// the config turns it off.
 export const isTransakHeadlessPaymentMethodEnabled = (
   method: PaymentMethodKey | undefined,
   buyCryptoConfig: BuyCryptoConfig | undefined,
   country: string | undefined,
 ): boolean => {
-  if (buyCryptoConfig?.transak?.config?.headlessBuyEnabled !== true) {
+  if (buyCryptoConfig?.transak?.config?.embeddedBuyDisabled === true) {
     return false;
   }
   // UK customers must go through Transak's FCA journey, which only the widget

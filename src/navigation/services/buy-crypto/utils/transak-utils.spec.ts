@@ -9,27 +9,27 @@ import {
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 
 const headlessConfig: BuyCryptoConfig = {
-  transak: {config: {headlessBuyEnabled: true}},
+  transak: {config: {embeddedBuyDisabled: false}},
 };
 
 describe('isTransakHeadlessPaymentMethodEnabled', () => {
-  it('is enabled for cards when the config turns it on', () => {
+  it('is enabled for cards unless the config turns it off', () => {
     expect(
       isTransakHeadlessPaymentMethodEnabled('creditCard', headlessConfig, 'US'),
     ).toBe(true);
     expect(
       isTransakHeadlessPaymentMethodEnabled('debitCard', headlessConfig, 'DE'),
     ).toBe(true);
-  });
-
-  it('is disabled unless the config turns it on', () => {
     expect(
       isTransakHeadlessPaymentMethodEnabled('creditCard', undefined, 'US'),
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('is disabled when the config turns it off', () => {
     expect(
       isTransakHeadlessPaymentMethodEnabled(
         'creditCard',
-        {transak: {config: {headlessBuyEnabled: false}}},
+        {transak: {config: {embeddedBuyDisabled: true}}},
         'US',
       ),
     ).toBe(false);
