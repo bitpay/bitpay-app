@@ -17,6 +17,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import i18next from 'i18next';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {cloneDeep} from '../../../utils/object';
 import {TransakCard, TransakCardRef} from '@transak/ui-components-rn';
@@ -258,7 +259,9 @@ const isSavedCardExpired = (card: TransakHeadlessSavedCard): boolean => {
 };
 
 const getSavedCardLabel = (card: TransakHeadlessSavedCard): string =>
-  `${card.scheme ? card.scheme.toUpperCase() : 'CARD'} •••• ${card.last4}`;
+  `${card.scheme ? card.scheme.toUpperCase() : i18next.t('Card')} •••• ${
+    card.last4
+  }`;
 
 const getOrderRedirectUrl = (
   order: TransakHeadlessOrderData | undefined,
@@ -884,7 +887,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
           <ItemDivisor />
 
           <ThemedText secondary style={styles.sectionLabel}>
-            {t('Pay with')}
+            {t('Pay With')}
           </ThemedText>
           {usableSavedCards.length > 0 ? (
             <>
@@ -973,9 +976,9 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
             borderRadius={100}
             height={50}>
             {confirmButtonKind === 'agreeAndConfirm'
-              ? t('Agree and Confirm order')
+              ? 'Agree and Confirm order'
               : confirmButtonKind === 'confirm'
-              ? t('Confirm order')
+              ? 'Confirm order'
               : t('Buy')}
           </Button>
           <View style={styles.poweredByContainer}>

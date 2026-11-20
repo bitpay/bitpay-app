@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useTranslation} from 'react-i18next';
+import {Trans, useTranslation} from 'react-i18next';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {BaseText} from '../../../components/styled/Text';
@@ -375,7 +375,7 @@ const TransakBuyHeadlessOnboarding = ({
             </>
           ) : (
             <>
-              <Title>{t('Enter verification code')}</Title>
+              <Title>{t('Enter Verification Code')}</Title>
               <Subtitle>
                 {t('Transak sent a 6-digit code to {{email}}.', {email})}
               </Subtitle>
@@ -426,7 +426,7 @@ const TransakBuyHeadlessOnboarding = ({
             />
             <SecondaryActions>
               <ActionLink disabled={busy} onPress={resendCode}>
-                {resending ? t('Sending...') : t('Resend code')}
+                {resending ? t('Sending') : t('Resend code')}
               </ActionLink>
               <ActionLink
                 disabled={busy}
@@ -444,18 +444,20 @@ const TransakBuyHeadlessOnboarding = ({
 
       <BottomSection>
         <LegalText>
-          {t('By continuing, you agree to')}{' '}
-          <LegalLink
-            onPress={() =>
-              openUrl(
-                country === 'US'
-                  ? 'https://transak.com/terms-of-service-us'
-                  : 'https://transak.com/terms-of-service',
-              )
-            }>
-            {t("Transak's Terms of Service")}
-          </LegalLink>
-          {'.'}
+          <Trans
+            i18nKey="TransakHeadlessTermsAgreement"
+            components={[
+              <LegalLink
+                onPress={() =>
+                  openUrl(
+                    country === 'US'
+                      ? 'https://transak.com/terms-of-service-us'
+                      : 'https://transak.com/terms-of-service',
+                  )
+                }
+              />,
+            ]}
+          />
         </LegalText>
         <Button
           onPress={step === 'email' ? submitEmail : submitCode}
