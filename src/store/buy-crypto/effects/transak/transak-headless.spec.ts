@@ -300,6 +300,23 @@ describe('prepareTransakHeadlessCheckout', () => {
     expect(wallet.transakHeadlessCancelOrder).not.toHaveBeenCalled();
   });
 
+  it('is unavailable without cancelling its own order once it is not awaiting payment', async () => {
+    const wallet = createWallet({
+      transakHeadlessGetActiveOrders: jest.fn(() =>
+        ok([{orderId: 'headless-order', status: 'PROCESSING'}]),
+      ),
+    });
+    await expect(
+      prepareTransakHeadlessCheckout(wallet, quoteRequestData, 'user-token', {
+        ownOrderIds: ['headless-order'],
+      }),
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'active order: headless-order',
+    });
+    expect(wallet.transakHeadlessCancelOrder).not.toHaveBeenCalled();
+  });
+
   it('cancels its own abandoned order and goes on', async () => {
     const onOwnOrderCancelled = jest.fn();
     const wallet = createWallet({

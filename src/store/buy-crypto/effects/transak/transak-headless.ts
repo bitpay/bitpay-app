@@ -301,8 +301,13 @@ export const prepareTransakHeadlessCheckout = async (
       userAccessToken,
     });
     const ownOrderIds = opts.ownOrderIds ?? [];
+    // Only our own unpaid orders are cancelled. Transak documents that active
+    // orders are only AWAITING_PAYMENT_FROM_USER; any other status is left
+    // untouched, since the customer may already have paid it.
     const otherOrder = activeOrders.find(
-      order => !ownOrderIds.includes(order.orderId),
+      order =>
+        !ownOrderIds.includes(order.orderId) ||
+        order.status !== 'AWAITING_PAYMENT_FROM_USER',
     );
     if (otherOrder) {
       return {

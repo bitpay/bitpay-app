@@ -81,7 +81,7 @@ import {
   getTransakHeadlessConfirmButtonKind,
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
-  isSameTransakHeadlessTermsIds,
+  isSameTransakHeadlessQuoteForCustomer,
   transakEnv,
   transakHeadlessEnvironment,
 } from '../buy-crypto/utils/transak-utils';
@@ -656,8 +656,37 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     orderRef.current = order;
     recordOrder(order);
 
+    // The customer left the checkout while the order was being created or its
+    // payment page was being fetched: nothing will show the 3DS page, so the
+    // unpaid order is cancelled instead of being left open on Transak.
+    const abandonIfUnmounted = async (
+      status: TransakStatusKey,
+    ): Promise<boolean> => {
+      if (mountedRef.current) {
+        return false;
+      }
+      if (status === 'AWAITING_PAYMENT_FROM_USER') {
+        const cancelledStatus = await cancelAbandonedOrder(order.orderId);
+        if (cancelledStatus) {
+          dispatch(
+            BuyCryptoActions.updatePaymentRequestTransak({
+              transakIncomingData: {
+                transakExternalId,
+                status: cancelledStatus,
+                order_id: order.orderId,
+              },
+            }),
+          );
+        }
+      }
+      return true;
+    };
+
     let url = getOrderRedirectUrl(order);
     let status = order.status;
+    if (await abandonIfUnmounted(status)) {
+      return;
+    }
     for (
       let attempt = 0;
       !url &&
@@ -666,21 +695,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       attempt++
     ) {
       await sleep(ORDER_POLL_INTERVAL_MS);
-      if (!mountedRef.current) {
-        if (status === 'AWAITING_PAYMENT_FROM_USER') {
-          const cancelledStatus = await cancelAbandonedOrder(order.orderId);
-          if (cancelledStatus) {
-            dispatch(
-              BuyCryptoActions.updatePaymentRequestTransak({
-                transakIncomingData: {
-                  transakExternalId,
-                  status: cancelledStatus,
-                  order_id: order.orderId,
-                },
-              }),
-            );
-          }
-        }
+      if (await abandonIfUnmounted(status)) {
         return;
       }
       try {
@@ -699,6 +714,9 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       }
     }
 
+    if (await abandonIfUnmounted(status)) {
+      return;
+    }
     if (url) {
       setRedirectUrl(url);
     } else {
@@ -712,8 +730,27 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     setButtonState('loading');
     try {
       const freshQuote = await getFreshQuote();
-      if (!isSameTransakHeadlessTermsIds(freshQuote.termsIds, quote.termsIds)) {
+      // The screen now shows the fresh quote: the customer confirms it again
+      // instead of paying an amount or disclaimers they have not seen.
+      if (!isSameTransakHeadlessQuoteForCustomer(quote, freshQuote)) {
         setButtonState(undefined);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'info',
+            title: t('Price updated'),
+            message: t(
+              'The quote has been updated. Please review it and confirm your order again.',
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => dispatch(dismissBottomNotificationModal()),
+                primary: true,
+              },
+            ],
+          }),
+        );
         return;
       }
       const order = await transakHeadlessCreateOrder(wallet, {

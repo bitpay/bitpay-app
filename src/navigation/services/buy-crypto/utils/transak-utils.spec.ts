@@ -3,6 +3,7 @@ import {
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
   getTransakHeadlessUnsupportedTermsIds,
+  isSameTransakHeadlessQuoteForCustomer,
   isSameTransakHeadlessTermsIds,
   isTransakHeadlessPaymentMethodEnabled,
 } from './transak-utils';
@@ -123,5 +124,38 @@ describe('Transak headless disclaimers', () => {
     expect(isSameTransakHeadlessTermsIds(undefined, [])).toBe(true);
     expect(isSameTransakHeadlessTermsIds(['A', 'B'], ['B', 'A'])).toBe(false);
     expect(isSameTransakHeadlessTermsIds(['A'], [])).toBe(false);
+  });
+});
+
+describe('isSameTransakHeadlessQuoteForCustomer', () => {
+  const shown = {
+    fiatAmount: 100,
+    cryptoAmount: 0.001,
+    totalFee: 4.5,
+    termsIds: ['TRANSAK_TERMS_OF_SERVICE'],
+  };
+
+  it('is the same quote when amounts and disclaimers match', () => {
+    expect(isSameTransakHeadlessQuoteForCustomer(shown, {...shown})).toBe(true);
+  });
+
+  it('is the same quote when only the estimated crypto amount changes', () => {
+    const fresh = {...shown, cryptoAmount: 0.00099};
+    expect(isSameTransakHeadlessQuoteForCustomer(shown, fresh)).toBe(true);
+  });
+
+  it('is a different quote when the fee or the total changes', () => {
+    expect(
+      isSameTransakHeadlessQuoteForCustomer(shown, {...shown, totalFee: 5}),
+    ).toBe(false);
+    expect(
+      isSameTransakHeadlessQuoteForCustomer(shown, {...shown, fiatAmount: 101}),
+    ).toBe(false);
+  });
+
+  it('is a different quote when the disclaimers change', () => {
+    expect(
+      isSameTransakHeadlessQuoteForCustomer(shown, {...shown, termsIds: []}),
+    ).toBe(false);
   });
 });
