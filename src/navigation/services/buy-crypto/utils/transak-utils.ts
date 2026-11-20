@@ -458,20 +458,15 @@ export const isSameTransakHeadlessTermsIds = (
 ): boolean => (a ?? []).join(',') === (b ?? []).join(',');
 
 // Whether an order can be placed with the fresh quote without showing it
-// first: same disclaimers and the same amounts the customer confirmed.
+// first: same disclaimers, charge and fee the customer confirmed. The crypto
+// amount is an estimate that Transak refreshes every minute, so it is not
+// compared.
 export const isSameTransakHeadlessQuoteForCustomer = (
-  shown: Pick<
-    TransakHeadlessQuoteData,
-    'fiatAmount' | 'cryptoAmount' | 'totalFee' | 'termsIds'
-  >,
-  fresh: Pick<
-    TransakHeadlessQuoteData,
-    'fiatAmount' | 'cryptoAmount' | 'totalFee' | 'termsIds'
-  >,
+  shown: Pick<TransakHeadlessQuoteData, 'fiatAmount' | 'totalFee' | 'termsIds'>,
+  fresh: Pick<TransakHeadlessQuoteData, 'fiatAmount' | 'totalFee' | 'termsIds'>,
 ): boolean =>
   isSameTransakHeadlessTermsIds(shown.termsIds, fresh.termsIds) &&
   Number(shown.fiatAmount) === Number(fresh.fiatAmount) &&
-  Number(shown.cryptoAmount) === Number(fresh.cryptoAmount) &&
   Number(shown.totalFee) === Number(fresh.totalFee);
 
 export const getTransakCoinFormat = (coin: string): string => {

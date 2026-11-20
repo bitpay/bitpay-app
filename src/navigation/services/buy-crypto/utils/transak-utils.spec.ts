@@ -139,13 +139,9 @@ describe('isSameTransakHeadlessQuoteForCustomer', () => {
     expect(isSameTransakHeadlessQuoteForCustomer(shown, {...shown})).toBe(true);
   });
 
-  it('is a different quote when the crypto amount changes', () => {
-    expect(
-      isSameTransakHeadlessQuoteForCustomer(shown, {
-        ...shown,
-        cryptoAmount: 0.00099,
-      }),
-    ).toBe(false);
+  it('is the same quote when only the estimated crypto amount changes', () => {
+    const fresh = {...shown, cryptoAmount: 0.00099};
+    expect(isSameTransakHeadlessQuoteForCustomer(shown, fresh)).toBe(true);
   });
 
   it('is a different quote when the fee or the total changes', () => {
