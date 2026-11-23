@@ -14,9 +14,19 @@ const mockOngoingProcess = {
   showOngoingProcess: jest.fn(),
   hideOngoingProcess: jest.fn(),
 };
+const mockResultView = jest.fn((_props: {message: string}) => null);
 const mockState = {
   APP: {homeCarouselConfig: [{id: 'key-1', show: true}]},
-  WALLET: {keys: {'key-1': {id: 'key-1', keyName: 'My Key', wallets: []}}},
+  WALLET: {
+    keys: {
+      'key-1': {
+        id: 'key-1',
+        keyName: 'My Key',
+        wallets: [],
+        cloudBackupTimestamp: undefined as number | undefined,
+      },
+    },
+  },
 };
 
 jest.mock('react-i18next', () => ({
@@ -69,7 +79,7 @@ jest.mock(
 );
 
 jest.mock('../../../components/backup/ResultView', () => ({
-  ResultView: () => null,
+  ResultView: (props: {message: string}) => mockResultView(props),
 }));
 
 jest.mock(
@@ -94,6 +104,7 @@ const deleteKeyCalls = () =>
 describe('DeleteKey', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockState.WALLET.keys['key-1'].cloudBackupTimestamp = undefined;
   });
 
   it('deletes the key once when it opens already confirmed', async () => {
@@ -116,6 +127,28 @@ describe('DeleteKey', () => {
       payload: [],
     });
   });
+
+  it.each([
+    [
+      1,
+      '{{keyName}} was removed from this phone. Your {{cloudName}} backup is still there if you need it.',
+    ],
+    [undefined, '{{keyName}} has been removed from this phone.'],
+  ])(
+    'mentions the cloud backup only when the key has one (cloudBackupTimestamp %s)',
+    async (cloudBackupTimestamp, message) => {
+      mockState.WALLET.keys['key-1'].cloudBackupTimestamp =
+        cloudBackupTimestamp;
+      mockRoute.params = {keyId: 'key-1', confirmed: true};
+
+      render(<DeleteKey />);
+      await act(() => Promise.resolve());
+
+      expect(mockResultView).toHaveBeenLastCalledWith(
+        expect.objectContaining({message}),
+      );
+    },
+  );
 
   it('does not delete the key when it opens without confirmation', async () => {
     mockRoute.params = {keyId: 'key-1'};

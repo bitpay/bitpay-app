@@ -7,6 +7,7 @@ import {
   DeviceEventEmitter,
   EmitterSubscription,
   Linking,
+  NativeModules,
   Platform,
 } from 'react-native';
 import {shareNative} from '../../utils/share';
@@ -94,6 +95,7 @@ import {
 } from '../wallet/effects/status/status';
 import {createWalletAddress} from '../wallet/effects/address/address';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+import {LOCK_AUTHORIZED_TIME} from '../../constants/Lock';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME,
@@ -957,17 +959,24 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
   }
 };
 
-export const requestNotificationsPermissions = async (): Promise<boolean> => {
-  const {status} = await requestNotifications([
-    'alert',
-    'badge',
-    'sound',
-  ]).catch(() => ({
-    status: null,
-  }));
+export const requestNotificationsPermissions =
+  (): Effect<Promise<boolean>> => async dispatch => {
+    const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+    dispatch(
+      AppActions.lockAuthorizedUntil(
+        Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME,
+      ),
+    );
+    const {status} = await requestNotifications([
+      'alert',
+      'badge',
+      'sound',
+    ]).catch(() => ({
+      status: null,
+    }));
 
-  return status?.toLowerCase() === RESULTS.GRANTED;
-};
+    return status?.toLowerCase() === RESULTS.GRANTED;
+  };
 
 export const setNotifications =
   (accepted: boolean): Effect =>

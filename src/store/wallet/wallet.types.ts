@@ -21,6 +21,7 @@ export enum WalletActionTypes {
   SUCCESS_IMPORT = 'WALLET/SUCCESS_IMPORT',
   FAILED_IMPORT = 'WALLET/FAILED_IMPORT',
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
+  SET_CLOUD_BACKUP_COMPLETE = 'WALLET/SET_CLOUD_BACKUP_COMPLETE',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
   SUCCESS_GET_CUSTOM_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_CUSTOM_TOKEN_OPTIONS',
@@ -119,6 +120,11 @@ interface failedImport {
 interface setBackupComplete {
   type: typeof WalletActionTypes.SET_BACKUP_COMPLETE;
   payload: string;
+}
+
+interface setCloudBackupComplete {
+  type: typeof WalletActionTypes.SET_CLOUD_BACKUP_COMPLETE;
+  payload: {keyId: string; timestamp: number};
 }
 
 interface successEncryptOrDecryptPassword {
@@ -409,6 +415,7 @@ export type WalletActionType =
   | successImport
   | failedImport
   | setBackupComplete
+  | setCloudBackupComplete
   | successEncryptOrDecryptPassword
   | deleteKey
   | successGetCustomTokenOptions

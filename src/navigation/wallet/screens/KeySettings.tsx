@@ -23,7 +23,9 @@ import {
   FlatList,
   SafeAreaView,
   StyleSheet,
+  Platform,
 } from 'react-native';
+import moment from 'moment';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ActiveOpacity,
@@ -225,7 +227,8 @@ const KeySettings = () => {
   const accountInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[keyId]?.evmAccountsInfo,
   );
-  const {keyName} = _key || {};
+  const {keyName, cloudBackupTimestamp} = _key || {};
+  const cloudName = Platform.OS === 'ios' ? 'iCloud' : 'Google Drive';
   const hasRecoveryPhrase = !!(
     _key &&
     !_key.isReadOnly &&
@@ -453,6 +456,10 @@ const KeySettings = () => {
           ? t(
               'Its recovery phrase isn’t backed up. If you delete it, any funds in it are gone for good.',
             )
+          : cloudBackupTimestamp
+          ? t(
+              'This removes it from this phone. You can restore it from your backup.',
+            )
           : t(
               'This removes it from this phone. You can restore it with your recovery phrase.',
             ),
@@ -472,7 +479,16 @@ const KeySettings = () => {
         ],
       }),
     );
-  }, [dispatch, hasRecoveryPhrase, keyId, keyName, navigation, needsBackup, t]);
+  }, [
+    cloudBackupTimestamp,
+    dispatch,
+    hasRecoveryPhrase,
+    keyId,
+    keyName,
+    navigation,
+    needsBackup,
+    t,
+  ]);
 
   const onPressItem = useCallback(
     (item: AccountRowProps) => {
@@ -595,6 +611,18 @@ const KeySettings = () => {
               <WalletSettingsTitle>{t('Backup')}</WalletSettingsTitle>
               {!_key.backupComplete ? (
                 <StatusTag>{t('Backup Required')}</StatusTag>
+              ) : _key.cloudBackupTimestamp ? (
+                <SettingDescription>
+                  {t('{{cloudName}} · {{date}}', {
+                    cloudName,
+                    date: moment(_key.cloudBackupTimestamp).isSame(
+                      Date.now(),
+                      'day',
+                    )
+                      ? t('Today')
+                      : moment(_key.cloudBackupTimestamp).format('MMM D, YYYY'),
+                  })}
+                </SettingDescription>
               ) : hasRecoveryPhrase ? (
                 <SettingDescription>{t('Manual')}</SettingDescription>
               ) : null}
@@ -792,6 +820,7 @@ const KeySettings = () => {
   }, [
     _key,
     buildEncryptModalConfig,
+    cloudName,
     dispatch,
     hasRecoveryPhrase,
     keyId,

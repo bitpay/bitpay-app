@@ -1,0 +1,37 @@
+diff --git a/node_modules/react-native-cloud-storage/ios/Utils/FileUtils.swift b/node_modules/react-native-cloud-storage/ios/Utils/FileUtils.swift
+index e676920..73fef2e 100644
+--- a/node_modules/react-native-cloud-storage/ios/Utils/FileUtils.swift
++++ b/node_modules/react-native-cloud-storage/ios/Utils/FileUtils.swift
+@@ -191,7 +191,7 @@ enum FileUtils {
+       guard fileManager.fileExists(atPath: url.path) || fileManager.isUbiquitousItem(at: url) else {
+         throw CloudStorageError.fileNotFound(path: url.path)
+       }
+-      let values = try url.resourceValues(forKeys: [.fileSizeKey, .creationDateKey, .contentModificationDateKey, .isDirectoryKey, .isRegularFileKey])
++      let values = try url.resourceValues(forKeys: [.fileSizeKey, .creationDateKey, .contentModificationDateKey, .isDirectoryKey, .isRegularFileKey, .ubiquitousItemIsUploadedKey, .ubiquitousItemUploadingErrorKey])
+       guard let size = values.fileSize, let birthtime = values.creationDate, let mtime = values.contentModificationDate else {
+         throw CloudStorageError.statError(path: url.path)
+       }
+@@ -200,7 +200,9 @@ enum FileUtils {
+         birthtimeMs: birthtime.timeIntervalSince1970 * 1000,
+         mtimeMs: mtime.timeIntervalSince1970 * 1000,
+         isDirectory: values.isDirectory == true,
+-        isFile: values.isRegularFile == true
++        isFile: values.isRegularFile == true,
++        isUploaded: values.ubiquitousItemIsUploaded == true,
++        uploadErrorCode: values.ubiquitousItemUploadingError?.code
+       )
+     }
+   }
+diff --git a/node_modules/react-native-cloud-storage/ios/Utils/Types.swift b/node_modules/react-native-cloud-storage/ios/Utils/Types.swift
+index fe641bf..ce755ad 100644
+--- a/node_modules/react-native-cloud-storage/ios/Utils/Types.swift
++++ b/node_modules/react-native-cloud-storage/ios/Utils/Types.swift
+@@ -31,6 +31,8 @@ struct FileStat: Encodable {
+   let mtimeMs: Double
+   let isDirectory: Bool
+   let isFile: Bool
++  var isUploaded = false
++  var uploadErrorCode: Int?
+ 
+   func toDictionary() -> [String: Any] {
+     guard let data = try? JSONEncoder().encode(self),
