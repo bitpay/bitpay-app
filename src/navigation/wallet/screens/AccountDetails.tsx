@@ -1298,7 +1298,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         accessibilityLabel={t('Add Custom Token')}
         onPress={() => {
           haptic('soft');
-          if (memorizedAssetsByChainList?.[0].chains?.[0]) {
+          if (memorizedAssetsByChainList?.[0]?.chains?.[0]) {
             navigation.navigate('AddCustomToken', {
               key,
               selectedAccountAddress: accountItem?.receiveAddress,
