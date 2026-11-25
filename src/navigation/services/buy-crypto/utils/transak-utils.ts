@@ -1,6 +1,7 @@
 import {t} from 'i18next';
 import {
   TransakFiatCurrency,
+  TransakHeadlessPaymentMethod,
   TransakHeadlessQuoteData,
   TransakHeadlessUserAuthData,
   TransakPaymentOption,
@@ -315,6 +316,16 @@ export const getTransakSelectedPaymentMethodData = (
           },
         );
       break;
+    case 'googlePay':
+      transakSelectedPaymentMethodData =
+        transakSelectedFiatCurrency.paymentOptions.find(
+          (transakPaymentOption: TransakPaymentOption) => {
+            if (['google_pay'].includes(transakPaymentOption.id)) {
+              return true;
+            }
+          },
+        );
+      break;
     case 'creditCard':
     case 'debitCard':
       transakSelectedPaymentMethodData =
@@ -357,14 +368,41 @@ export const getPassthroughUri = (): string => {
 export const transakHeadlessEnvironment: 'STAGING' | 'PRODUCTION' =
   transakEnv === 'production' ? 'PRODUCTION' : 'STAGING';
 
-// embeddedBuyDisabled is a kill switch, as for MoonPay: headless is used unless
-// the config turns it off.
+export const getTransakHeadlessPaymentMethod = (
+  method: PaymentMethodKey | undefined,
+): TransakHeadlessPaymentMethod | undefined => {
+  switch (method) {
+    case 'creditCard':
+    case 'debitCard':
+      return 'credit_debit_card';
+    case 'applePay':
+      return 'apple_pay';
+    case 'googlePay':
+      return 'google_pay';
+    default:
+      return undefined;
+  }
+};
+
+// Whether the device can run the wallet sheets, as for MoonPay embedded: Apple
+// Pay needs native wallet support; Google Pay is decided inside the WebView by
+// the Payment Request API.
+export interface TransakHeadlessSupport {
+  applePaySupported?: boolean;
+  googlePaySupported?: boolean;
+}
+
+// embeddedBuyDisabled is a kill switch for every method, and each method can
+// be turned off on its own, with the same keys as MoonPay embedded: headless
+// is used unless the config turns it off.
 export const isTransakHeadlessPaymentMethodEnabled = (
   method: PaymentMethodKey | undefined,
   buyCryptoConfig: BuyCryptoConfig | undefined,
   country: string | undefined,
+  support: TransakHeadlessSupport = {},
 ): boolean => {
-  if (buyCryptoConfig?.transak?.config?.embeddedBuyDisabled === true) {
+  const transakConfig = buyCryptoConfig?.transak?.config;
+  if (transakConfig?.embeddedBuyDisabled === true) {
     return false;
   }
   // UK customers must go through Transak's FCA journey, which only the widget
@@ -372,7 +410,23 @@ export const isTransakHeadlessPaymentMethodEnabled = (
   if (country === 'GB') {
     return false;
   }
-  return method === 'creditCard' || method === 'debitCard';
+  const paymentMethods = transakConfig?.paymentMethods;
+  switch (getTransakHeadlessPaymentMethod(method)) {
+    case 'credit_debit_card':
+      return !paymentMethods?.cardEmbedded?.disabled;
+    case 'apple_pay':
+      return (
+        !paymentMethods?.applePayEmbedded?.disabled &&
+        !!support.applePaySupported
+      );
+    case 'google_pay':
+      return (
+        !paymentMethods?.googlePayEmbedded?.disabled &&
+        !!support.googlePaySupported
+      );
+    default:
+      return false;
+  }
 };
 
 // A session about to expire is treated as expired: Transak cannot refresh an
@@ -510,6 +564,9 @@ export const getTransakPaymentMethodFormat = (
       break;
     case 'applePay':
       formattedPaymentMethod = 'apple_pay';
+      break;
+    case 'googlePay':
+      formattedPaymentMethod = 'google_pay';
       break;
     case 'creditCard':
     case 'debitCard':

@@ -20,7 +20,11 @@ import {useTranslation} from 'react-i18next';
 import i18next from 'i18next';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {cloneDeep} from '../../../utils/object';
-import {TransakCard, TransakCardRef} from '@transak/ui-components-rn';
+import {
+  TransakApplePay,
+  TransakCard,
+  TransakCardRef,
+} from '@transak/ui-components-rn';
 import {useTheme, usePaymentSent} from '../../../contexts';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {
@@ -71,8 +75,8 @@ import {
   TRANSAK_HEADLESS_CANCEL_REASON,
   TransakHeadlessError,
   transakHeadlessCancelOrder,
-  transakHeadlessCreateCardSession,
   transakHeadlessCreateOrder,
+  transakHeadlessCreateTransactionSession,
   transakHeadlessGetOrderDetails,
   transakHeadlessGetOrderQuote,
   TransakHeadlessPreparation,
@@ -86,6 +90,7 @@ import {
   transakHeadlessEnvironment,
 } from '../buy-crypto/utils/transak-utils';
 import TransakHeadlessDisclaimers from '../components/TransakHeadlessDisclaimers';
+import TransakGooglePayFrame from '../components/TransakGooglePayFrame';
 import {PaymentMethod} from '../buy-crypto/constants/BuyCryptoConstants';
 import {CryptoOffer} from '../components/externalServicesOfferSelector';
 import {TransakSettingsProps} from '../../tabs/settings/external-services/screens/TransakSettings';
@@ -95,11 +100,12 @@ import {TabsScreens} from '../../tabs/TabsStack';
 import {APP_DEEPLINK_PREFIX} from '../../../constants/config';
 
 // Transak refreshes quotes every minute; anything older is re-fetched before
-// it is used to create a card session or a saved-card order.
+// it is used to create a session or a saved-card order.
 const QUOTE_MAX_AGE_MS = 30 * 1000;
-// Same as the SDK's own iframe timeout on web, which the RN component lacks.
-const CARD_FORM_LOAD_TIMEOUT_MS = 30 * 1000;
+// Same as the SDK's own iframe timeout on web, which the RN components lack.
+const PAYMENT_FORM_LOAD_TIMEOUT_MS = 30 * 1000;
 const CARD_FORM_HEIGHT = 340;
+const WALLET_BUTTON_HEIGHT = 50;
 // The order may come back without the 3DS URL yet.
 const ORDER_POLL_INTERVAL_MS = 2000;
 const ORDER_POLL_ATTEMPTS = 10;
@@ -110,6 +116,12 @@ const FINAL_FAILED_STATUSES: TransakStatusKey[] = [
   'EXPIRED',
   'REFUNDED',
 ];
+
+// Paid without a 3DS page (always the case for Apple Pay): the order already
+// moved past the payment.
+const isPaidStatus = (status: TransakStatusKey): boolean =>
+  status !== 'AWAITING_PAYMENT_FROM_USER' &&
+  !FINAL_FAILED_STATUSES.includes(status);
 
 const styles = StyleSheet.create({
   root: {flex: 1},
@@ -167,7 +179,10 @@ const styles = StyleSheet.create({
     height: CARD_FORM_HEIGHT,
     marginTop: 8,
   },
-  cardFormLoading: {
+  walletButton: {
+    height: WALLET_BUTTON_HEIGHT,
+  },
+  formLoading: {
     position: 'absolute',
     top: 0,
     right: 0,
@@ -291,6 +306,10 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
 
   const coin = cloneDeep(wallet.currencyAbbreviation).toLowerCase();
+  const headlessPaymentMethod = quoteRequestData.paymentMethod;
+  // Apple Pay and Google Pay are paid from their own button, inside the
+  // Transak component, instead of the card form and the Buy button.
+  const isWalletPayment = headlessPaymentMethod !== 'credit_debit_card';
   const usableSavedCards = preparation.savedCards.filter(
     card => !isSavedCardExpired(card),
   );
@@ -304,8 +323,8 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
   const [selectedCardId, setSelectedCardId] = useState<string>(
     usableSavedCards[0]?.paymentIdentifierId ?? 'new',
   );
-  const [cardSessionId, setCardSessionId] = useState<string>();
-  const [cardFormReady, setCardFormReady] = useState(false);
+  const [sessionId, setSessionId] = useState<string>();
+  const [formReady, setFormReady] = useState(false);
   const [cardValid, setCardValid] = useState(false);
   const [cardStateError, setCardStateError] = useState<string>();
   const [buttonState, setButtonState] = useState<ButtonState>();
@@ -315,6 +334,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
   const creatingSessionRef = useRef(false);
   const sessionRetriedRef = useRef(false);
   const submittingCardRef = useRef(false);
+  const orderRequestedRef = useRef(false);
   const orderRef = useRef<TransakHeadlessOrderData | undefined>(undefined);
   const finalizingRef = useRef(false);
   const mountedRef = useRef(true);
@@ -365,7 +385,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
         coin,
         chain: wallet.chain?.toLowerCase() || '',
         fiatCurrency: offer.fiatCurrency || '',
-        isHeadless: true,
+        isEmbedded: true,
       }),
     );
 
@@ -426,61 +446,68 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     return newQuote;
   };
 
-  const createCardSession = async () => {
+  const createSession = async () => {
     if (creatingSessionRef.current) {
       return;
     }
     creatingSessionRef.current = true;
-    setCardSessionId(undefined);
-    setCardFormReady(false);
+    setSessionId(undefined);
+    setFormReady(false);
     setCardValid(false);
     setCardStateError(undefined);
     try {
       const freshQuote = await getFreshQuote();
-      const session = await transakHeadlessCreateCardSession(wallet, {
+      const session = await transakHeadlessCreateTransactionSession(wallet, {
         env: transakEnv,
         userAccessToken: userAuth.accessToken,
         quoteId: freshQuote.quoteId,
         walletAddress: toAddress,
-        successUrl,
-        failureUrl,
-        config: {colorMode: theme.dark ? 'DARK' : 'LIGHT'},
+        // Apple Pay has no 3DS page to come back from.
+        ...(headlessPaymentMethod !== 'apple_pay' && {successUrl, failureUrl}),
+        config: {
+          colorMode: theme.dark ? 'DARK' : 'LIGHT',
+          ...(isWalletPayment && {
+            height: `${WALLET_BUTTON_HEIGHT}px`,
+            borderRadius: `${WALLET_BUTTON_HEIGHT / 2}px`,
+          }),
+        },
       });
       if (!session?.sessionId) {
         throw new Error('No sessionId returned');
       }
       if (mountedRef.current) {
-        setCardSessionId(session.sessionId);
+        setSessionId(session.sessionId);
       }
     } catch (err) {
-      showError({err, reason: 'createCardSession', allowFallback: true});
+      showError({err, reason: 'createSession', allowFallback: true});
     } finally {
       creatingSessionRef.current = false;
     }
   };
 
-  // Only when the new card option gets selected: a failed session is not
-  // retried on its own, the customer is offered the widget instead.
+  // Only when the new card option (or the wallet button) is shown: a failed
+  // session is not retried on its own, the customer is offered the widget
+  // instead.
   useEffect(() => {
-    if (isNewCard && !cardSessionId) {
-      createCardSession();
+    if (isNewCard && !sessionId) {
+      createSession();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNewCard]);
 
   useEffect(() => {
-    if (!cardSessionId || cardFormReady) {
+    if (!sessionId || formReady) {
       return;
     }
     const timeout = setTimeout(() => {
       showError({
-        reason: 'card form load timeout',
+        reason: 'payment form load timeout',
         allowFallback: true,
       });
-    }, CARD_FORM_LOAD_TIMEOUT_MS);
+    }, PAYMENT_FORM_LOAD_TIMEOUT_MS);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardSessionId, cardFormReady]);
+  }, [sessionId, formReady]);
 
   const recordOrder = (order: TransakHeadlessOrderData) => {
     const fiatTotalAmount = order.fiatAmount ?? quote.fiatAmount;
@@ -630,7 +657,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
           paymentMethod: paymentMethod?.method || '',
           exchangeRate:
             (cryptoAmount && (fiatTotalAmount - fee) / cryptoAmount) || '',
-          isHeadless: true,
+          isEmbedded: true,
         }),
       );
       showPaymentSent({
@@ -658,14 +685,18 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
 
     // The customer left the checkout while the order was being created or its
     // payment page was being fetched: nothing will show the 3DS page, so the
-    // unpaid order is cancelled instead of being left open on Transak.
+    // unpaid order is cancelled instead of being left open on Transak. An
+    // Apple Pay order has no such page: the customer already authorized it.
     const abandonIfUnmounted = async (
       status: TransakStatusKey,
     ): Promise<boolean> => {
       if (mountedRef.current) {
         return false;
       }
-      if (status === 'AWAITING_PAYMENT_FROM_USER') {
+      if (
+        status === 'AWAITING_PAYMENT_FROM_USER' &&
+        headlessPaymentMethod !== 'apple_pay'
+      ) {
         const cancelledStatus = await cancelAbandonedOrder(order.orderId);
         if (cancelledStatus) {
           dispatch(
@@ -691,6 +722,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       let attempt = 0;
       !url &&
       !FINAL_FAILED_STATUSES.includes(status) &&
+      !isPaidStatus(status) &&
       attempt < ORDER_POLL_ATTEMPTS;
       attempt++
     ) {
@@ -719,6 +751,8 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     }
     if (url) {
       setRedirectUrl(url);
+    } else if (isPaidStatus(status)) {
+      finalize('success');
     } else {
       finalize(
         FINAL_FAILED_STATUSES.includes(status) ? 'failure' : 'unconfirmed',
@@ -773,7 +807,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
   };
 
   const payWithNewCard = () => {
-    if (!cardFormReady || !cardValid) {
+    if (!formReady || !cardValid) {
       return;
     }
     setButtonState('loading');
@@ -781,11 +815,18 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     cardRef.current?.submit();
   };
 
-  const onCardSuccess = async ({requestId}: {requestId: string}) => {
-    if (!submittingCardRef.current) {
+  // The card form only succeeds after the Buy button submits it; Apple Pay and
+  // Google Pay are confirmed in their own sheet.
+  const onPaymentSuccess = async ({requestId}: {requestId: string}) => {
+    if (
+      (!isWalletPayment && !submittingCardRef.current) ||
+      orderRequestedRef.current
+    ) {
       return;
     }
+    orderRequestedRef.current = true;
     submittingCardRef.current = false;
+    setButtonState('loading');
     try {
       const order = await transakHeadlessCreateOrder(wallet, {
         env: transakEnv,
@@ -796,26 +837,28 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     } catch (err) {
       showError({
         err,
-        reason: 'createOrder (new card)',
+        reason: `createOrder (${
+          isWalletPayment ? headlessPaymentMethod : 'new card'
+        })`,
         allowFallback: !orderRef.current,
       });
     }
   };
 
-  const onCardError = ({code}: {code: string}) => {
+  const onPaymentFormError = ({code}: {code: string}) => {
     // An expired or invalid session: one new session is worth a try before
     // giving up, since the customer has not paid anything yet.
     if (code === 'CONFIG_LOAD_FAILED' && !sessionRetriedRef.current) {
       sessionRetriedRef.current = true;
       logger.warn(
-        '[TransakHeadlessCheckout] card form config failed, new session',
+        '[TransakHeadlessCheckout] payment form config failed, new session',
       );
-      createCardSession();
+      createSession();
       return;
     }
     showError({
       err: new TransakHeadlessError(code),
-      reason: 'card form error',
+      reason: `${headlessPaymentMethod} form error`,
       allowFallback: true,
     });
   };
@@ -844,8 +887,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
   };
 
   const buyDisabled =
-    !!buttonState ||
-    (isNewCard ? !cardFormReady || !cardValid : !selectedCardId);
+    !!buttonState || (isNewCard ? !formReady || !cardValid : !selectedCardId);
 
   const confirmButtonKind = getTransakHeadlessConfirmButtonKind(quote.termsIds);
 
@@ -923,9 +965,11 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
           </RowDataContainer>
           <ItemDivisor />
 
-          <ThemedText secondary style={styles.sectionLabel}>
-            {t('Pay With')}
-          </ThemedText>
+          {!isWalletPayment ? (
+            <ThemedText secondary style={styles.sectionLabel}>
+              {t('Pay With')}
+            </ThemedText>
+          ) : null}
           {usableSavedCards.length > 0 ? (
             <>
               {usableSavedCards.map(card => (
@@ -966,15 +1010,15 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
             </>
           ) : null}
 
-          {isNewCard ? (
+          {isNewCard && !isWalletPayment ? (
             <View style={styles.cardForm}>
-              {cardSessionId ? (
+              {sessionId ? (
                 <TransakCard
-                  key={cardSessionId}
+                  key={sessionId}
                   ref={cardRef}
-                  sessionId={cardSessionId}
+                  sessionId={sessionId}
                   environment={transakHeadlessEnvironment}
-                  onReady={() => setCardFormReady(true)}
+                  onReady={() => setFormReady(true)}
                   onChange={({isValid, errorCode}) => {
                     setCardValid(isValid);
                     setCardStateError(
@@ -985,12 +1029,12 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
                         : undefined,
                     );
                   }}
-                  onSuccess={onCardSuccess}
-                  onError={onCardError}
+                  onSuccess={onPaymentSuccess}
+                  onError={onPaymentFormError}
                 />
               ) : null}
-              {!cardFormReady ? (
-                <View style={styles.cardFormLoading}>
+              {!formReady ? (
+                <View style={styles.formLoading}>
                   <ActivityIndicator />
                 </View>
               ) : null}
@@ -1006,18 +1050,52 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
             termsIds={quote.termsIds}
             placement={'aboveButton'}
           />
-          <Button
-            onPress={onPressBuy}
-            disabled={buyDisabled}
-            state={buttonState}
-            borderRadius={100}
-            height={50}>
-            {confirmButtonKind === 'agreeAndConfirm'
-              ? 'Agree and Confirm order'
-              : confirmButtonKind === 'confirm'
-              ? 'Confirm order'
-              : t('Buy')}
-          </Button>
+          {isWalletPayment ? (
+            <View style={styles.walletButton}>
+              {sessionId && headlessPaymentMethod === 'apple_pay' ? (
+                <TransakApplePay
+                  key={sessionId}
+                  sessionId={sessionId}
+                  environment={transakHeadlessEnvironment}
+                  onReady={() => setFormReady(true)}
+                  onSuccess={onPaymentSuccess}
+                  onError={onPaymentFormError}
+                />
+              ) : null}
+              {sessionId && headlessPaymentMethod === 'google_pay' ? (
+                <TransakGooglePayFrame
+                  key={sessionId}
+                  sessionId={sessionId}
+                  environment={transakHeadlessEnvironment}
+                  onReady={() => setFormReady(true)}
+                  onSuccess={onPaymentSuccess}
+                  onError={onPaymentFormError}
+                />
+              ) : null}
+              {!formReady || buttonState ? (
+                <View
+                  style={[
+                    styles.formLoading,
+                    {backgroundColor: theme.colors.background},
+                  ]}>
+                  <ActivityIndicator />
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <Button
+              onPress={onPressBuy}
+              disabled={buyDisabled}
+              state={buttonState}
+              borderRadius={100}
+              height={50}>
+              {confirmButtonKind === 'agreeAndConfirm'
+                ? 'Agree and Confirm order'
+                : confirmButtonKind === 'confirm'
+                ? 'Confirm order'
+                : t('Buy')}
+            </Button>
+          )}
           <View style={styles.poweredByContainer}>
             <ThemedText secondary style={styles.poweredByText}>
               {t('Powered by')}

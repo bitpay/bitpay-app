@@ -1174,7 +1174,7 @@ export interface TransakHeadlessGetQuoteRequestData {
   fiatCurrency: string;
   cryptoCurrency: string;
   network: string;
-  paymentMethod: TransakPaymentType;
+  paymentMethod: TransakHeadlessPaymentMethod;
   fiatAmount: number;
   partnerCustomerId?: string;
   partnerOrderId?: string;
@@ -1230,7 +1230,12 @@ export interface TransakHeadlessSavedCard {
   expiryYear?: number;
 }
 
-export interface TransakHeadlessCardSessionData {
+export type TransakHeadlessPaymentMethod =
+  | 'credit_debit_card'
+  | 'apple_pay'
+  | 'google_pay';
+
+export interface TransakHeadlessTransactionSessionData {
   sessionId: string;
   expiresAt?: string;
 }

@@ -31,6 +31,7 @@ import yup from '../../../lib/yup';
 import TransakLogo from '../../../components/icons/external-services/transak/transak-logo';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
+  TransakHeadlessPaymentMethod,
   TransakHeadlessUserAuthData,
   TransakHeadlessVerifyOtpData,
 } from '../../../store/buy-crypto/buy-crypto.models';
@@ -207,6 +208,7 @@ LegalLink.displayName = 'LegalLink';
 export interface TransakBuyHeadlessOnboardingProps {
   wallet: Wallet;
   country?: string;
+  paymentMethod: TransakHeadlessPaymentMethod;
   initialEmail?: string;
   // Kept loading until it resolves, while the checkout is prepared.
   onConnect: (userAuth: TransakHeadlessUserAuthData) => Promise<void> | void;
@@ -227,7 +229,14 @@ const TransakBuyHeadlessOnboarding = ({
   const logger = useLogger();
   const dispatch = useAppDispatch();
 
-  const {wallet, country, initialEmail, onConnect, onSkip} = route.params;
+  const {wallet, country, paymentMethod, initialEmail, onConnect, onSkip} =
+    route.params;
+  const walletPaymentName =
+    paymentMethod === 'apple_pay'
+      ? 'Apple Pay'
+      : paymentMethod === 'google_pay'
+      ? 'Google Pay'
+      : undefined;
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState<string>(initialEmail ?? '');
@@ -366,11 +375,22 @@ const TransakBuyHeadlessOnboarding = ({
           </IconRow>
           {step === 'email' ? (
             <>
-              <Title>{t('Pay by card without leaving the app')}</Title>
+              <Title>
+                {walletPaymentName
+                  ? t('Pay with {{paymentMethod}} without leaving the app', {
+                      paymentMethod: walletPaymentName,
+                    })
+                  : t('Pay by card without leaving the app')}
+              </Title>
               <Subtitle>
-                {t(
-                  'BitPay partners with Transak so you can buy crypto with your card right here. Verify your email with Transak to continue.',
-                )}
+                {walletPaymentName
+                  ? t(
+                      'BitPay partners with Transak so you can buy crypto with {{paymentMethod}} right here. Verify your email with Transak to continue.',
+                      {paymentMethod: walletPaymentName},
+                    )
+                  : t(
+                      'BitPay partners with Transak so you can buy crypto with your card right here. Verify your email with Transak to continue.',
+                    )}
               </Subtitle>
             </>
           ) : (

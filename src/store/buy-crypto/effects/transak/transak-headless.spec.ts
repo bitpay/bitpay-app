@@ -231,7 +231,25 @@ describe('prepareTransakHeadlessCheckout', () => {
       userAccessToken: 'user-token',
       kycType: 'STANDARD',
       fiatCurrency: 'EUR',
+      paymentCategory: 'credit_debit_card',
     });
+  });
+
+  it('checks the Apple Pay limits and skips the saved cards', async () => {
+    const wallet = createWallet();
+    const preparation = await prepareTransakHeadlessCheckout(
+      wallet,
+      {...quoteRequestData, paymentMethod: 'apple_pay'},
+      'user-token',
+    );
+    expect(preparation).toMatchObject({status: 'ready', savedCards: []});
+    expect(wallet.transakHeadlessGetQuote).toHaveBeenCalledWith(
+      expect.objectContaining({paymentMethod: 'apple_pay'}),
+    );
+    expect(wallet.transakHeadlessGetUserLimits).toHaveBeenCalledWith(
+      expect.objectContaining({paymentCategory: 'apple_pay'}),
+    );
+    expect(wallet.transakHeadlessGetSavedCards).not.toHaveBeenCalled();
   });
 
   it('is unavailable when the KYC is not approved', async () => {

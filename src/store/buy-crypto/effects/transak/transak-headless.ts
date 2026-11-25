@@ -1,13 +1,14 @@
 import {Wallet} from '../../../wallet/wallet.models';
 import {
   TransakEnv,
-  TransakHeadlessCardSessionData,
   TransakHeadlessGetQuoteRequestData,
   TransakHeadlessKycRequirementData,
   TransakHeadlessOrderData,
+  TransakHeadlessPaymentMethod,
   TransakHeadlessQuoteData,
   TransakHeadlessSavedCard,
   TransakHeadlessSendOtpData,
+  TransakHeadlessTransactionSessionData,
   TransakHeadlessUserLimitsData,
   TransakHeadlessVerifyOtpData,
   TransakStatusKey,
@@ -109,6 +110,7 @@ export const transakHeadlessGetUserLimits = async (
     userAccessToken: string;
     kycType: string;
     fiatCurrency: string;
+    paymentCategory: TransakHeadlessPaymentMethod;
   },
 ): Promise<TransakHeadlessUserLimitsData> =>
   unwrap(await wallet.transakHeadlessGetUserLimits(requestData));
@@ -146,22 +148,25 @@ export const transakHeadlessGetSavedCards = async (
   return data?.paymentInstruments?.credit_debit_card?.cards ?? [];
 };
 
-export const transakHeadlessCreateCardSession = async (
+// Cards and Google Pay need the redirect URLs for 3DS; Apple Pay takes none.
+export const transakHeadlessCreateTransactionSession = async (
   wallet: Wallet,
   requestData: {
     env: TransakEnv;
     userAccessToken: string;
     quoteId: string;
     walletAddress: string;
-    successUrl: string;
-    failureUrl: string;
+    successUrl?: string;
+    failureUrl?: string;
     config?: {
       colorMode?: 'DARK' | 'LIGHT';
       colors?: {[key: string]: string};
+      borderRadius?: string;
+      height?: string;
     };
   },
-): Promise<TransakHeadlessCardSessionData> =>
-  unwrap(await wallet.transakHeadlessCreateCardSession(requestData));
+): Promise<TransakHeadlessTransactionSessionData> =>
+  unwrap(await wallet.transakHeadlessCreateTransactionSession(requestData));
 
 export const transakHeadlessCreateOrder = async (
   wallet: Wallet,
@@ -285,6 +290,7 @@ export const prepareTransakHeadlessCheckout = async (
           userAccessToken,
           kycType,
           fiatCurrency: quoteRequestData.fiatCurrency,
+          paymentCategory: quoteRequestData.paymentMethod,
         });
         if (isTransakHeadlessOverLimit(limits, quote.fiatAmount)) {
           return {status: 'unavailable', reason: 'limits: exceeded'};
@@ -329,15 +335,17 @@ export const prepareTransakHeadlessCheckout = async (
     }
 
     let savedCards: TransakHeadlessSavedCard[] = [];
-    try {
-      savedCards = await transakHeadlessGetSavedCards(wallet, {
-        env,
-        userAccessToken,
-      });
-    } catch (err) {
-      // Not being able to list saved cards still allows paying with a new one.
-      if (isTransakHeadlessUnauthorized(err)) {
-        throw err;
+    if (quoteRequestData.paymentMethod === 'credit_debit_card') {
+      try {
+        savedCards = await transakHeadlessGetSavedCards(wallet, {
+          env,
+          userAccessToken,
+        });
+      } catch (err) {
+        // Not being able to list saved cards still allows paying with a new one.
+        if (isTransakHeadlessUnauthorized(err)) {
+          throw err;
+        }
       }
     }
 

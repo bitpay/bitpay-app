@@ -57,8 +57,9 @@ export type ConfigPaymentMethodKey =
   | 'pisp'
   | 'pix'
   | 'venmo'
-  // MoonPay embedded flow only — independent from the general 'applePay' /
-  // 'creditCard' / 'debitCard' keys above, which also cover the Kayak flow.
+  // MoonPay embedded and Transak headless flows only — independent from the
+  // general 'applePay' / 'creditCard' / 'debitCard' keys above, which also
+  // cover the Kayak flow.
   | 'applePayEmbedded'
   | 'googlePayEmbedded'
   | 'cardEmbedded'

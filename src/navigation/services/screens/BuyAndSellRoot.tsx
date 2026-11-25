@@ -183,6 +183,7 @@ import {
   getPassthroughUri,
   getTransakChainFormat,
   getTransakCoinFormat,
+  getTransakHeadlessPaymentMethod,
   getTransakPaymentMethodFormat,
   isTransakHeadlessPaymentMethodEnabled,
   isTransakHeadlessUserAuthValid,
@@ -246,6 +247,7 @@ import {useTheme} from '../../../contexts';
 import Modal from 'react-native-modal';
 import {
   ActivityIndicator,
+  Platform,
   SafeAreaView,
   StyleSheet,
   TextProps,
@@ -3438,15 +3440,21 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    // Headless keeps the whole card payment in the app. Whenever it cannot run
-    // (no session and the customer skips, KYC not approved, Transak errors...)
-    // the purchase continues below with the standard Transak widget.
+    // Headless keeps the whole card, Apple Pay or Google Pay payment in the
+    // app. Whenever it cannot run (no session and the customer skips, KYC not
+    // approved, Transak errors...) the purchase continues below with the
+    // standard Transak widget.
     if (
       !skipHeadless &&
       isTransakHeadlessPaymentMethodEnabled(
         paymentMethod?.method,
         buyCryptoConfig,
         locationData?.countryShortCode,
+        {
+          applePaySupported:
+            Platform.OS === 'ios' && getMoonpayEmbeddedApplePaySupported(),
+          googlePaySupported: Platform.OS === 'android',
+        },
       )
     ) {
       const startedHeadless = await continueToTransakHeadless(
@@ -3625,7 +3633,10 @@ const BuyAndSellRoot = ({
     paymentMethod: PaymentMethod,
     address: string,
   ): Promise<boolean> => {
-    if (!selectedWallet) {
+    const headlessPaymentMethod = getTransakHeadlessPaymentMethod(
+      paymentMethod?.method,
+    );
+    if (!selectedWallet || !headlessPaymentMethod) {
       return false;
     }
     const wallet = selectedWallet;
@@ -3637,7 +3648,7 @@ const BuyAndSellRoot = ({
         wallet.currencyAbbreviation.toLowerCase(),
       ),
       network: getTransakChainFormat(wallet.chain) ?? 'mainnet',
-      paymentMethod: 'credit_debit_card',
+      paymentMethod: headlessPaymentMethod,
       fiatAmount: offer.fiatAmount,
       partnerCustomerId: wallet.id,
       partnerOrderId: transakExternalId,
@@ -3700,7 +3711,7 @@ const BuyAndSellRoot = ({
           paymentMethod: paymentMethod.method,
           coin: wallet.currencyAbbreviation.toLowerCase(),
           chain: wallet.chain?.toLowerCase(),
-          isHeadless: true,
+          isEmbedded: true,
         }),
       );
 
@@ -3764,6 +3775,7 @@ const BuyAndSellRoot = ({
       {
         wallet,
         country: locationData?.countryShortCode,
+        paymentMethod: headlessPaymentMethod,
         initialEmail: user?.email,
         onConnect: async (userAuth: TransakHeadlessUserAuthData) => {
           dispatch(

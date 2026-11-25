@@ -41,7 +41,76 @@ describe('isTransakHeadlessPaymentMethodEnabled', () => {
       isTransakHeadlessPaymentMethodEnabled('creditCard', headlessConfig, 'GB'),
     ).toBe(false);
     expect(
+      isTransakHeadlessPaymentMethodEnabled(
+        'sepaBankTransfer',
+        headlessConfig,
+        'DE',
+      ),
+    ).toBe(false);
+  });
+
+  it('enables the wallets only where the device supports them', () => {
+    const support = {applePaySupported: true, googlePaySupported: true};
+    expect(
+      isTransakHeadlessPaymentMethodEnabled(
+        'applePay',
+        headlessConfig,
+        'US',
+        support,
+      ),
+    ).toBe(true);
+    expect(
+      isTransakHeadlessPaymentMethodEnabled(
+        'googlePay',
+        headlessConfig,
+        'US',
+        support,
+      ),
+    ).toBe(true);
+    expect(
       isTransakHeadlessPaymentMethodEnabled('applePay', headlessConfig, 'US'),
+    ).toBe(false);
+    expect(
+      isTransakHeadlessPaymentMethodEnabled('googlePay', headlessConfig, 'US'),
+    ).toBe(false);
+    expect(
+      isTransakHeadlessPaymentMethodEnabled(
+        'applePay',
+        headlessConfig,
+        'GB',
+        support,
+      ),
+    ).toBe(false);
+  });
+
+  it('turns each payment method off on its own', () => {
+    const config: BuyCryptoConfig = {
+      transak: {
+        config: {
+          paymentMethods: {
+            cardEmbedded: {disabled: true},
+            applePayEmbedded: {disabled: true},
+          },
+        },
+      },
+    };
+    const support = {applePaySupported: true, googlePaySupported: true};
+    expect(
+      isTransakHeadlessPaymentMethodEnabled('creditCard', config, 'US'),
+    ).toBe(false);
+    expect(
+      isTransakHeadlessPaymentMethodEnabled('applePay', config, 'US', support),
+    ).toBe(false);
+    expect(
+      isTransakHeadlessPaymentMethodEnabled('googlePay', config, 'US', support),
+    ).toBe(true);
+    expect(
+      isTransakHeadlessPaymentMethodEnabled(
+        'googlePay',
+        {transak: {config: {embeddedBuyDisabled: true}}},
+        'US',
+        support,
+      ),
     ).toBe(false);
   });
 });
