@@ -10,19 +10,11 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {transakRefreshOrderDetails} from '../utils/external-services-status';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import TransakLogo from '../../../../../components/icons/external-services/transak/transak-logo';
-import {
-  TransakAccessTokenData,
-  TransakGetOrderDetailsRequestData,
-  TransakIncomingData,
-  TransakPaymentData,
-} from '../../../../../store/buy-crypto/buy-crypto.models';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-} from '../../../../../utils/hooks';
+import {TransakPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -50,7 +42,6 @@ import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {
-  transakEnv,
   transakGetStatusDetails,
   TransakStatus,
 } from '../../../../services/buy-crypto/utils/transak-utils';
@@ -59,9 +50,6 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
-import {cloneDeep} from '../../../../../utils/object';
-import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
-import {RootState} from '../../../../../store';
 
 export interface TransakDetailsProps {
   paymentRequest: TransakPaymentData;
@@ -81,12 +69,6 @@ const TransakDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: TransakDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
-    ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
-  );
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const [status, setStatus] = useState<TransakStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -102,229 +84,11 @@ const TransakDetails: React.FC = () => {
   };
 
   const getOrderDetails = async (force?: boolean) => {
-    if (
-      ['COMPLETED', 'CANCELLED', 'FAILED', 'REFUNDED', 'EXPIRED'].includes(
-        paymentRequest.status,
-      ) &&
-      !force
-    ) {
-      return;
-    }
-
-    if (!paymentRequest.order_id) {
-      logger.debug('Transak getOrderDetails Warn: No order_id');
-      return;
-    }
-
-    const walletIsSupported = (wallet: Wallet): boolean =>
-      !!(wallet.credentials && wallet.isComplete());
-
-    // BWS only returns an order to the wallet that bought it (saved as user_id).
-    const selectedWallet =
-      Object.values(allKeys)
-        .flatMap(key => key.wallets ?? [])
-        .find(
-          wallet =>
-            wallet.id === paymentRequest.user_id && walletIsSupported(wallet),
-        ) ??
-      Object.values(allKeys)
-        .filter(key => key.backupComplete)
-        .flatMap(key => key.wallets ?? [])
-        .find(walletIsSupported);
-
-    if (!selectedWallet) {
-      logger.error('No supported wallet found for Transak order details');
-      return;
-    }
-
-    // eslint-disable-next-line no-bitwise -- `| 0` truncates the seconds timestamp to an integer
-    const nowTimestamp = (Date.now() / 1000) | 0;
-    let _accessToken = accessTokenTransak?.accessToken;
-    let _expiresAt = accessTokenTransak?.expiresAt;
-    if (!_accessToken || !_expiresAt || _expiresAt < nowTimestamp) {
-      try {
-        if (_expiresAt && _expiresAt < nowTimestamp) {
-          logger.debug(
-            'Transak access token expired. Fetching new one from TransakDetails...',
-          );
-        }
-        const _tokenData = await selectedWallet.transakGetAccessToken({
-          env: transakEnv,
-        });
-        const tokenData: TransakAccessTokenData | undefined =
-          _tokenData?.body?.data ?? _tokenData?.body ?? _tokenData;
-
-        if (tokenData?.accessToken) {
-          logger.debug(
-            'Transak access token fetched successfully from TransakDetails.',
-          );
-          dispatch(
-            BuyCryptoActions.updateAccessTokenTransak({
-              env: transakEnv,
-              ...tokenData,
-            }),
-          );
-          _accessToken = tokenData.accessToken;
-        } else {
-          const err =
-            'Error fetching Transak access token in TransakDetails. Error: No accessToken provided';
-          logger.error(`${err}`);
-          // Continue anyway, as we can generate a new access token in the BWS if needed.
-        }
-      } catch (err: any) {
-        let msg: string =
-          'Error fetching Transak access token in TransakDetails';
-        if (typeof err === 'string') {
-          msg = msg + `: ${err}`;
-        } else if (typeof err?.message === 'string') {
-          msg = msg + `: ${err.message}`;
-        }
-        logger.error(`${msg}`);
-        // Continue anyway, as we can generate a new access token in the BWS if needed.
-      }
-    } else {
-      logger.debug('Using cached Transak access token.');
-    }
-
-    const requestData: TransakGetOrderDetailsRequestData = {
-      env: transakEnv,
-      orderId: paymentRequest.order_id,
-      accessToken: _accessToken,
-    };
-
-    try {
-      const _orderData = await selectedWallet.transakGetOrderDetails(
-        requestData,
-      );
-      const data = _orderData?.body ?? _orderData;
-
-      if (!data?.data) {
-        logger.error('Transak getOrderDetails Error: No data');
-        return;
-      }
-      const orderData = data.data;
-      let shouldUpdate = false;
-      if (
-        orderData.cryptoAmount &&
-        typeof orderData.cryptoAmount === 'number' &&
-        orderData.cryptoAmount > 0 &&
-        orderData.cryptoAmount != paymentRequest.crypto_amount
-      ) {
-        logger.debug(
-          `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${orderData.cryptoAmount}`,
-        );
-        paymentRequest.crypto_amount = orderData.cryptoAmount;
-        shouldUpdate = true;
-      }
-      if (
-        orderData.fiatAmount &&
-        typeof orderData.fiatAmount === 'number' &&
-        orderData.fiatAmount > 0 &&
-        orderData.fiatAmount != paymentRequest.fiat_total_amount
-      ) {
-        logger.debug(
-          `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiatAmount}`,
-        );
-        paymentRequest.fiat_total_amount = orderData.fiatAmount;
-        let fiatBaseAmount: number = paymentRequest.fiat_base_amount;
-        if (
-          orderData.totalFeeInFiat &&
-          typeof orderData.totalFeeInFiat === 'number' &&
-          orderData.totalFeeInFiat > 0
-        ) {
-          fiatBaseAmount =
-            Number(orderData.fiatAmount) - Number(orderData.totalFeeInFiat);
-          logger.debug(
-            `Updating fiat_base_amount from: ${paymentRequest.fiat_base_amount} to: ${fiatBaseAmount}`,
-          );
-          paymentRequest.fiat_base_amount = fiatBaseAmount;
-        }
-        shouldUpdate = true;
-      }
-      if (
-        orderData.fiatCurrency &&
-        paymentRequest.fiat_total_amount_currency !==
-          orderData.fiatCurrency.toUpperCase()
-      ) {
-        logger.debug(
-          `Updating fiat_total_amount_currency from: ${
-            paymentRequest.fiat_total_amount_currency
-          } to: ${orderData.fiatCurrency.toUpperCase()}`,
-        );
-        paymentRequest.fiat_total_amount_currency =
-          orderData.fiatCurrency.toUpperCase();
-        shouldUpdate = true;
-      }
-      if (
-        orderData.cryptoCurrency &&
-        paymentRequest.coin !== orderData.cryptoCurrency.toUpperCase()
-      ) {
-        logger.debug(
-          `Updating coin from: ${
-            paymentRequest.coin
-          } to: ${orderData.cryptoCurrency.toUpperCase()}`,
-        );
-        paymentRequest.coin = cloneDeep(orderData.cryptoCurrency).toUpperCase();
-        if (
-          orderData.network &&
-          orderData.network == 'mainnet' &&
-          paymentRequest.chain !== orderData.cryptoCurrency.toLowerCase()
-        ) {
-          logger.debug(
-            `Updating chain from: ${
-              paymentRequest.chain
-            } to: ${orderData.cryptoCurrency.toLowerCase()}`,
-          );
-          paymentRequest.coin = orderData.network;
-        }
-        shouldUpdate = true;
-      }
-      if (
-        orderData.transactionHash &&
-        paymentRequest.transaction_id !== orderData.transactionHash
-      ) {
-        logger.debug(
-          `Updating transactionHash from: ${paymentRequest.transaction_id} to: ${orderData.transactionHash}`,
-        );
-        paymentRequest.transaction_id = orderData.transactionHash;
-        shouldUpdate = true;
-      }
-      if (
-        orderData.status &&
-        (!paymentRequest.status || orderData.status != paymentRequest.status)
-      ) {
-        logger.debug(
-          `Updating status from: ${paymentRequest.status} to: ${orderData.status}`,
-        );
-        paymentRequest.status = orderData.status;
-        updateStatusDescription();
-        shouldUpdate = true;
-      }
-
-      if (shouldUpdate) {
-        const stateParams: TransakIncomingData = {
-          transakExternalId: paymentRequest.external_id,
-          status: paymentRequest.status,
-          cryptoAmount: paymentRequest.crypto_amount,
-          transactionId: paymentRequest.transaction_id,
-          fiatTotalAmount: paymentRequest.fiat_total_amount,
-          fiatBaseAmount: paymentRequest.fiat_base_amount,
-          coin: paymentRequest.coin,
-          chain: paymentRequest.chain,
-          fiatTotalAmountCurrency: paymentRequest.fiat_total_amount_currency,
-        };
-        dispatch(
-          BuyCryptoActions.updatePaymentRequestTransak({
-            transakIncomingData: stateParams,
-          }),
-        );
-
-        logger.debug(
-          'Saved payment request with: ' + JSON.stringify(paymentRequest),
-        );
-      }
-    } catch (err) {
-      logger.error('Transak getOrderDetails Error: ' + JSON.stringify(err));
+    const updated = await dispatch(
+      transakRefreshOrderDetails(paymentRequest, force),
+    );
+    if (updated) {
+      updateStatusDescription();
     }
   };
 

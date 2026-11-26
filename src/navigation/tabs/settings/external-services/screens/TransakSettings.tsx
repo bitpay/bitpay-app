@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -10,6 +10,10 @@ import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  transakRefreshOrderDetails,
+  refreshPendingOrders,
+} from '../utils/external-services-status';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
@@ -48,8 +52,12 @@ const TransakSettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState(
-    [] as TransakPaymentData[],
+  const paymentRequests = useMemo(
+    () =>
+      Object.values(transakHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [transakHistory],
   );
 
   const route = useRoute<RouteProp<{params: TransakSettingsProps}>>();
@@ -66,12 +74,15 @@ const TransakSettings: React.FC = () => {
 
   useEffect(() => {
     if (isFocused) {
-      const transakPaymentRequests = Object.values(transakHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      // Copies, so the refresh does not modify the objects held by the store.
+      refreshPendingOrders(
+        Object.values(transakHistory)
+          .filter(pr => pr.env === (__DEV__ ? 'dev' : 'prod'))
+          .map(order => ({...order})),
+        order => dispatch(transakRefreshOrderDetails(order)),
       );
-      setTransactions(transakPaymentRequests);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshes the orders that are not final each time the screen gains focus
   }, [isFocused]);
 
   return (

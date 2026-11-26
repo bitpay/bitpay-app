@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -10,6 +10,10 @@ import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  banxaRefreshOrderDetails,
+  refreshPendingOrders,
+} from '../utils/external-services-status';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
@@ -49,7 +53,13 @@ const BanxaSettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState([] as BanxaPaymentData[]);
+  const paymentRequests = useMemo(
+    () =>
+      Object.values(banxaHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [banxaHistory],
+  );
 
   const route = useRoute<RouteProp<{params: BanxaSettingsProps}>>();
   const {incomingPaymentRequest} = route.params || {};
@@ -65,12 +75,15 @@ const BanxaSettings: React.FC = () => {
 
   useEffect(() => {
     if (isFocused) {
-      const banxaPaymentRequests = Object.values(banxaHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      // Copies, so the refresh does not modify the objects held by the store.
+      refreshPendingOrders(
+        Object.values(banxaHistory)
+          .filter(pr => pr.env === (__DEV__ ? 'dev' : 'prod'))
+          .map(order => ({...order})),
+        order => dispatch(banxaRefreshOrderDetails(order)),
       );
-      setTransactions(banxaPaymentRequests);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshes the orders that are not final each time the screen gains focus
   }, [isFocused]);
 
   return (
