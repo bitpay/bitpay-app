@@ -396,7 +396,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
           ? t(
               'We could not complete your purchase in the app. You can continue on Transak instead.',
             )
-          : t('Your card payment was not completed.'),
+          : t('Your payment was not completed.'),
         enableBackdropDismiss: false,
         actions: [
           ...(allowFallback
