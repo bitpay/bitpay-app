@@ -117,6 +117,87 @@ index ee51e76..c6b9c28 100644
    //#endregion
 
    //#region expose methods
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useScrollEventsHandlersDefault.js b/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useScrollEventsHandlersDefault.js
+index 2a9bfff..7591410 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useScrollEventsHandlersDefault.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useScrollEventsHandlersDefault.js
+@@ -18,8 +18,23 @@ const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY)
+     animatedAnimationState,
+     animatedHandleGestureState
+   } = (0, _useBottomSheetInternal.useBottomSheetInternal)();
++  const isLocking = (0, _reactNativeReanimated.useSharedValue)(false);
+ 
+   //#region callbacks
++  const lockScrollableTo = (0, _react.useCallback)(position => {
++    'worklet';
++
++    if (isLocking.value) {
++      return;
++    }
++    isLocking.value = true;
++    try {
++      // @ts-expect-error
++      (0, _reactNativeReanimated.scrollTo)(scrollableRef, 0, position, false);
++    } finally {
++      isLocking.value = false;
++    }
++  }, [isLocking, scrollableRef]);
+   const handleOnScroll = (0, _react.useCallback)(({
+     contentOffset: {
+       y
+@@ -45,12 +60,11 @@ const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY)
+     }
+     if (animatedScrollableStatus.value === _constants.SCROLLABLE_STATUS.LOCKED) {
+       const lockPosition = context.shouldLockInitialPosition ? context.initialContentOffsetY ?? 0 : 0;
+-      // @ts-expect-error
+-      (0, _reactNativeReanimated.scrollTo)(scrollableRef, 0, lockPosition, false);
++      lockScrollableTo(lockPosition);
+       scrollableContentOffsetY.value = lockPosition;
+       return;
+     }
+-  }, [scrollableRef, scrollableContentOffsetY, animatedScrollableStatus, animatedSheetState, animatedHandleGestureState]);
++  }, [lockScrollableTo, scrollableContentOffsetY, animatedScrollableStatus, animatedSheetState, animatedHandleGestureState]);
+   const handleOnBeginDrag = (0, _react.useCallback)(({
+     contentOffset: {
+       y
+@@ -84,8 +98,7 @@ const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY)
+ 
+     if (animatedScrollableStatus.value === _constants.SCROLLABLE_STATUS.LOCKED) {
+       const lockPosition = context.shouldLockInitialPosition ? context.initialContentOffsetY ?? 0 : 0;
+-      // @ts-expect-error
+-      (0, _reactNativeReanimated.scrollTo)(scrollableRef, 0, lockPosition, false);
++      lockScrollableTo(lockPosition);
+       scrollableContentOffsetY.value = lockPosition;
+       return;
+     }
+@@ -96,7 +109,7 @@ const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY)
+         contentOffsetY: y
+       }));
+     }
+-  }, [scrollableRef, scrollableContentOffsetY, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
++  }, [lockScrollableTo, scrollableContentOffsetY, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
+   const handleOnMomentumEnd = (0, _react.useCallback)(({
+     contentOffset: {
+       y
+@@ -106,8 +119,7 @@ const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY)
+ 
+     if (animatedScrollableStatus.value === _constants.SCROLLABLE_STATUS.LOCKED) {
+       const lockPosition = context.shouldLockInitialPosition ? context.initialContentOffsetY ?? 0 : 0;
+-      // @ts-expect-error
+-      (0, _reactNativeReanimated.scrollTo)(scrollableRef, 0, lockPosition, false);
++      lockScrollableTo(lockPosition);
+       scrollableContentOffsetY.value = 0;
+       return;
+     }
+@@ -118,7 +130,7 @@ const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY)
+         contentOffsetY: y
+       }));
+     }
+-  }, [scrollableContentOffsetY, scrollableRef, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
++  }, [scrollableContentOffsetY, lockScrollableTo, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
+   //#endregion
+ 
+   return {
 diff --git a/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js b/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js
 index 94fabdb..7dd267d 100644
 --- a/node_modules/@gorhom/bottom-sheet/lib/module/components/bottomSheetModal/BottomSheetModal.js
@@ -236,6 +317,96 @@ index 94fabdb..7dd267d 100644
    //#endregion
 
    //#region expose methods
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useScrollEventsHandlersDefault.js b/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useScrollEventsHandlersDefault.js
+index a3a47c1..0888cd7 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useScrollEventsHandlersDefault.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useScrollEventsHandlersDefault.js
+@@ -2,7 +2,7 @@
+ 
+ import { useCallback } from 'react';
+ import { State } from 'react-native-gesture-handler';
+-import { scrollTo } from 'react-native-reanimated';
++import { scrollTo, useSharedValue } from 'react-native-reanimated';
+ import { ANIMATION_STATUS, SCROLLABLE_STATUS, SHEET_STATE } from '../constants';
+ import { useBottomSheetInternal } from './useBottomSheetInternal';
+ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentOffsetY) => {
+@@ -14,8 +14,23 @@ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentO
+     animatedAnimationState,
+     animatedHandleGestureState
+   } = useBottomSheetInternal();
++  const isLocking = useSharedValue(false);
+ 
+   //#region callbacks
++  const lockScrollableTo = useCallback(position => {
++    'worklet';
++
++    if (isLocking.value) {
++      return;
++    }
++    isLocking.value = true;
++    try {
++      // @ts-expect-error
++      scrollTo(scrollableRef, 0, position, false);
++    } finally {
++      isLocking.value = false;
++    }
++  }, [isLocking, scrollableRef]);
+   const handleOnScroll = useCallback(({
+     contentOffset: {
+       y
+@@ -41,12 +56,11 @@ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentO
+     }
+     if (animatedScrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
+       const lockPosition = context.shouldLockInitialPosition ? context.initialContentOffsetY ?? 0 : 0;
+-      // @ts-expect-error
+-      scrollTo(scrollableRef, 0, lockPosition, false);
++      lockScrollableTo(lockPosition);
+       scrollableContentOffsetY.value = lockPosition;
+       return;
+     }
+-  }, [scrollableRef, scrollableContentOffsetY, animatedScrollableStatus, animatedSheetState, animatedHandleGestureState]);
++  }, [lockScrollableTo, scrollableContentOffsetY, animatedScrollableStatus, animatedSheetState, animatedHandleGestureState]);
+   const handleOnBeginDrag = useCallback(({
+     contentOffset: {
+       y
+@@ -80,8 +94,7 @@ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentO
+ 
+     if (animatedScrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
+       const lockPosition = context.shouldLockInitialPosition ? context.initialContentOffsetY ?? 0 : 0;
+-      // @ts-expect-error
+-      scrollTo(scrollableRef, 0, lockPosition, false);
++      lockScrollableTo(lockPosition);
+       scrollableContentOffsetY.value = lockPosition;
+       return;
+     }
+@@ -92,7 +105,7 @@ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentO
+         contentOffsetY: y
+       }));
+     }
+-  }, [scrollableRef, scrollableContentOffsetY, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
++  }, [lockScrollableTo, scrollableContentOffsetY, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
+   const handleOnMomentumEnd = useCallback(({
+     contentOffset: {
+       y
+@@ -102,8 +115,7 @@ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentO
+ 
+     if (animatedScrollableStatus.value === SCROLLABLE_STATUS.LOCKED) {
+       const lockPosition = context.shouldLockInitialPosition ? context.initialContentOffsetY ?? 0 : 0;
+-      // @ts-expect-error
+-      scrollTo(scrollableRef, 0, lockPosition, false);
++      lockScrollableTo(lockPosition);
+       scrollableContentOffsetY.value = 0;
+       return;
+     }
+@@ -114,7 +126,7 @@ export const useScrollEventsHandlersDefault = (scrollableRef, scrollableContentO
+         contentOffsetY: y
+       }));
+     }
+-  }, [scrollableContentOffsetY, scrollableRef, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
++  }, [scrollableContentOffsetY, lockScrollableTo, animatedAnimationState, animatedScrollableStatus, animatedScrollableState]);
+   //#endregion
+ 
+   return {
 diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
 index 2954b3f..05dd06f 100644
 --- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
@@ -378,3 +549,96 @@ index 2954b3f..05dd06f 100644
 +    [enableDismissOnClose, handleRestore, unmount]
    );
    //#endregion
+diff --git a/node_modules/@gorhom/bottom-sheet/src/hooks/useScrollEventsHandlersDefault.ts b/node_modules/@gorhom/bottom-sheet/src/hooks/useScrollEventsHandlersDefault.ts
+index 7b84480..3a97e2b 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/hooks/useScrollEventsHandlersDefault.ts
++++ b/node_modules/@gorhom/bottom-sheet/src/hooks/useScrollEventsHandlersDefault.ts
+@@ -1,6 +1,6 @@
+ import { useCallback } from 'react';
+ import { State } from 'react-native-gesture-handler';
+-import { scrollTo } from 'react-native-reanimated';
++import { scrollTo, useSharedValue } from 'react-native-reanimated';
+ import { ANIMATION_STATUS, SCROLLABLE_STATUS, SHEET_STATE } from '../constants';
+ import type {
+   ScrollEventHandlerCallbackType,
+@@ -25,8 +25,25 @@ export const useScrollEventsHandlersDefault: ScrollEventsHandlersHookType = (
+     animatedAnimationState,
+     animatedHandleGestureState,
+   } = useBottomSheetInternal();
++  const isLocking = useSharedValue(false);
+ 
+   //#region callbacks
++  const lockScrollableTo = useCallback(
++    (position: number) => {
++      'worklet';
++      if (isLocking.value) {
++        return;
++      }
++      isLocking.value = true;
++      try {
++        // @ts-expect-error
++        scrollTo(scrollableRef, 0, position, false);
++      } finally {
++        isLocking.value = false;
++      }
++    },
++    [isLocking, scrollableRef]
++  );
+   const handleOnScroll: ScrollEventHandlerCallbackType<ScrollEventContextType> =
+     useCallback(
+       ({ contentOffset: { y } }, context) => {
+@@ -55,14 +72,13 @@ export const useScrollEventsHandlersDefault: ScrollEventsHandlersHookType = (
+           const lockPosition = context.shouldLockInitialPosition
+             ? (context.initialContentOffsetY ?? 0)
+             : 0;
+-          // @ts-expect-error
+-          scrollTo(scrollableRef, 0, lockPosition, false);
++          lockScrollableTo(lockPosition);
+           scrollableContentOffsetY.value = lockPosition;
+           return;
+         }
+       },
+       [
+-        scrollableRef,
++        lockScrollableTo,
+         scrollableContentOffsetY,
+         animatedScrollableStatus,
+         animatedSheetState,
+@@ -104,8 +120,7 @@ export const useScrollEventsHandlersDefault: ScrollEventsHandlersHookType = (
+           const lockPosition = context.shouldLockInitialPosition
+             ? (context.initialContentOffsetY ?? 0)
+             : 0;
+-          // @ts-expect-error
+-          scrollTo(scrollableRef, 0, lockPosition, false);
++          lockScrollableTo(lockPosition);
+           scrollableContentOffsetY.value = lockPosition;
+           return;
+         }
+@@ -119,7 +134,7 @@ export const useScrollEventsHandlersDefault: ScrollEventsHandlersHookType = (
+         }
+       },
+       [
+-        scrollableRef,
++        lockScrollableTo,
+         scrollableContentOffsetY,
+         animatedAnimationState,
+         animatedScrollableStatus,
+@@ -134,8 +149,7 @@ export const useScrollEventsHandlersDefault: ScrollEventsHandlersHookType = (
+           const lockPosition = context.shouldLockInitialPosition
+             ? (context.initialContentOffsetY ?? 0)
+             : 0;
+-          // @ts-expect-error
+-          scrollTo(scrollableRef, 0, lockPosition, false);
++          lockScrollableTo(lockPosition);
+           scrollableContentOffsetY.value = 0;
+           return;
+         }
+@@ -150,7 +164,7 @@ export const useScrollEventsHandlersDefault: ScrollEventsHandlersHookType = (
+       },
+       [
+         scrollableContentOffsetY,
+-        scrollableRef,
++        lockScrollableTo,
+         animatedAnimationState,
+         animatedScrollableStatus,
+         animatedScrollableState,
