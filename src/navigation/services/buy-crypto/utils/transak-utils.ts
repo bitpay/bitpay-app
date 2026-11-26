@@ -429,6 +429,10 @@ export const isTransakHeadlessPaymentMethodEnabled = (
   }
 };
 
+export const isTransakHeadlessKycEnabled = (
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+): boolean => buyCryptoConfig?.transak?.config?.headlessKycDisabled !== true;
+
 // A session about to expire is treated as expired: Transak cannot refresh an
 // expired session, and a purchase must not fail halfway because of it.
 export const isTransakHeadlessUserAuthValid = (

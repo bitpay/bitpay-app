@@ -7,6 +7,7 @@ export type ExchangeConfig = {
     paymentMethods?: PaymentMethodsConfig;
     // MoonPay embedded and Transak headless flows kill switch.
     embeddedBuyDisabled?: boolean;
+    headlessKycDisabled?: boolean;
     [key: string]: any; // Other partner-specific configuration properties can be added here
   };
 };

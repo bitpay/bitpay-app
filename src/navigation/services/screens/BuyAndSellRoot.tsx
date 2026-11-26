@@ -185,6 +185,7 @@ import {
   getTransakCoinFormat,
   getTransakHeadlessPaymentMethod,
   getTransakPaymentMethodFormat,
+  isTransakHeadlessKycEnabled,
   isTransakHeadlessPaymentMethodEnabled,
   isTransakHeadlessUserAuthValid,
   transakEnv,
@@ -3654,8 +3655,43 @@ const BuyAndSellRoot = ({
       partnerOrderId: transakExternalId,
     };
 
+    // Replaces the onboarding or KYC screen (if any) so going back from the
+    // next one returns to the offers.
+    const showHeadlessScreen = (
+      screen:
+        | {
+            name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_KYC;
+            params: ExternalServicesGroupParamList[ExternalServicesScreens.TRANSAK_BUY_HEADLESS_KYC];
+          }
+        | {
+            name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT;
+            params: ExternalServicesGroupParamList[ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT];
+          },
+    ) => {
+      navigation.dispatch(state => {
+        const routes = state.routes.filter(
+          r =>
+            r.name !==
+              ExternalServicesScreens.TRANSAK_BUY_HEADLESS_ONBOARDING &&
+            r.name !== ExternalServicesScreens.TRANSAK_BUY_HEADLESS_KYC,
+        );
+        if (routes.length === state.routes.length) {
+          return CommonActions.navigate(screen);
+        }
+        const newRoutes = [...routes, screen];
+        return CommonActions.reset({
+          ...state,
+          routes: newRoutes,
+          index: newRoutes.length - 1,
+        });
+      });
+    };
+
+    // After the KYC screen the customer is not sent to it again: a KYC still
+    // not approved goes to the widget.
     const startCheckout = async (
       userAuth: TransakHeadlessUserAuthData,
+      allowKyc: boolean,
     ): Promise<'started' | 'unauthorized' | 'unavailable'> => {
       const ownHeadlessOrders = Object.values(transakPaymentRequests).filter(
         pr => pr.is_headless && pr.order_id,
@@ -3682,8 +3718,37 @@ const BuyAndSellRoot = ({
               );
             }
           },
+          ...(allowKyc &&
+            isTransakHeadlessKycEnabled(buyCryptoConfig) && {
+              kycSession: {colorMode: theme.dark ? 'DARK' : 'LIGHT'},
+            }),
         },
       );
+      if (preparation.status === 'kyc') {
+        showHeadlessScreen({
+          name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_KYC,
+          params: {
+            wallet,
+            userAuth,
+            quoteRequestData,
+            sessionId: preparation.sessionId,
+            onApproved: async () => {
+              const result = await startCheckout(userAuth, false);
+              if (result !== 'started') {
+                fallbackToTransakWidget(offer, paymentMethod);
+              }
+            },
+            onFallback: (reason: string) => {
+              logger.debug(
+                `[TransakHeadlessBuy] KYC fallback (${reason}), continuing with the Transak widget.`,
+              );
+              fallbackToTransakWidget(offer, paymentMethod);
+            },
+          },
+        });
+        setOpeningBrowser(false);
+        return 'started';
+      }
       if (preparation.status !== 'ready') {
         logger.debug(
           `[TransakHeadlessBuy] cannot run headless: ${
@@ -3715,55 +3780,31 @@ const BuyAndSellRoot = ({
         }),
       );
 
-      const checkoutParams = {
-        wallet,
-        toAddress: address,
-        offer,
-        paymentMethod,
-        userAuth,
-        transakExternalId,
-        quoteRequestData,
-        preparation,
-        onFallback: (reason: string) => {
-          logger.debug(
-            `[TransakHeadlessBuy] checkout fallback (${reason}), continuing with the Transak widget.`,
-          );
-          fallbackToTransakWidget(offer, paymentMethod);
-        },
-      };
-
-      // Replace the onboarding (if any) so going back from the checkout
-      // returns to the offers.
-      navigation.dispatch(state => {
-        const routes = state.routes.filter(
-          r =>
-            r.name !== ExternalServicesScreens.TRANSAK_BUY_HEADLESS_ONBOARDING,
-        );
-        if (routes.length === state.routes.length) {
-          return CommonActions.navigate({
-            name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT,
-            params: checkoutParams,
-          });
-        }
-        const newRoutes = [
-          ...routes,
-          {
-            name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT,
-            params: checkoutParams,
+      showHeadlessScreen({
+        name: ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT,
+        params: {
+          wallet,
+          toAddress: address,
+          offer,
+          paymentMethod,
+          userAuth,
+          transakExternalId,
+          quoteRequestData,
+          preparation,
+          onFallback: (reason: string) => {
+            logger.debug(
+              `[TransakHeadlessBuy] checkout fallback (${reason}), continuing with the Transak widget.`,
+            );
+            fallbackToTransakWidget(offer, paymentMethod);
           },
-        ];
-        return CommonActions.reset({
-          ...state,
-          routes: newRoutes,
-          index: newRoutes.length - 1,
-        });
+        },
       });
       setOpeningBrowser(false);
       return 'started';
     };
 
     if (isTransakHeadlessUserAuthValid(transakHeadlessUserAuth)) {
-      const result = await startCheckout(transakHeadlessUserAuth);
+      const result = await startCheckout(transakHeadlessUserAuth, true);
       if (result !== 'unauthorized') {
         return result === 'started';
       }
@@ -3784,7 +3825,7 @@ const BuyAndSellRoot = ({
               userAuth,
             }),
           );
-          const result = await startCheckout(userAuth);
+          const result = await startCheckout(userAuth, true);
           if (result !== 'started') {
             fallbackToTransakWidget(offer, paymentMethod);
           }

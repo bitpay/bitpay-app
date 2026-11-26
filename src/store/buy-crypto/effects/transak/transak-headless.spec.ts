@@ -1,10 +1,12 @@
 import {Wallet} from '../../../wallet/wallet.models';
 import {TransakHeadlessGetQuoteRequestData} from '../../buy-crypto.models';
 import {
+  isTransakHeadlessKycApproved,
   isTransakHeadlessOverLimit,
   prepareTransakHeadlessCheckout,
   TransakHeadlessError,
   transakHeadlessGetOrderQuote,
+  transakHeadlessGetQuoteAndKyc,
   transakHeadlessSendOtp,
   TransakHeadlessUnavailableError,
 } from './transak-headless';
@@ -52,6 +54,9 @@ const createWallet = (overrides: {[method: string]: jest.Mock} = {}) => {
     ),
     transakHeadlessGetActiveOrders: jest.fn(() => ok([])),
     transakHeadlessCancelOrder: jest.fn(() => ok({status: 'CANCELLED'})),
+    transakHeadlessCreateKycSession: jest.fn(() =>
+      ok({sessionId: 'kyc-session-id'}),
+    ),
     transakHeadlessGetSavedCards: jest.fn(() =>
       ok({
         paymentInstruments: {
@@ -190,6 +195,44 @@ describe('transakHeadlessGetOrderQuote', () => {
   });
 });
 
+describe('transakHeadlessGetQuoteAndKyc', () => {
+  it('returns a KYC that is not approved without rejecting it', async () => {
+    const wallet = createWallet({
+      transakHeadlessGetKycRequirement: jest.fn(() =>
+        ok({status: 'NOT_SUBMITTED', isAllowedToPlaceOrder: false}),
+      ),
+    });
+    await expect(
+      transakHeadlessGetQuoteAndKyc(wallet, quoteRequestData, 'user-token'),
+    ).resolves.toEqual({
+      quote,
+      kyc: {status: 'NOT_SUBMITTED', isAllowedToPlaceOrder: false},
+    });
+  });
+});
+
+describe('isTransakHeadlessKycApproved', () => {
+  it('is approved only when Transak also allows the order', () => {
+    expect(
+      isTransakHeadlessKycApproved({
+        status: 'APPROVED',
+        isAllowedToPlaceOrder: true,
+      }),
+    ).toBe(true);
+    expect(isTransakHeadlessKycApproved({kyc: {status: 'APPROVED'}})).toBe(
+      true,
+    );
+    expect(
+      isTransakHeadlessKycApproved({
+        status: 'APPROVED',
+        isAllowedToPlaceOrder: false,
+      }),
+    ).toBe(false);
+    expect(isTransakHeadlessKycApproved({status: 'SUBMITTED'})).toBe(false);
+    expect(isTransakHeadlessKycApproved(undefined)).toBe(false);
+  });
+});
+
 describe('isTransakHeadlessOverLimit', () => {
   it('is over the limit when a period is exceeded', () => {
     expect(
@@ -263,6 +306,126 @@ describe('prepareTransakHeadlessCheckout', () => {
     ).resolves.toEqual({
       status: 'unavailable',
       reason: 'kyc: ADDITIONAL_FORMS_REQUIRED (-)',
+    });
+  });
+
+  it('does not create a KYC session when headless KYC is not allowed', async () => {
+    const wallet = createWallet({
+      transakHeadlessGetKycRequirement: jest.fn(() =>
+        ok({status: 'NOT_SUBMITTED', kycType: 'SIMPLE'}),
+      ),
+    });
+    await expect(
+      prepareTransakHeadlessCheckout(wallet, quoteRequestData, 'user-token'),
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'kyc: NOT_SUBMITTED (SIMPLE)',
+    });
+    expect(wallet.transakHeadlessCreateKycSession).not.toHaveBeenCalled();
+  });
+
+  it.each(['NOT_SUBMITTED', 'ADDITIONAL_FORMS_REQUIRED'])(
+    'creates a KYC session when the KYC is %s',
+    async status => {
+      const wallet = createWallet({
+        transakHeadlessGetKycRequirement: jest.fn(() =>
+          ok({status, isAllowedToPlaceOrder: false}),
+        ),
+      });
+      await expect(
+        prepareTransakHeadlessCheckout(
+          wallet,
+          {...quoteRequestData, paymentMethod: 'apple_pay'},
+          'user-token',
+          {kycSession: {colorMode: 'DARK'}},
+        ),
+      ).resolves.toEqual({status: 'kyc', sessionId: 'kyc-session-id'});
+      expect(wallet.transakHeadlessCreateKycSession).toHaveBeenCalledWith({
+        env: 'sandbox',
+        userAccessToken: 'user-token',
+        quoteId: 'quote-id',
+        config: {colorMode: 'DARK'},
+      });
+      expect(wallet.transakHeadlessGetUserLimits).not.toHaveBeenCalled();
+      expect(wallet.transakHeadlessGetActiveOrders).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['SUBMITTED', 'REJECTED'])(
+    'goes to the widget without a KYC session when the KYC is %s',
+    async status => {
+      const wallet = createWallet({
+        transakHeadlessGetKycRequirement: jest.fn(() =>
+          ok({status, kycType: 'STANDARD'}),
+        ),
+      });
+      await expect(
+        prepareTransakHeadlessCheckout(wallet, quoteRequestData, 'user-token', {
+          kycSession: {colorMode: 'LIGHT'},
+        }),
+      ).resolves.toEqual({
+        status: 'unavailable',
+        reason: `kyc: ${status} (STANDARD)`,
+      });
+      expect(wallet.transakHeadlessCreateKycSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it('goes to the widget when an approved KYC cannot place the order', async () => {
+    const wallet = createWallet({
+      transakHeadlessGetKycRequirement: jest.fn(() =>
+        ok({status: 'APPROVED', isAllowedToPlaceOrder: false}),
+      ),
+    });
+    await expect(
+      prepareTransakHeadlessCheckout(wallet, quoteRequestData, 'user-token', {
+        kycSession: {colorMode: 'LIGHT'},
+      }),
+    ).resolves.toEqual({status: 'unavailable', reason: 'kyc: APPROVED (-)'});
+    expect(wallet.transakHeadlessCreateKycSession).not.toHaveBeenCalled();
+  });
+
+  it('is unavailable when the KYC session cannot be created', async () => {
+    const wallet = createWallet({
+      transakHeadlessGetKycRequirement: jest.fn(() =>
+        ok({status: 'NOT_SUBMITTED'}),
+      ),
+      transakHeadlessCreateKycSession: jest.fn(() =>
+        Promise.resolve({
+          body: {
+            error: {
+              statusCode: 422,
+              errorCode: 6003,
+              message: 'This feature is not enabled for your account.',
+            },
+          },
+        }),
+      ),
+    });
+    await expect(
+      prepareTransakHeadlessCheckout(wallet, quoteRequestData, 'user-token', {
+        kycSession: {colorMode: 'LIGHT'},
+      }),
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason: '422/6003: This feature is not enabled for your account.',
+    });
+  });
+
+  it('is unavailable when Transak returns no KYC session', async () => {
+    const wallet = createWallet({
+      transakHeadlessGetKycRequirement: jest.fn(() =>
+        ok({status: 'NOT_SUBMITTED'}),
+      ),
+      transakHeadlessCreateKycSession: jest.fn(() => ok({})),
+    });
+    await expect(
+      prepareTransakHeadlessCheckout(wallet, quoteRequestData, 'user-token', {
+        kycSession: {colorMode: 'LIGHT'},
+      }),
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'kyc session: no sessionId',
     });
   });
 

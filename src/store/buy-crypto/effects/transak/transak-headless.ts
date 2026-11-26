@@ -168,6 +168,20 @@ export const transakHeadlessCreateTransactionSession = async (
 ): Promise<TransakHeadlessTransactionSessionData> =>
   unwrap(await wallet.transakHeadlessCreateTransactionSession(requestData));
 
+export const transakHeadlessCreateKycSession = async (
+  wallet: Wallet,
+  requestData: {
+    env: TransakEnv;
+    userAccessToken: string;
+    quoteId: string;
+    config?: {
+      colorMode?: 'DARK' | 'LIGHT';
+      colors?: {[key: string]: string};
+    };
+  },
+): Promise<TransakHeadlessTransactionSessionData> =>
+  unwrap(await wallet.transakHeadlessCreateKycSession(requestData));
+
 export const transakHeadlessCreateOrder = async (
   wallet: Wallet,
   requestData:
@@ -207,7 +221,29 @@ export const isTransakHeadlessOverLimit = (
     remaining => typeof remaining === 'number' && remaining < fiatAmount,
   );
 
-export const transakHeadlessGetOrderQuote = async (
+export const isTransakHeadlessKycApproved = (
+  kyc: TransakHeadlessKycRequirementData | undefined,
+): boolean =>
+  getTransakHeadlessKycStatus(kyc) === 'APPROVED' &&
+  kyc?.isAllowedToPlaceOrder !== false;
+
+// Forms still to be filled in, which the TransakKyc component can collect.
+// Any other status (in review, rejected...) is left to the widget.
+const TRANSAK_HEADLESS_KYC_FORM_STATUSES: (string | undefined)[] = [
+  'NOT_SUBMITTED',
+  'ADDITIONAL_FORMS_REQUIRED',
+];
+
+const getTransakHeadlessKycUnavailableReason = (
+  kyc: TransakHeadlessKycRequirementData | undefined,
+): string =>
+  `kyc: ${getTransakHeadlessKycStatus(kyc) ?? 'unknown'} (${
+    getTransakHeadlessKycType(kyc) ?? '-'
+  })`;
+
+// The KYC requirement is always read with a new quote: Transak asks for one
+// per check, and a quote only lasts about a minute.
+export const transakHeadlessGetQuoteAndKyc = async (
   wallet: Wallet,
   quoteRequestData: TransakHeadlessGetQuoteRequestData,
   userAccessToken: string,
@@ -237,15 +273,27 @@ export const transakHeadlessGetOrderQuote = async (
     userAccessToken,
     quoteId: quote.quoteId,
   });
-  const kycStatus = getTransakHeadlessKycStatus(kyc);
-  if (kycStatus !== 'APPROVED' || kyc?.isAllowedToPlaceOrder === false) {
+  return {quote, kyc};
+};
+
+export const transakHeadlessGetOrderQuote = async (
+  wallet: Wallet,
+  quoteRequestData: TransakHeadlessGetQuoteRequestData,
+  userAccessToken: string,
+): Promise<{
+  quote: TransakHeadlessQuoteData;
+  kyc: TransakHeadlessKycRequirementData;
+}> => {
+  const {quote, kyc} = await transakHeadlessGetQuoteAndKyc(
+    wallet,
+    quoteRequestData,
+    userAccessToken,
+  );
+  if (!isTransakHeadlessKycApproved(kyc)) {
     throw new TransakHeadlessUnavailableError(
-      `kyc: ${kycStatus ?? 'unknown'} (${
-        getTransakHeadlessKycType(kyc) ?? '-'
-      })`,
+      getTransakHeadlessKycUnavailableReason(kyc),
     );
   }
-
   return {quote, kyc};
 };
 
@@ -256,6 +304,9 @@ export type TransakHeadlessPreparation =
       quoteFetchedAt: number;
       savedCards: TransakHeadlessSavedCard[];
     }
+  // The customer has KYC forms to fill in: the TransakKyc component is shown
+  // with this session before the checkout.
+  | {status: 'kyc'; sessionId: string}
   // The stored session was rejected: it has to be discarded.
   | {status: 'unauthorized'}
   // Headless cannot run this purchase (KYC, limits, feature...): the widget
@@ -271,16 +322,42 @@ export const prepareTransakHeadlessCheckout = async (
   opts: {
     ownOrderIds?: string[];
     onOwnOrderCancelled?: (orderId: string, status: TransakStatusKey) => void;
+    // Without it, a KYC that is not approved goes to the widget.
+    kycSession?: {colorMode: 'DARK' | 'LIGHT'};
   } = {},
 ): Promise<TransakHeadlessPreparation> => {
   const env = quoteRequestData.env;
   try {
-    const {quote, kyc} = await transakHeadlessGetOrderQuote(
+    const {quote, kyc} = await transakHeadlessGetQuoteAndKyc(
       wallet,
       quoteRequestData,
       userAccessToken,
     );
     const quoteFetchedAt = Date.now();
+
+    if (!isTransakHeadlessKycApproved(kyc)) {
+      if (
+        !opts.kycSession ||
+        !TRANSAK_HEADLESS_KYC_FORM_STATUSES.includes(
+          getTransakHeadlessKycStatus(kyc),
+        )
+      ) {
+        return {
+          status: 'unavailable',
+          reason: getTransakHeadlessKycUnavailableReason(kyc),
+        };
+      }
+      const session = await transakHeadlessCreateKycSession(wallet, {
+        env,
+        userAccessToken,
+        quoteId: quote.quoteId,
+        config: {colorMode: opts.kycSession.colorMode},
+      });
+      if (!session?.sessionId) {
+        return {status: 'unavailable', reason: 'kyc session: no sessionId'};
+      }
+      return {status: 'kyc', sessionId: session.sessionId};
+    }
 
     const kycType = getTransakHeadlessKycType(kyc);
     if (kycType) {

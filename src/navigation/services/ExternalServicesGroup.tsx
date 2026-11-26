@@ -33,6 +33,9 @@ import MoonpayBuyEmbeddedOnboarding, {
 import TransakBuyHeadlessCheckout, {
   TransakBuyHeadlessCheckoutProps,
 } from './screens/TransakBuyHeadlessCheckout';
+import TransakBuyHeadlessKyc, {
+  TransakBuyHeadlessKycProps,
+} from './screens/TransakBuyHeadlessKyc';
 import TransakBuyHeadlessOnboarding, {
   TransakBuyHeadlessOnboardingProps,
 } from './screens/TransakBuyHeadlessOnboarding';
@@ -50,6 +53,7 @@ export type ExternalServicesGroupParamList = {
   RampSellCheckout: RampSellCheckoutProps;
   SimplexSellCheckout: SimplexSellCheckoutProps;
   TransakBuyHeadlessCheckout: TransakBuyHeadlessCheckoutProps;
+  TransakBuyHeadlessKyc: TransakBuyHeadlessKycProps;
   TransakBuyHeadlessOnboarding: TransakBuyHeadlessOnboardingProps;
 };
 
@@ -61,6 +65,7 @@ export enum ExternalServicesScreens {
   RAMP_SELL_CHECKOUT = 'RampSellCheckout',
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
   TRANSAK_BUY_HEADLESS_CHECKOUT = 'TransakBuyHeadlessCheckout',
+  TRANSAK_BUY_HEADLESS_KYC = 'TransakBuyHeadlessKyc',
   TRANSAK_BUY_HEADLESS_ONBOARDING = 'TransakBuyHeadlessOnboarding',
 }
 
@@ -139,6 +144,15 @@ const ExternalServicesGroup = ({
         component={TransakBuyHeadlessCheckout}
         options={{
           headerTitle: () => <HeaderTitle>{t('Confirm Buy')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServices.Screen
+        name={ExternalServicesScreens.TRANSAK_BUY_HEADLESS_KYC}
+        component={TransakBuyHeadlessKyc}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Identity Verification')}</HeaderTitle>
+          ),
         }}
       />
       <ExternalServices.Screen

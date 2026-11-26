@@ -5,6 +5,7 @@ import {
   getTransakHeadlessUnsupportedTermsIds,
   isSameTransakHeadlessQuoteForCustomer,
   isSameTransakHeadlessTermsIds,
+  isTransakHeadlessKycEnabled,
   isTransakHeadlessPaymentMethodEnabled,
 } from './transak-utils';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
@@ -111,6 +112,26 @@ describe('isTransakHeadlessPaymentMethodEnabled', () => {
         'US',
         support,
       ),
+    ).toBe(false);
+  });
+});
+
+describe('isTransakHeadlessKycEnabled', () => {
+  it('is enabled unless the config turns it off', () => {
+    expect(isTransakHeadlessKycEnabled(undefined)).toBe(true);
+    expect(isTransakHeadlessKycEnabled(headlessConfig)).toBe(true);
+    expect(
+      isTransakHeadlessKycEnabled({
+        transak: {config: {headlessKycDisabled: false}},
+      }),
+    ).toBe(true);
+  });
+
+  it('is disabled when the config turns it off', () => {
+    expect(
+      isTransakHeadlessKycEnabled({
+        transak: {config: {headlessKycDisabled: true}},
+      }),
     ).toBe(false);
   });
 });
