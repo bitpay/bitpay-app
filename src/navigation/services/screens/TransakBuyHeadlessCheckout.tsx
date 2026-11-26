@@ -86,6 +86,7 @@ import {
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
   isSameTransakHeadlessQuoteForCustomer,
+  isTransakHeadlessPaidStatus,
   transakEnv,
   transakHeadlessEnvironment,
 } from '../buy-crypto/utils/transak-utils';
@@ -116,12 +117,6 @@ const FINAL_FAILED_STATUSES: TransakStatusKey[] = [
   'EXPIRED',
   'REFUNDED',
 ];
-
-// Paid without a 3DS page (always the case for Apple Pay): the order already
-// moved past the payment.
-const isPaidStatus = (status: TransakStatusKey): boolean =>
-  status !== 'AWAITING_PAYMENT_FROM_USER' &&
-  !FINAL_FAILED_STATUSES.includes(status);
 
 const styles = StyleSheet.create({
   root: {flex: 1},
@@ -722,7 +717,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       let attempt = 0;
       !url &&
       !FINAL_FAILED_STATUSES.includes(status) &&
-      !isPaidStatus(status) &&
+      !isTransakHeadlessPaidStatus(status) &&
       attempt < ORDER_POLL_ATTEMPTS;
       attempt++
     ) {
@@ -751,7 +746,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     }
     if (url) {
       setRedirectUrl(url);
-    } else if (isPaidStatus(status)) {
+    } else if (isTransakHeadlessPaidStatus(status)) {
       finalize('success');
     } else {
       finalize(

@@ -473,6 +473,21 @@ export const getTransakHeadlessRedirectResult = (
   }
 };
 
+// Only statuses Transak sets once the payment went through: a missing or
+// unknown status is never taken as paid.
+const TRANSAK_HEADLESS_PAID_STATUSES: TransakStatusKey[] = [
+  'PAYMENT_DONE_MARKED_BY_USER',
+  'PROCESSING',
+  'PENDING_DELIVERY_FROM_TRANSAK',
+  'ON_HOLD_PENDING_DELIVERY_FROM_TRANSAK',
+  'COMPLETED',
+];
+
+export const isTransakHeadlessPaidStatus = (
+  status: TransakStatusKey | undefined,
+): boolean =>
+  status !== undefined && TRANSAK_HEADLESS_PAID_STATUSES.includes(status);
+
 export const TRANSAK_HEADLESS_TERMS_IDS = [
   'TRANSAK_TERMS_OF_SERVICE',
   'COINME_USER_AGREEMENT',

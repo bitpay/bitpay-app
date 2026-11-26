@@ -6,6 +6,7 @@ import {
   isSameTransakHeadlessQuoteForCustomer,
   isSameTransakHeadlessTermsIds,
   isTransakHeadlessKycEnabled,
+  isTransakHeadlessPaidStatus,
   isTransakHeadlessPaymentMethodEnabled,
 } from './transak-utils';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
@@ -133,6 +134,34 @@ describe('isTransakHeadlessKycEnabled', () => {
         transak: {config: {headlessKycDisabled: true}},
       }),
     ).toBe(false);
+  });
+});
+
+describe('isTransakHeadlessPaidStatus', () => {
+  it('is paid once Transak moved the order past the payment', () => {
+    expect(isTransakHeadlessPaidStatus('PAYMENT_DONE_MARKED_BY_USER')).toBe(
+      true,
+    );
+    expect(isTransakHeadlessPaidStatus('PROCESSING')).toBe(true);
+    expect(isTransakHeadlessPaidStatus('PENDING_DELIVERY_FROM_TRANSAK')).toBe(
+      true,
+    );
+    expect(
+      isTransakHeadlessPaidStatus('ON_HOLD_PENDING_DELIVERY_FROM_TRANSAK'),
+    ).toBe(true);
+    expect(isTransakHeadlessPaidStatus('COMPLETED')).toBe(true);
+  });
+
+  it('is not paid while awaiting payment, failed, unknown or missing', () => {
+    expect(isTransakHeadlessPaidStatus('AWAITING_PAYMENT_FROM_USER')).toBe(
+      false,
+    );
+    expect(isTransakHeadlessPaidStatus('FAILED')).toBe(false);
+    expect(isTransakHeadlessPaidStatus('CANCELLED')).toBe(false);
+    expect(isTransakHeadlessPaidStatus('pending')).toBe(false);
+    expect(isTransakHeadlessPaidStatus('paymentRequestSent')).toBe(false);
+    expect(isTransakHeadlessPaidStatus('ORDER_CREATED' as any)).toBe(false);
+    expect(isTransakHeadlessPaidStatus(undefined)).toBe(false);
   });
 });
 
