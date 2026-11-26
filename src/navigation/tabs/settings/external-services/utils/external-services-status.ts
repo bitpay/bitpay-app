@@ -128,7 +128,7 @@ export const changellyRefreshTxStatus =
         logManager.error('Changelly getStatus Error: ' + data.error.message);
         return false;
       }
-      if (data?.result && data.result != swapTx.status) {
+      if (data?.result && data.result !== swapTx.status) {
         logManager.debug(
           `Updating Changelly status of ${swapTx.exchangeTxId} to: ${data.result}`,
         );
@@ -229,7 +229,7 @@ export const thorswapRefreshTxStatus =
           swapTx.amountTo = Number(swapTxData.result.legs[0].toAmount);
           shouldUpdate = true;
         }
-        if (swapTxData.status && swapTxData.status != swapTx.status) {
+        if (swapTxData.status && swapTxData.status !== swapTx.status) {
           logManager.debug('Updating status to: ' + swapTxData.status);
           swapTx.status = swapTxData.status;
           shouldUpdate = true;
@@ -327,7 +327,7 @@ export const banxaRefreshOrderDetails =
         orderData.coin_amount &&
         typeof orderData.coin_amount === 'number' &&
         orderData.coin_amount > 0 &&
-        orderData.coin_amount != paymentRequest.crypto_amount
+        orderData.coin_amount !== paymentRequest.crypto_amount
       ) {
         logManager.debug(
           `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${orderData.coin_amount}`,
@@ -339,7 +339,7 @@ export const banxaRefreshOrderDetails =
         orderData.fiat_amount &&
         typeof orderData.fiat_amount === 'number' &&
         orderData.fiat_amount > 0 &&
-        orderData.fiat_amount != paymentRequest.fiat_total_amount
+        orderData.fiat_amount !== paymentRequest.fiat_total_amount
       ) {
         logManager.debug(
           `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiat_amount}`,
@@ -513,7 +513,7 @@ export const sardineRefreshOrderDetails =
         data.data?.quantity &&
         typeof data.data.quantity === 'number' &&
         data.data.quantity > 0 &&
-        data.data.quantity != paymentRequest.crypto_amount
+        data.data.quantity !== paymentRequest.crypto_amount
       ) {
         logManager.debug(
           `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${data.data.quantity}`,
@@ -531,7 +531,7 @@ export const sardineRefreshOrderDetails =
       }
       if (
         data.status &&
-        (!paymentRequest.status || data.status != paymentRequest.status)
+        (!paymentRequest.status || data.status !== paymentRequest.status)
       ) {
         logManager.debug(
           `Updating status from: ${paymentRequest.status} to: ${data.status}`,
@@ -677,7 +677,7 @@ export const transakRefreshOrderDetails =
         orderData.cryptoAmount &&
         typeof orderData.cryptoAmount === 'number' &&
         orderData.cryptoAmount > 0 &&
-        orderData.cryptoAmount != paymentRequest.crypto_amount
+        orderData.cryptoAmount !== paymentRequest.crypto_amount
       ) {
         logManager.debug(
           `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${orderData.cryptoAmount}`,
@@ -689,7 +689,7 @@ export const transakRefreshOrderDetails =
         orderData.fiatAmount &&
         typeof orderData.fiatAmount === 'number' &&
         orderData.fiatAmount > 0 &&
-        orderData.fiatAmount != paymentRequest.fiat_total_amount
+        orderData.fiatAmount !== paymentRequest.fiat_total_amount
       ) {
         logManager.debug(
           `Updating fiat_total_amount from: ${paymentRequest.fiat_total_amount} to: ${orderData.fiatAmount}`,
@@ -736,7 +736,7 @@ export const transakRefreshOrderDetails =
         paymentRequest.coin = cloneDeep(orderData.cryptoCurrency).toUpperCase();
         if (
           orderData.network &&
-          orderData.network == 'mainnet' &&
+          orderData.network === 'mainnet' &&
           paymentRequest.chain !== orderData.cryptoCurrency.toLowerCase()
         ) {
           logManager.debug(
@@ -760,7 +760,7 @@ export const transakRefreshOrderDetails =
       }
       if (
         orderData.status &&
-        (!paymentRequest.status || orderData.status != paymentRequest.status)
+        (!paymentRequest.status || orderData.status !== paymentRequest.status)
       ) {
         logManager.debug(
           `Updating status from: ${paymentRequest.status} to: ${orderData.status}`,
@@ -851,7 +851,7 @@ export const moonpayRefreshTransactionDetails =
         }
         if (
           !paymentRequest.status ||
-          txDetails.status != paymentRequest.status
+          txDetails.status !== paymentRequest.status
         ) {
           logManager.debug('Updating status to: ' + txDetails.status);
           paymentRequest.status = txDetails.status;
@@ -860,7 +860,7 @@ export const moonpayRefreshTransactionDetails =
         if (
           txDetails?.destination?.amount &&
           Number(txDetails.destination.amount) > 0 &&
-          Number(txDetails.destination.amount) != paymentRequest.crypto_amount
+          Number(txDetails.destination.amount) !== paymentRequest.crypto_amount
         ) {
           logManager.debug(
             'Updating crypto amount to: ' + txDetails.destination.amount,
@@ -870,7 +870,7 @@ export const moonpayRefreshTransactionDetails =
           if (
             txDetails?.source?.amount &&
             Number(txDetails.source.amount) > 0 &&
-            Number(txDetails.source.amount) != paymentRequest.fiat_total_amount
+            Number(txDetails.source.amount) !== paymentRequest.fiat_total_amount
           ) {
             logManager.debug(
               'Updating fiat total amount to: ' + txDetails.source.amount,
@@ -1012,7 +1012,7 @@ export const moonpayRefreshTransactionDetails =
       if (
         !paymentRequest.transaction_id ||
         !paymentRequest.status ||
-        data.status != paymentRequest.status
+        data.status !== paymentRequest.status
       ) {
         logManager.debug('Updating status to: ' + data.status);
         paymentRequest.status = data.status;
@@ -1072,7 +1072,7 @@ export const moonpayRefreshSellTransactionDetails =
       let shouldUpdate = false;
       if (
         !sellOrder.status ||
-        data.status != sellOrder.status ||
+        data.status !== sellOrder.status ||
         (data.status === 'failed' && data.failureReason)
       ) {
         if (

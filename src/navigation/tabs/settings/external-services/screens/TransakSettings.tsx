@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -52,8 +52,12 @@ const TransakSettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState(
-    [] as TransakPaymentData[],
+  const paymentRequests = useMemo(
+    () =>
+      Object.values(transakHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [transakHistory],
   );
 
   const route = useRoute<RouteProp<{params: TransakSettingsProps}>>();
@@ -67,15 +71,6 @@ const TransakSettings: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
-
-  useEffect(() => {
-    if (isFocused) {
-      const transakPaymentRequests = Object.values(transakHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
-      );
-      setTransactions(transakPaymentRequests);
-    }
-  }, [isFocused, transakHistory]);
 
   useEffect(() => {
     if (isFocused) {

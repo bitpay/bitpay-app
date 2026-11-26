@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
@@ -40,14 +40,13 @@ const ThorswapSettings: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const [swapTxs, setSwapTxs] = useState([] as thorswapTxData[]);
-
-  useEffect(() => {
-    if (isFocused) {
-      const thorswapTransactions = Object.values(thorswapHistory);
-      setSwapTxs(thorswapTransactions.sort((a, b) => b.date - a.date));
-    }
-  }, [isFocused, thorswapHistory]);
+  const swapTxs = useMemo(
+    () =>
+      (Object.values(thorswapHistory) as thorswapTxData[]).sort(
+        (a, b) => b.date - a.date,
+      ),
+    [thorswapHistory],
+  );
 
   useEffect(() => {
     if (isFocused) {

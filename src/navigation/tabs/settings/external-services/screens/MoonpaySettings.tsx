@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -66,10 +66,20 @@ const MoonpaySettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState(
-    [] as MoonpayPaymentData[],
+  const paymentRequests = useMemo(
+    () =>
+      Object.values(moonpayHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [moonpayHistory],
   );
-  const [sellOrders, setSellOrders] = useState([] as MoonpaySellOrderData[]);
+  const sellOrders = useMemo(
+    () =>
+      Object.values(moonpaySellHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [moonpaySellHistory],
+  );
   const TabTitle = {
     buy: t('Buy History'),
     sell: t('Sell History'),
@@ -260,20 +270,6 @@ const MoonpaySettings: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
-
-  useEffect(() => {
-    if (isFocused) {
-      const moonpayPaymentRequests = Object.values(moonpayHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
-      );
-      setTransactions(moonpayPaymentRequests);
-
-      const moonpaySellOrders = Object.values(moonpaySellHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
-      );
-      setSellOrders(moonpaySellOrders);
-    }
-  }, [isFocused, moonpayHistory, moonpaySellHistory]);
 
   useEffect(() => {
     if (isFocused) {

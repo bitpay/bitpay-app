@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -53,7 +53,13 @@ const BanxaSettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState([] as BanxaPaymentData[]);
+  const paymentRequests = useMemo(
+    () =>
+      Object.values(banxaHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      ),
+    [banxaHistory],
+  );
 
   const route = useRoute<RouteProp<{params: BanxaSettingsProps}>>();
   const {incomingPaymentRequest} = route.params || {};
@@ -66,15 +72,6 @@ const BanxaSettings: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
-
-  useEffect(() => {
-    if (isFocused) {
-      const banxaPaymentRequests = Object.values(banxaHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
-      );
-      setTransactions(banxaPaymentRequests);
-    }
-  }, [isFocused, banxaHistory]);
 
   useEffect(() => {
     if (isFocused) {

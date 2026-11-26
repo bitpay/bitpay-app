@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
@@ -52,8 +52,12 @@ const SardineSettings: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const logger = useLogger();
-  const [paymentRequests, setTransactions] = useState(
-    [] as SardinePaymentData[],
+  const paymentRequests = useMemo(
+    () =>
+      Object.values(sardineHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod') && !!pr.order_id,
+      ),
+    [sardineHistory],
   );
 
   const route = useRoute<RouteProp<{params: SardineSettingsProps}>>();
@@ -67,15 +71,6 @@ const SardineSettings: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
-
-  useEffect(() => {
-    if (isFocused) {
-      const sardinePaymentRequests = Object.values(sardineHistory).filter(
-        pr => pr.env === (__DEV__ ? 'dev' : 'prod') && !!pr.order_id,
-      );
-      setTransactions(sardinePaymentRequests);
-    }
-  }, [isFocused, sardineHistory]);
 
   useEffect(() => {
     if (isFocused) {
