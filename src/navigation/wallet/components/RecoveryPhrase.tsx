@@ -1686,7 +1686,6 @@ const RecoveryPhrase = () => {
               )}
               <SheetModal
                 isVisible={currencyModalVisible}
-                unmountContentWhenHidden
                 onBackdropPress={() => setCurrencyModalVisible(false)}>
                 <CurrencySelectionModalContainer>
                   <TextAlign align={'center'}>

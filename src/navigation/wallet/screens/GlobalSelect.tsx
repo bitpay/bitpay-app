@@ -7,9 +7,8 @@ import React, {
   useLayoutEffect,
 } from 'react';
 import {useTheme} from '../../../contexts';
-import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
-import {FlashList, type FlashListProps} from '@shopify/flash-list';
+import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
@@ -952,28 +951,6 @@ export const preloadCustomGlobalSelectList = ({
     previous,
   });
 };
-
-type FlashListComponentProps<T> = FlashListProps<T> & {
-  inModal?: boolean;
-};
-
-const BottomSheetIntegratedFlashList = <T,>(
-  props: FlashListComponentProps<T>,
-) => {
-  const BottomSheetScrollable = useBottomSheetScrollableCreator();
-
-  return <FlashList {...props} renderScrollComponent={BottomSheetScrollable} />;
-};
-
-export const FlashListComponent = <T,>({
-  inModal,
-  ...props
-}: FlashListComponentProps<T>) =>
-  inModal ? (
-    <BottomSheetIntegratedFlashList {...props} />
-  ) : (
-    <FlashList {...props} />
-  );
 
 const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
@@ -2449,8 +2426,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           customCurrenciesSupportedList.length > 0) &&
           selectedAssetsFromAccount.length === 0 && (
             <FlashListCointainer>
-              <FlashListComponent
-                inModal={useAsModal}
+              <FlashList
                 contentContainerStyle={{paddingBottom: 150}}
                 data={flatListData}
                 extraData={hideAllBalances}
@@ -2487,8 +2463,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 ) : null}
               </TitleNameContainer>
               <FlashListCointainer style={{height: HEIGHT - 235}}>
-                <FlashListComponent
-                  inModal={useAsModal}
+                <FlashList
                   contentContainerStyle={{paddingBottom: 300}}
                   data={
                     !searchVal && !selectedChainFilterOption

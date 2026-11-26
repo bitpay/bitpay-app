@@ -1,96 +1,33 @@
 import React from 'react';
-import {AppState, AppStateStatus, View} from 'react-native';
+import {AppState, AppStateStatus, StyleSheet, View} from 'react-native';
 import {act, fireEvent, render} from '@test/render';
-import SheetModal from './SheetModal';
+import SheetModal, {isModalLayoutSheetOpen} from './SheetModal';
 
-const mockPresent = jest.fn();
-const mockDismiss = jest.fn();
 const mockOnBackdropPress = jest.fn();
 const mockOnModalHide = jest.fn();
-const mockCancelAnimationFrame = jest.fn();
-let mockBottomSheetModalProps: any;
-let mockBottomSheetBackdropProps: any;
+let mockModalBottomSheetProps: any;
+let mockModalBottomSheetRenders: Array<{index: number; hasChildren: boolean}> =
+  [];
 let mockBaseModalProps: any;
-let mockGestureEnabled = true;
-let mockGestureOnEnd: ((event: unknown, success: boolean) => void) | undefined;
-let mockAnimationFrames = new Map<number, (timestamp: number) => void>();
-let mockNextAnimationFrameId = 1;
 
-jest.mock('@gorhom/bottom-sheet', () => {
+jest.mock('@swmansion/react-native-bottom-sheet', () => {
   const MockReact = require('react');
   const {View: RNView} = require('react-native');
 
-  const BottomSheetModal = MockReact.forwardRef((props: any, ref: any) => {
-    mockBottomSheetModalProps = props;
-    MockReact.useImperativeHandle(ref, () => ({
-      present: mockPresent,
-      dismiss: mockDismiss,
-    }));
-    const backdrop = props.backdropComponent?.({
-      animatedIndex: {value: 0},
-      animatedPosition: {value: 0},
-      style: {},
+  const ModalBottomSheet = (props: any) => {
+    mockModalBottomSheetProps = props;
+    mockModalBottomSheetRenders.push({
+      index: props.index,
+      hasChildren: props.children != null,
     });
     return MockReact.createElement(
       RNView,
-      {testID: 'bottom-sheet-modal'},
-      backdrop,
+      {testID: 'modal-bottom-sheet'},
       props.children,
     );
-  });
-
-  const BottomSheetBackdrop = (props: any) => {
-    mockBottomSheetBackdropProps = props;
-    return MockReact.createElement(RNView, {
-      testID: 'gorhom-backdrop',
-      accessible: props.accessible,
-    });
   };
 
-  const BottomSheetView = ({children}: any) =>
-    MockReact.createElement(RNView, {testID: 'bottom-sheet-view'}, children);
-
-  return {BottomSheetBackdrop, BottomSheetModal, BottomSheetView};
-});
-
-jest.mock('react-native-gesture-handler', () => {
-  const actualGestureHandler = jest.requireActual(
-    'react-native-gesture-handler',
-  );
-  const MockReact = require('react');
-  const {Pressable} = require('react-native');
-
-  return {
-    ...actualGestureHandler,
-    Gesture: {
-      Tap: () => {
-        const gesture = {
-          enabled: (enabled: boolean) => {
-            mockGestureEnabled = enabled;
-            return gesture;
-          },
-          onEnd: (callback: (event: unknown, success: boolean) => void) => {
-            mockGestureOnEnd = callback;
-            return gesture;
-          },
-        };
-        return gesture;
-      },
-    },
-    GestureDetector: ({children}: any) =>
-      MockReact.createElement(
-        Pressable,
-        {
-          testID: 'controlled-backdrop-gesture',
-          onPress: () => {
-            if (mockGestureEnabled) {
-              mockGestureOnEnd?.({}, true);
-            }
-          },
-        },
-        children,
-      ),
-  };
+  return {ModalBottomSheet};
 });
 
 jest.mock('react-native-safe-area-context', () => {
@@ -145,96 +82,84 @@ const bottomSheetProps = (isVisible: boolean, extraProps: object = {}) => ({
   ...extraProps,
 });
 
-const confirmPresentation = () => {
-  act(() => mockBottomSheetModalProps.onChange(0));
-};
-
-const confirmDismissal = () => {
-  act(() => mockBottomSheetModalProps.onDismiss());
-};
-
-const flushAnimationFrames = () => {
-  const callbacks = [...mockAnimationFrames.values()];
-  mockAnimationFrames.clear();
-  callbacks.forEach(callback => callback(0));
+const settleAt = (index: number) => {
+  act(() => mockModalBottomSheetProps.onSettle(index));
 };
 
 describe('SheetModal bottom-sheet lifecycle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockBottomSheetModalProps = undefined;
-    mockBottomSheetBackdropProps = undefined;
-    mockGestureEnabled = true;
-    mockGestureOnEnd = undefined;
-    mockAnimationFrames = new Map();
-    mockNextAnimationFrameId = 1;
-    global.requestAnimationFrame = jest.fn(callback => {
-      const frameId = mockNextAnimationFrameId++;
-      mockAnimationFrames.set(frameId, callback);
-      return frameId;
-    });
-    global.cancelAnimationFrame = mockCancelAnimationFrame.mockImplementation(
-      frameId => {
-        mockAnimationFrames.delete(frameId);
-      },
-    );
+    mockModalBottomSheetProps = undefined;
+    mockModalBottomSheetRenders = [];
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it('does not present or dismiss when initially hidden', () => {
+  it('keeps the sheet at its closed detent while hidden', () => {
     render(<SheetModal {...bottomSheetProps(false)} />);
 
-    expect(mockPresent).not.toHaveBeenCalled();
-    expect(mockDismiss).not.toHaveBeenCalled();
+    expect(mockModalBottomSheetProps.index).toBe(0);
   });
 
-  it('presents exactly once when initially visible', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockDismiss).not.toHaveBeenCalled();
-
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-  });
-
-  it('presents, dismisses, and reports one completed standard lifecycle', () => {
+  it('opens and closes the sheet through parent visibility', () => {
     const sheet = render(<SheetModal {...bottomSheetProps(false)} />);
 
     sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
+    expect(mockModalBottomSheetProps.index).toBe(1);
 
-    confirmPresentation();
+    settleAt(1);
     sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
+    expect(mockModalBottomSheetProps.index).toBe(0);
 
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-
-    confirmDismissal();
-    confirmDismissal();
+    settleAt(0);
+    settleAt(0);
     expect(mockOnModalHide).toHaveBeenCalledTimes(1);
   });
 
-  it('waits for presentation confirmation before closing', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(false)} />);
-
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-
+  it('reports one hide for duplicate closed settles in the same batch', () => {
+    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
+    settleAt(1);
     sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockDismiss).not.toHaveBeenCalled();
 
-    confirmPresentation();
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
+    act(() => {
+      mockModalBottomSheetProps.onSettle(0);
+      mockModalBottomSheetProps.onSettle(0);
+    });
+
+    expect(mockOnModalHide).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a late open settle after the parent hides it', () => {
+    const sheet = render(
+      <SheetModal {...bottomSheetProps(true)}>
+        <SheetContent />
+      </SheetModal>,
+    );
+    sheet.rerender(
+      <SheetModal {...bottomSheetProps(false)}>
+        <SheetContent />
+      </SheetModal>,
+    );
+
+    settleAt(1);
+
+    expect(sheet.getByTestId('sheet-content')).toBeTruthy();
+    expect(mockOnModalHide).not.toHaveBeenCalled();
+  });
+
+  it('does not report a hide for a sheet that never opened', () => {
+    render(<SheetModal {...bottomSheetProps(false)} />);
+
+    settleAt(0);
+
+    expect(mockOnModalHide).not.toHaveBeenCalled();
   });
 
   it.each([false, true])(
-    'dismisses through parent visibility when backgrounded (presentation confirmed: %s)',
-    presented => {
+    'dismisses through parent visibility when backgrounded (opening settled: %s)',
+    settled => {
       let onAppStateChange: (status: AppStateStatus) => void = () => {};
       jest
         .spyOn(AppState, 'addEventListener')
@@ -255,209 +180,136 @@ describe('SheetModal bottom-sheet lifecycle', () => {
         );
       };
       render(<Parent />);
-      expect(mockPresent).toHaveBeenCalledTimes(1);
-      if (presented) {
-        confirmPresentation();
+      if (settled) {
+        settleAt(1);
       }
 
       act(() => onAppStateChange('background'));
       expect(mockOnBackdropPress).toHaveBeenCalledTimes(1);
-      expect(mockDismiss).toHaveBeenCalledTimes(presented ? 1 : 0);
-      if (!presented) {
-        // A background close must still wait until the native sheet is ready.
-        act(() => mockBottomSheetModalProps.onAnimate(-1, 0, 600, 300));
-      }
-      expect(mockDismiss).toHaveBeenCalledTimes(1);
+      expect(mockModalBottomSheetProps.index).toBe(0);
       act(() => onAppStateChange('background'));
       expect(mockOnBackdropPress).toHaveBeenCalledTimes(1);
-      expect(mockDismiss).toHaveBeenCalledTimes(1);
-      confirmDismissal();
+      settleAt(0);
       expect(mockOnModalHide).toHaveBeenCalledTimes(1);
     },
   );
 
-  it('can close after native animation starts without reaching an open index', () => {
+  it('lets only the parent own close requests', () => {
     const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    act(() => mockBottomSheetModalProps.onAnimate(-1, 0, 600, 300));
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-    act(() => mockBottomSheetModalProps.onAnimate(-1, 0, 600, 300));
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-    confirmDismissal();
-    expect(mockOnModalHide).toHaveBeenCalledTimes(1);
-  });
 
-  it('does not reuse native readiness from a previous presentation', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    act(() => mockBottomSheetModalProps.onAnimate(-1, 0, 600, 300));
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    confirmDismissal();
-    // A stale start while idle must not make the next presentation dismissible.
-    act(() => mockBottomSheetModalProps.onAnimate(-1, 0, 600, 300));
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockPresent).toHaveBeenCalledTimes(2);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-    act(() => mockBottomSheetModalProps.onAnimate(-1, 0, 600, 300));
-    expect(mockDismiss).toHaveBeenCalledTimes(2);
-  });
-
-  it('reopens on the next frame after dismissal completes', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-
-    confirmDismissal();
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-
-    act(flushAnimationFrames);
-    expect(mockPresent).toHaveBeenCalledTimes(2);
-  });
-
-  it('settles a rapid visible-hidden-visible-hidden sequence without duplicates', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(false)} />);
-
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockDismiss).not.toHaveBeenCalled();
-
-    confirmPresentation();
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    confirmDismissal();
-    act(flushAnimationFrames);
-
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it('lets only the parent own backdrop dismissal', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-
-    fireEvent.press(sheet.getByTestId('controlled-backdrop-gesture'));
+    act(() => mockModalBottomSheetProps.onCloseRequest());
 
     expect(mockOnBackdropPress).toHaveBeenCalledTimes(1);
-    expect(mockDismiss).not.toHaveBeenCalled();
-    expect(mockBottomSheetBackdropProps.pressBehavior).toBe('none');
+    expect(mockModalBottomSheetProps.index).toBe(1);
+    expect(mockModalBottomSheetProps.detents[0]).toEqual({
+      value: 0,
+      programmatic: true,
+    });
 
     sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
+    expect(mockModalBottomSheetProps.index).toBe(0);
   });
 
-  it('keeps the backdrop noninteractive when dismissal is disabled', () => {
-    const sheet = render(
+  it('leaves close requests unhandled when dismissal is disabled', () => {
+    render(
       <SheetModal
         {...bottomSheetProps(true, {enableBackdropDismiss: false})}
       />,
     );
 
-    fireEvent.press(sheet.getByTestId('controlled-backdrop-gesture'));
-
-    expect(mockOnBackdropPress).not.toHaveBeenCalled();
-    expect(mockDismiss).not.toHaveBeenCalled();
-    expect(mockBottomSheetBackdropProps.accessible).toBe(false);
+    expect(mockModalBottomSheetProps.onCloseRequest).toBeUndefined();
   });
 
-  it('cancels a queued reopen when unmounted', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    confirmDismissal();
+  it.each([
+    [{}, 'content'],
+    [{snapPoints: ['72%']}, '72%'],
+    [{fullscreen: true}, '100%'],
+  ])('sizes the open detent from %j', (extraProps, openDetent) => {
+    render(<SheetModal {...bottomSheetProps(true, extraProps)} />);
 
-    sheet.unmount();
-    act(flushAnimationFrames);
-
-    expect(mockCancelAnimationFrame).toHaveBeenCalledTimes(1);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
+    expect(mockModalBottomSheetProps.detents[1]).toBe(openDetent);
+    expect(mockModalBottomSheetProps.topInset).toBe(0);
   });
 
-  it('requests a parent close instead of reopening an externally dismissed sheet', () => {
-    render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-    // A provider replace/dismiss can complete while isVisible is still true.
-    confirmDismissal();
-    act(flushAnimationFrames);
+  it('lays out default sheets full screen like the legacy modal', () => {
+    const sheet = render(
+      <SheetModal isVisible={true} onBackdropPress={mockOnBackdropPress}>
+        <SheetContent />
+      </SheetModal>,
+    );
 
+    expect(mockModalBottomSheetProps.detents).toEqual([
+      {value: 0, programmatic: true},
+      '100%',
+    ]);
+    expect(mockModalBottomSheetProps.surface).toBeUndefined();
+    expect(mockModalBottomSheetProps.scrimColor).toBe('rgba(0, 0, 0, 0.4)');
+    expect(mockModalBottomSheetProps.settleDuration).toBe(300);
+    expect(sheet.getByTestId('sheet-content')).toBeTruthy();
+
+    const backdrop = sheet.getByLabelText('Dismiss modal');
+    let layout = backdrop.parent;
+    while (layout && typeof layout.type !== 'string') {
+      layout = layout.parent;
+    }
+    expect(StyleSheet.flatten(layout?.props.style)).toEqual(
+      expect.objectContaining({flex: 1, justifyContent: 'flex-end'}),
+    );
+    fireEvent.press(backdrop);
     expect(mockOnBackdropPress).toHaveBeenCalledTimes(1);
-    expect(mockOnModalHide).toHaveBeenCalledTimes(1);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockDismiss).not.toHaveBeenCalled();
-    confirmDismissal();
-    expect(mockOnModalHide).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps a minimized sheet mounted until the provider restores it', () => {
-    render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-    act(() => mockBottomSheetModalProps.onChange(-1));
-    act(flushAnimationFrames);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockOnModalHide).not.toHaveBeenCalled();
-    confirmPresentation();
-    expect(mockPresent).toHaveBeenCalledTimes(1);
-    expect(mockOnBackdropPress).not.toHaveBeenCalled();
+  it('lets the parent own close requests in the legacy layout', () => {
+    render(
+      <SheetModal
+        isVisible={true}
+        enableBackdropDismiss={false}
+        onBackdropPress={mockOnBackdropPress}
+      />,
+    );
+
+    expect(mockModalBottomSheetProps.onCloseRequest).toBe(mockOnBackdropPress);
   });
 
-  it('ignores a stale restoration callback while a parent dismissal is pending', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    confirmPresentation();
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
+  it('tracks open legacy-layout sheets for other surfaces', () => {
+    const sheet = render(
+      <SheetModal isVisible={true} onBackdropPress={mockOnBackdropPress} />,
+    );
+    expect(isModalLayoutSheetOpen()).toBe(true);
+
+    sheet.rerender(
+      <SheetModal isVisible={false} onBackdropPress={mockOnBackdropPress} />,
+    );
+    expect(isModalLayoutSheetOpen()).toBe(true);
+
+    settleAt(0);
+    expect(isModalLayoutSheetOpen()).toBe(false);
 
     sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    confirmDismissal();
-    // A late callback from the old sheet must not consume the queued reopen.
-    confirmPresentation();
-    act(flushAnimationFrames);
-    expect(mockPresent).toHaveBeenCalledTimes(2);
-    expect(mockOnBackdropPress).not.toHaveBeenCalled();
+    expect(isModalLayoutSheetOpen()).toBe(false);
   });
 
-  it('can reopen after the parent acknowledges an external dismissal', () => {
-    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
-    confirmPresentation();
-    confirmDismissal();
-    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
-    act(flushAnimationFrames);
-    sheet.rerender(<SheetModal {...bottomSheetProps(true)} />);
-    expect(mockPresent).toHaveBeenCalledTimes(2);
-    expect(mockDismiss).not.toHaveBeenCalled();
-  });
-
-  it('passes parent visibility directly to the legacy modal', () => {
+  it('keeps top sheets on the legacy modal', () => {
     const modal = render(
       <SheetModal
         isVisible={true}
-        modalLibrary="modal"
+        placement="top"
+        modalLibrary="bottom-sheet"
         onBackdropPress={mockOnBackdropPress}
+        onModalHide={mockOnModalHide}
       />,
     );
 
     expect(
       modal.getByTestId('legacy-modal').props.accessibilityState.expanded,
     ).toBe(true);
-    expect(mockPresent).not.toHaveBeenCalled();
-    expect(mockDismiss).not.toHaveBeenCalled();
+    expect(mockModalBottomSheetProps).toBeUndefined();
+    expect(mockBaseModalProps.onModalHide).toBe(mockOnModalHide);
 
     modal.rerender(
       <SheetModal
         isVisible={false}
-        modalLibrary="modal"
+        placement="top"
         onBackdropPress={mockOnBackdropPress}
       />,
     );
@@ -476,10 +328,9 @@ describe('SheetModal bottom-sheet lifecycle', () => {
 
     expect(sheet.queryByTestId('sheet-content')).toBeNull();
     expect(onMount).not.toHaveBeenCalled();
-    expect(mockPresent).not.toHaveBeenCalled();
   });
 
-  it('mounts bottom-sheet children when presenting it', () => {
+  it('mounts bottom-sheet children in the same render that opens it', () => {
     const onMount = jest.fn();
     const content = <SheetContent onMount={onMount} />;
     const sheet = render(
@@ -490,39 +341,41 @@ describe('SheetModal bottom-sheet lifecycle', () => {
       <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
     );
 
+    expect(mockModalBottomSheetProps.index).toBe(1);
+    expect(
+      mockModalBottomSheetRenders.find(({index}) => index === 1)?.hasChildren,
+    ).toBe(true);
     expect(sheet.getByTestId('sheet-content')).toBeTruthy();
     expect(onMount).toHaveBeenCalledTimes(1);
-    expect(mockPresent).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps children mounted while closing and unmounts them on dismiss', () => {
+  it('keeps children mounted while closing and unmounts them once closed', () => {
     const onUnmount = jest.fn();
     const content = <SheetContent onUnmount={onUnmount} />;
     const sheet = render(
       <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
     );
-    confirmPresentation();
+    settleAt(1);
 
     sheet.rerender(
       <SheetModal {...bottomSheetProps(false)}>{content}</SheetModal>,
     );
-    expect(mockDismiss).toHaveBeenCalledTimes(1);
     expect(sheet.getByTestId('sheet-content')).toBeTruthy();
     expect(onUnmount).not.toHaveBeenCalled();
 
-    confirmDismissal();
+    settleAt(0);
     expect(sheet.queryByTestId('sheet-content')).toBeNull();
     expect(onUnmount).toHaveBeenCalledTimes(1);
   });
 
-  it('reopens after an in-progress dismiss without remounting children', () => {
+  it('reopens during a close without remounting children', () => {
     const onMount = jest.fn();
     const onUnmount = jest.fn();
     const content = <SheetContent onMount={onMount} onUnmount={onUnmount} />;
     const sheet = render(
       <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
     );
-    confirmPresentation();
+    settleAt(1);
 
     sheet.rerender(
       <SheetModal {...bottomSheetProps(false)}>{content}</SheetModal>,
@@ -530,40 +383,12 @@ describe('SheetModal bottom-sheet lifecycle', () => {
     sheet.rerender(
       <SheetModal {...bottomSheetProps(true)}>{content}</SheetModal>,
     );
-    confirmDismissal();
-    act(flushAnimationFrames);
+    settleAt(0);
 
-    expect(mockPresent).toHaveBeenCalledTimes(2);
+    expect(mockModalBottomSheetProps.index).toBe(1);
     expect(sheet.getByTestId('sheet-content')).toBeTruthy();
     expect(onMount).toHaveBeenCalledTimes(1);
     expect(onUnmount).not.toHaveBeenCalled();
-  });
-
-  it('lazily mounts opted-in modal children and removes them after hiding', () => {
-    const onMount = jest.fn();
-    const onUnmount = jest.fn();
-    const renderModal = (isVisible: boolean) => (
-      <SheetModal
-        isVisible={isVisible}
-        unmountContentWhenHidden
-        onBackdropPress={mockOnBackdropPress}>
-        <SheetContent onMount={onMount} onUnmount={onUnmount} />
-      </SheetModal>
-    );
-    const modal = render(renderModal(false));
-
-    expect(modal.queryByTestId('sheet-content')).toBeNull();
-    expect(onMount).not.toHaveBeenCalled();
-
-    modal.rerender(renderModal(true));
-    expect(modal.getByTestId('sheet-content')).toBeTruthy();
-    expect(onMount).toHaveBeenCalledTimes(1);
-
-    modal.rerender(renderModal(false));
-    expect(modal.getByTestId('sheet-content')).toBeTruthy();
-
-    act(() => mockBaseModalProps.onModalHide());
-    expect(modal.queryByTestId('sheet-content')).toBeNull();
-    expect(onUnmount).toHaveBeenCalledTimes(1);
+    expect(mockOnModalHide).not.toHaveBeenCalled();
   });
 });

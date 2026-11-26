@@ -1,7 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useCallback, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
-import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
 import {FlashList} from '@shopify/flash-list';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '../../../contexts';
@@ -109,7 +108,6 @@ const TransactMenuContent = React.memo(
     const {t} = useTranslation();
     const theme = useTheme();
     const navigation = useNavigation();
-    const BottomSheetScrollable = useBottomSheetScrollableCreator();
     const keys = useAppSelector(({WALLET}) => WALLET.keys);
     const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
     const isEuLocation = useAppSelector(({LOCATION}) =>
@@ -300,7 +298,6 @@ const TransactMenuContent = React.memo(
         modalLibrary={'bottom-sheet'}
         height={modalHeight}
         snapPoints={[`${Math.floor(modalHeightPercentage * 100)}%`]}
-        stackBehavior="push"
         isVisible={isVisible}
         onBackdropPress={hideModal}
         onModalHide={onModalHide}>
@@ -310,11 +307,7 @@ const TransactMenuContent = React.memo(
             styles.modalContainer,
             {backgroundColor: theme.dark ? Midnight : LightBlue},
           ]}>
-          <FlashList
-            data={TransactMenuList}
-            renderItem={renderItem}
-            renderScrollComponent={BottomSheetScrollable}
-          />
+          <FlashList data={TransactMenuList} renderItem={renderItem} />
           <View style={styles.footerContainer}>
             <TouchableOpacity
               style={[

@@ -45,7 +45,7 @@ import {
 } from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+import {BottomSheetProvider as ModalBottomSheetProvider} from '@swmansion/react-native-bottom-sheet';
 import {
   PaymentSentProvider,
   OngoingProcessProvider,
@@ -260,7 +260,7 @@ const AppWrapper = () => {
         <GestureHandlerRootView style={{flex: 1}}>
           <TokenProvider>
             <OngoingProcessProvider>
-              <BottomSheetModalProvider>
+              <ModalBottomSheetProvider>
                 <BottomSheetProvider>
                   <PaymentSentProvider>
                     <DklsWorkerHost />
@@ -269,7 +269,7 @@ const AppWrapper = () => {
                     </AppInitialization>
                   </PaymentSentProvider>
                 </BottomSheetProvider>
-              </BottomSheetModalProvider>
+              </ModalBottomSheetProvider>
             </OngoingProcessProvider>
           </TokenProvider>
         </GestureHandlerRootView>

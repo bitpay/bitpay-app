@@ -79,7 +79,6 @@ const PaymentSentContentComponent = ({
       modalLibrary={'modal'}
       isVisible={isVisible}
       onModalHide={onModalHide}
-      unmountContentWhenHidden
       onBackdropPress={handleClose}>
       <View style={styles.container}>
         <View style={centerViewStyle}>

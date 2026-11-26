@@ -1,14 +1,17 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {AppState, AppStateStatus, Platform, View} from 'react-native';
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
-import {runOnJS} from 'react-native-reanimated';
+import {
+  AppState,
+  AppStateStatus,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+  ModalBottomSheet,
+  ModalDetent,
+} from '@swmansion/react-native-bottom-sheet';
 import {useTheme} from '../../../../contexts';
 import {useTranslation} from 'react-i18next';
 import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
@@ -32,59 +35,28 @@ interface Props extends SheetParams {
   height?: number;
   paddingTop?: number;
   snapPoints?: string[];
-  stackBehavior?: 'push' | 'replace';
-  unmountContentWhenHidden?: boolean;
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
 
-type BottomSheetPhase = 'idle' | 'presenting' | 'presented' | 'dismissing';
+const DEFAULT_BACKDROP_OPACITY = 0.5;
+const MODAL_LAYOUT_BACKDROP_OPACITY = 0.4;
+const MODAL_LAYOUT_SETTLE_DURATION = 300;
+const MODAL_LAYOUT_DETENTS: ModalDetent[] = [
+  {value: 0, programmatic: true},
+  '100%',
+];
 
-type ControlledBackdropProps = BottomSheetBackdropProps & {
-  backdropOpacity?: number;
-  enableBackdropDismiss: boolean;
-  onBackdropPress: () => void;
-};
+let openModalLayoutSheets = 0;
 
-const ControlledBottomSheetBackdrop: React.FC<ControlledBackdropProps> = ({
-  backdropOpacity,
-  enableBackdropDismiss,
-  onBackdropPress,
-  ...backdropProps
-}) => {
-  const {t} = useTranslation();
-  const tapGesture = useMemo(
-    () =>
-      Gesture.Tap()
-        .enabled(enableBackdropDismiss)
-        .onEnd((_event, success) => {
-          if (success) {
-            runOnJS(onBackdropPress)();
-          }
-        }),
-    [enableBackdropDismiss, onBackdropPress],
-  );
+export const isModalLayoutSheetOpen = () => openModalLayoutSheets > 0;
 
-  return (
-    <GestureDetector gesture={tapGesture}>
-      <BottomSheetBackdrop
-        {...backdropProps}
-        pressBehavior="none"
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={backdropOpacity}
-        accessible={enableBackdropDismiss}
-        accessibilityRole={enableBackdropDismiss ? 'button' : undefined}
-        accessibilityLabel={
-          enableBackdropDismiss ? t('Dismiss modal') : undefined
-        }
-        accessibilityHint={
-          enableBackdropDismiss ? t('Closes the modal') : undefined
-        }
-      />
-    </GestureDetector>
-  );
-};
+const styles = StyleSheet.create({
+  modalLayout: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+});
 
 const SheetModal: React.FC<SheetModalProps> = ({
   children,
@@ -102,64 +74,32 @@ const SheetModal: React.FC<SheetModalProps> = ({
   height,
   paddingTop,
   snapPoints,
-  stackBehavior,
-  unmountContentWhenHidden = false,
 }) => {
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   const theme = useTheme();
+  const {t} = useTranslation();
 
-  const phaseRef = useRef<BottomSheetPhase>('idle');
-  const nativeReadyRef = useRef(false);
   const desiredVisibleRef = useRef(isVisible);
-  const usesBottomSheetRef = useRef(modalLibrary === 'bottom-sheet');
-  const mountedRef = useRef(false);
-  const reopenAnimationFrameRef = useRef<number | null>(null);
   desiredVisibleRef.current = isVisible;
-  usesBottomSheetRef.current = modalLibrary === 'bottom-sheet';
+  const hasPendingHideRef = useRef(isVisible);
+  if (isVisible) {
+    hasPendingHideRef.current = true;
+  }
   const [shouldRenderBottomSheetContent, setShouldRenderBottomSheetContent] =
-    useState(modalLibrary === 'bottom-sheet' ? isVisible : true);
-  const [shouldRenderModalContent, setShouldRenderModalContent] = useState(
-    modalLibrary !== 'modal' || !unmountContentWhenHidden || isVisible,
-  );
-
-  const reconcileBottomSheet = useCallback(() => {
-    if (!mountedRef.current || !usesBottomSheetRef.current) {
+    useState(isVisible);
+  if (isVisible && !shouldRenderBottomSheetContent) {
+    setShouldRenderBottomSheetContent(true);
+  }
+  const usesBaseModal = placement === 'top';
+  const usesModalLayout = !usesBaseModal && modalLibrary === 'modal';
+  const isCountedOpenRef = useRef(false);
+  const setCountedOpen = useCallback((counted: boolean) => {
+    if (isCountedOpenRef.current === counted) {
       return;
     }
-
-    const modal = bottomSheetModalRef.current;
-    if (!modal) {
-      return;
-    }
-
-    if (desiredVisibleRef.current && phaseRef.current === 'idle') {
-      nativeReadyRef.current = false;
-      phaseRef.current = 'presenting';
-      try {
-        modal.present();
-      } catch (error) {
-        phaseRef.current = 'idle';
-        throw error;
-      }
-      return;
-    }
-
-    const phase = phaseRef.current;
-    if (
-      !desiredVisibleRef.current &&
-      (phase === 'presented' ||
-        (phase === 'presenting' && nativeReadyRef.current))
-    ) {
-      phaseRef.current = 'dismissing';
-      try {
-        modal.dismiss();
-      } catch (error) {
-        phaseRef.current = phase;
-        throw error;
-      }
-    }
+    isCountedOpenRef.current = counted;
+    openModalLayoutSheets += counted ? 1 : -1;
   }, []);
 
   const onAppStateChange = useCallback(
@@ -172,32 +112,14 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
 
   useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      if (reopenAnimationFrameRef.current !== null) {
-        cancelAnimationFrame(reopenAnimationFrameRef.current);
-        reopenAnimationFrameRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (modalLibrary === 'bottom-sheet') {
-      if (isVisible) {
-        setShouldRenderBottomSheetContent(true);
-      } else if (phaseRef.current === 'idle') {
-        setShouldRenderBottomSheetContent(false);
-      }
-      reconcileBottomSheet();
-    } else {
-      phaseRef.current = 'idle';
-      nativeReadyRef.current = false;
-      if (!unmountContentWhenHidden || isVisible) {
-        setShouldRenderModalContent(true);
-      }
+    if (!usesModalLayout) {
+      setCountedOpen(false);
+    } else if (isVisible) {
+      setCountedOpen(true);
     }
-  }, [isVisible, modalLibrary, reconcileBottomSheet, unmountContentWhenHidden]);
+  }, [isVisible, usesModalLayout, setCountedOpen]);
+
+  useEffect(() => () => setCountedOpen(false), [setCountedOpen]);
 
   useEffect(() => {
     const subscriptionAppStateChange = AppState.addEventListener(
@@ -225,93 +147,52 @@ const SheetModal: React.FC<SheetModalProps> = ({
     [sheetBackgroundColor, borderRadius, defaultBorderRadius, bottomInset],
   );
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <ControlledBottomSheetBackdrop
-        {...props}
-        onBackdropPress={onBackdropPress}
-        enableBackdropDismiss={enableBackdropDismiss !== false}
-        backdropOpacity={backdropOpacity}
-      />
-    ),
-    [enableBackdropDismiss, onBackdropPress, backdropOpacity],
-  );
-
-  const handleBottomSheetAnimate = useCallback(() => {
-    if (
-      !mountedRef.current ||
-      !usesBottomSheetRef.current ||
-      phaseRef.current !== 'presenting'
-    ) {
-      return;
-    }
-    // Native onAnimate requires mounted, layout-ready content. An interrupted
-    // opening can finish at -1 with only onClose, never confirming onChange(0).
-    // Allow parent closure after this readiness signal, not merely present().
-    nativeReadyRef.current = true;
-    reconcileBottomSheet();
-  }, [reconcileBottomSheet]);
-
-  const handleBottomSheetChange = useCallback(
+  const handleBottomSheetSettle = useCallback(
     (index: number) => {
       if (
-        index < 0 ||
-        !mountedRef.current ||
-        (phaseRef.current !== 'presenting' && phaseRef.current !== 'presented')
+        index !== 0 ||
+        desiredVisibleRef.current ||
+        !hasPendingHideRef.current
       ) {
         return;
       }
-      nativeReadyRef.current = true;
-      phaseRef.current = 'presented';
-      reconcileBottomSheet();
+      hasPendingHideRef.current = false;
+      setCountedOpen(false);
+      setShouldRenderBottomSheetContent(false);
+      onModalHide?.();
     },
-    [reconcileBottomSheet],
+    [onModalHide, setCountedOpen],
   );
 
-  const handleDismiss = useCallback(() => {
-    if (phaseRef.current === 'idle') {
-      return;
-    }
+  const bottomSheetDetents = useMemo<ModalDetent[]>(
+    () => [
+      {value: 0, programmatic: true},
+      fullscreen
+        ? '100%'
+        : (snapPoints?.[0] as `${number}%` | undefined) ?? 'content',
+    ],
+    [fullscreen, snapPoints],
+  );
 
-    const wasParentDismissal = phaseRef.current === 'dismissing';
-    phaseRef.current = 'idle';
-    nativeReadyRef.current = false;
+  const bottomSheetSurface = useMemo(
+    () => (
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {backgroundColor: sheetBackgroundColor},
+        ]}
+      />
+    ),
+    [sheetBackgroundColor],
+  );
 
-    // Provider replacement/dismissal is a close request, not a new open intent.
-    if (
-      !wasParentDismissal &&
-      mountedRef.current &&
-      desiredVisibleRef.current
-    ) {
-      onBackdropPress();
-    }
-    onModalHide?.();
-
-    if (
-      wasParentDismissal &&
-      mountedRef.current &&
-      desiredVisibleRef.current &&
-      reopenAnimationFrameRef.current === null
-    ) {
-      reopenAnimationFrameRef.current = requestAnimationFrame(() => {
-        reopenAnimationFrameRef.current = null;
-        if (mountedRef.current && desiredVisibleRef.current) {
-          reconcileBottomSheet();
-        }
-      });
-    }
-
-    if (!desiredVisibleRef.current) {
-      setShouldRenderBottomSheetContent(false);
-    }
-  }, [onBackdropPress, onModalHide, reconcileBottomSheet]);
-
-  const handleModalHide = useCallback(() => {
-    if (unmountContentWhenHidden && !desiredVisibleRef.current) {
-      setShouldRenderModalContent(false);
-    }
-    onModalHide?.();
-  }, [onModalHide, unmountContentWhenHidden]);
+  const bottomSheetSurfaceStyle = useMemo(
+    () => ({
+      borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
+      borderTopRightRadius: borderRadius ?? defaultBorderRadius,
+    }),
+    [borderRadius, defaultBorderRadius],
+  );
 
   const fullscreenStyles = useMemo(
     () =>
@@ -327,62 +208,78 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
   const themeValue = useMemo(() => theme as any, [theme]);
 
-  return modalLibrary === 'bottom-sheet' ? (
-    <View testID={'modalBackdrop'}>
-      <BottomSheetModal
-        accessible={false}
-        stackBehavior={stackBehavior || undefined}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{backgroundColor: sheetBackgroundColor}}
-        snapPoints={fullscreen ? ['100%'] : snapPoints || undefined}
-        enableDismissOnClose={true}
-        enableDynamicSizing={!fullscreen && !snapPoints}
-        enableOverDrag={false}
-        enablePanDownToClose={false}
-        handleComponent={null}
-        index={0}
-        {...(disableAnimations && {animationConfigs: {duration: 1}})}
-        onAnimate={handleBottomSheetAnimate}
-        onChange={handleBottomSheetChange}
-        onDismiss={handleDismiss}
-        ref={bottomSheetModalRef}>
-        {shouldRenderBottomSheetContent ? (
-          <NavigationThemeContext.Provider value={themeValue}>
-            <BottomSheetView style={fullscreenStyles}>
+  if (usesBaseModal) {
+    return (
+      <BaseModal
+        id={'sheetModal'}
+        isVisible={isVisible}
+        backdropOpacity={MODAL_LAYOUT_BACKDROP_OPACITY}
+        backdropTransitionOutTiming={0}
+        hideModalContentWhileAnimating={true}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        testID="modalBackdrop"
+        onBackdropPress={onBackdropPress}
+        animationIn={'slideInDown'}
+        animationOut={'slideOutUp'}
+        onModalHide={onModalHide}
+        style={{
+          position: 'relative',
+          justifyContent: 'flex-start',
+          margin: 0,
+        }}>
+        {children}
+        <BlurContainer />
+      </BaseModal>
+    );
+  }
+
+  return (
+    <ModalBottomSheet
+      index={isVisible ? 1 : 0}
+      detents={usesModalLayout ? MODAL_LAYOUT_DETENTS : bottomSheetDetents}
+      topInset={0}
+      surface={usesModalLayout ? undefined : bottomSheetSurface}
+      surfaceStyle={usesModalLayout ? undefined : bottomSheetSurfaceStyle}
+      scrimColor={`rgba(0, 0, 0, ${
+        usesModalLayout
+          ? MODAL_LAYOUT_BACKDROP_OPACITY
+          : backdropOpacity ?? DEFAULT_BACKDROP_OPACITY
+      })`}
+      scrimAccessibilityLabel={t('Dismiss modal')}
+      scrollCoordination="none"
+      settleDuration={
+        disableAnimations
+          ? 1
+          : usesModalLayout
+          ? MODAL_LAYOUT_SETTLE_DURATION
+          : undefined
+      }
+      onCloseRequest={
+        usesModalLayout || enableBackdropDismiss !== false
+          ? onBackdropPress
+          : undefined
+      }
+      onSettle={handleBottomSheetSettle}>
+      {shouldRenderBottomSheetContent ? (
+        <NavigationThemeContext.Provider value={themeValue}>
+          {usesModalLayout ? (
+            <View style={styles.modalLayout}>
+              <Pressable
+                style={StyleSheet.absoluteFill}
+                accessibilityRole="button"
+                accessibilityLabel={t('Dismiss modal')}
+                onPress={onBackdropPress}
+              />
               {children}
-            </BottomSheetView>
-          </NavigationThemeContext.Provider>
-        ) : null}
-      </BottomSheetModal>
-    </View>
-  ) : (
-    <BaseModal
-      id={'sheetModal'}
-      isVisible={isVisible}
-      backdropOpacity={0.4}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      testID="modalBackdrop"
-      onBackdropPress={onBackdropPress}
-      animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
-      animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
-      onModalHide={handleModalHide}
-      // swipeDirection={'down'}
-      // onSwipeComplete={hideModal}
-      style={{
-        position: 'relative',
-        justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
-        margin: 0,
-      }}>
-      {shouldRenderModalContent ? (
-        <>
-          {children}
-          <BlurContainer />
-        </>
+              <BlurContainer />
+            </View>
+          ) : (
+            <View style={fullscreenStyles}>{children}</View>
+          )}
+        </NavigationThemeContext.Provider>
       ) : null}
-    </BaseModal>
+    </ModalBottomSheet>
   );
 };
 

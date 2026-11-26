@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   SafeAreaView as RNSafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -57,7 +58,6 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {isEuCountry} from '../../../store/location/location.effects';
 import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
-import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import ArchaxBanner from '../../../components/archax/archax-banner';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 
@@ -833,7 +833,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
             )}
           </PartnersText>
         </SectionContainer>
-        <BottomSheetScrollView>
+        <ScrollView>
           {offers && !showOffersLoading
             ? Object.values(offers)
                 .sort((a, b) =>
@@ -1148,7 +1148,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                   ) : null;
                 })
             : null}
-        </BottomSheetScrollView>
+        </ScrollView>
         {showArchaxBanner && <ArchaxFooter />}
       </SafeAreaView>
 

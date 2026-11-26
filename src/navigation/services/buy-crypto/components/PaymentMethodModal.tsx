@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {useTheme} from '../../../../contexts';
 import {
   ModalHeader,
@@ -37,7 +37,6 @@ import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {getCachedExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
 import {sleep} from '../../../../utils/helper-methods';
 import {orderBy} from '../../../../utils/array';
-import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import TimeIcon from '../../../../components/icons/payment-methods/timeIcon';
 
@@ -339,7 +338,7 @@ const PaymentMethodsModal = ({
           </ModalHeaderRight>
         </ModalHeader>
 
-        <BottomSheetScrollView style={{marginTop: 10}}>
+        <ScrollView style={{marginTop: 10}}>
           {OrderedEnabledPaymentMethods
             ? Object.values(OrderedEnabledPaymentMethods).map(paymentMethod => {
                 return paymentMethod ? (
@@ -392,7 +391,7 @@ const PaymentMethodsModal = ({
                 ) : null;
               })
             : null}
-        </BottomSheetScrollView>
+        </ScrollView>
       </MenuContainer>
     </SheetModal>
   );

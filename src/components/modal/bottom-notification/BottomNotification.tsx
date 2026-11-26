@@ -1,7 +1,6 @@
 import React, {ReactNode, useMemo, useCallback} from 'react';
 import {StyleSheet, useWindowDimensions, View} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
-import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
@@ -191,9 +190,6 @@ const BottomNotificationContent = React.memo(() => {
     onBackdropDismiss,
   } = config || {};
 
-  const NotificationScrollView =
-    modalLibrary === 'modal' ? ScrollView : BottomSheetScrollView;
-
   const handleBackdropPress = useCallback(() => {
     if (enableBackdropDismiss) {
       dispatch(AppActions.dismissBottomNotificationModal());
@@ -267,7 +263,7 @@ const BottomNotificationContent = React.memo(() => {
       onModalHide={handleModalHide}
       onBackdropPress={handleBackdropPress}
       backgroundColor={theme.dark ? LightBlack : White}>
-      <NotificationScrollView
+      <ScrollView
         testID="bottom-notification-content"
         style={[
           styles.bottomNotificationContainer,
@@ -293,7 +289,7 @@ const BottomNotificationContent = React.memo(() => {
         {message2 ? message2 : null}
         <BottomNotificationHr />
         <View style={styles.ctaContainer}>{actionButtons}</View>
-      </NotificationScrollView>
+      </ScrollView>
     </SheetModal>
   );
 });
