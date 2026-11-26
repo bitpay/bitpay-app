@@ -18,6 +18,7 @@ import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
+import {useLatestCallback} from '../../../../utils/hooks/useLatestCallback';
 import {Black, Overlay, White} from '../../../../styles/colors';
 
 interface Props extends SheetParams {
@@ -42,6 +43,7 @@ type SheetModalProps = React.PropsWithChildren<Props>;
 const DEFAULT_BACKDROP_OPACITY = 0.5;
 const MODAL_LAYOUT_BACKDROP_OPACITY = 0.4;
 const MODAL_LAYOUT_SETTLE_DURATION = 300;
+const HIDE_FALLBACK_DELAY = 1000;
 const MODAL_LAYOUT_DETENTS: ModalDetent[] = [
   {value: 0, programmatic: true},
   '100%',
@@ -82,6 +84,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
 
   const desiredVisibleRef = useRef(isVisible);
   desiredVisibleRef.current = isVisible;
+  const notifyModalHide = useLatestCallback(() => onModalHide?.());
   const hasPendingHideRef = useRef(isVisible);
   if (isVisible) {
     hasPendingHideRef.current = true;
@@ -159,10 +162,21 @@ const SheetModal: React.FC<SheetModalProps> = ({
       hasPendingHideRef.current = false;
       setCountedOpen(false);
       setShouldRenderBottomSheetContent(false);
-      onModalHide?.();
+      notifyModalHide();
     },
-    [onModalHide, setCountedOpen],
+    [notifyModalHide, setCountedOpen],
   );
+
+  useEffect(() => {
+    if (usesBaseModal || isVisible || !hasPendingHideRef.current) {
+      return;
+    }
+    const timer = setTimeout(
+      () => handleBottomSheetSettle(0),
+      HIDE_FALLBACK_DELAY,
+    );
+    return () => clearTimeout(timer);
+  }, [usesBaseModal, isVisible, handleBottomSheetSettle]);
 
   const bottomSheetDetents = useMemo<ModalDetent[]>(
     () => [

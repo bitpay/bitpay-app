@@ -6,6 +6,7 @@ import SheetModal, {isModalLayoutSheetOpen} from './SheetModal';
 const mockOnBackdropPress = jest.fn();
 const mockOnModalHide = jest.fn();
 let mockModalBottomSheetProps: any;
+let mockSettleHandlers: Array<(index: number) => void> = [];
 let mockModalBottomSheetRenders: Array<{index: number; hasChildren: boolean}> =
   [];
 let mockBaseModalProps: any;
@@ -15,6 +16,9 @@ jest.mock('@swmansion/react-native-bottom-sheet', () => {
   const {View: RNView} = require('react-native');
 
   const ModalBottomSheet = (props: any) => {
+    if (!mockSettleHandlers.includes(props.onSettle)) {
+      mockSettleHandlers.push(props.onSettle);
+    }
     mockModalBottomSheetProps = props;
     mockModalBottomSheetRenders.push({
       index: props.index,
@@ -90,10 +94,12 @@ describe('SheetModal bottom-sheet lifecycle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockModalBottomSheetProps = undefined;
+    mockSettleHandlers = [];
     mockModalBottomSheetRenders = [];
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
   });
 
@@ -147,6 +153,41 @@ describe('SheetModal bottom-sheet lifecycle', () => {
 
     expect(sheet.getByTestId('sheet-content')).toBeTruthy();
     expect(mockOnModalHide).not.toHaveBeenCalled();
+  });
+
+  it('hides the content when the closed detent never settles', () => {
+    jest.useFakeTimers();
+    const sheet = render(
+      <SheetModal {...bottomSheetProps(true)}>
+        <SheetContent />
+      </SheetModal>,
+    );
+    sheet.rerender(
+      <SheetModal {...bottomSheetProps(false)}>
+        <SheetContent />
+      </SheetModal>,
+    );
+
+    act(() => jest.advanceTimersByTime(1000));
+    expect(sheet.queryByTestId('sheet-content')).toBeNull();
+    expect(mockOnModalHide).toHaveBeenCalledTimes(1);
+
+    settleAt(0);
+    expect(mockOnModalHide).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the hide deadline when the parent passes a new callback', () => {
+    jest.useFakeTimers();
+    const onModalHide = jest.fn();
+    const sheet = render(<SheetModal {...bottomSheetProps(true)} />);
+    sheet.rerender(<SheetModal {...bottomSheetProps(false)} />);
+
+    act(() => jest.advanceTimersByTime(500));
+    sheet.rerender(<SheetModal {...bottomSheetProps(false, {onModalHide})} />);
+    act(() => jest.advanceTimersByTime(500));
+
+    expect(mockOnModalHide).not.toHaveBeenCalled();
+    expect(onModalHide).toHaveBeenCalledTimes(1);
   });
 
   it('does not report a hide for a sheet that never opened', () => {
@@ -289,7 +330,32 @@ describe('SheetModal bottom-sheet lifecycle', () => {
     expect(isModalLayoutSheetOpen()).toBe(false);
   });
 
+  it('tracks every open legacy-layout sheet until the last one closes', () => {
+    const sheets = (firstVisible: boolean, secondVisible: boolean) => (
+      <>
+        <SheetModal
+          isVisible={firstVisible}
+          onBackdropPress={mockOnBackdropPress}
+        />
+        <SheetModal
+          isVisible={secondVisible}
+          onBackdropPress={mockOnBackdropPress}
+        />
+      </>
+    );
+    const view = render(sheets(true, true));
+
+    view.rerender(sheets(false, true));
+    act(() => mockSettleHandlers[0](0));
+    expect(isModalLayoutSheetOpen()).toBe(true);
+
+    view.rerender(sheets(false, false));
+    act(() => mockSettleHandlers[1](0));
+    expect(isModalLayoutSheetOpen()).toBe(false);
+  });
+
   it('keeps top sheets on the legacy modal', () => {
+    jest.useFakeTimers();
     const modal = render(
       <SheetModal
         isVisible={true}
@@ -311,11 +377,14 @@ describe('SheetModal bottom-sheet lifecycle', () => {
         isVisible={false}
         placement="top"
         onBackdropPress={mockOnBackdropPress}
+        onModalHide={mockOnModalHide}
       />,
     );
     expect(
       modal.getByTestId('legacy-modal').props.accessibilityState.expanded,
     ).toBe(false);
+    act(() => jest.advanceTimersByTime(1000));
+    expect(mockOnModalHide).not.toHaveBeenCalled();
   });
 
   it('does not mount bottom-sheet children while hidden', () => {
