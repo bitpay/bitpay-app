@@ -14,9 +14,10 @@ type TransakGooglePayFrameProps = GooglePayCallbacks & {
   environment: GooglePayEnvironment;
 };
 
-// TransakGooglePay from @transak/ui-components-rn, plus the Payment Request
-// API that Google Pay needs in an Android WebView: the component leaves it
-// disabled, as Android WebViews do by default.
+// TransakGooglePay from @transak/ui-components-rn, plus what Google Pay needs
+// in an Android WebView and the component leaves out: the Payment Request API,
+// disabled by default, and the GOOGLE_PAY_SUPPORTED user agent marker, as in
+// MoonPayGooglePayFrame.
 const TransakGooglePayFrame = ({
   sessionId,
   environment,
@@ -56,6 +57,7 @@ const TransakGooglePayFrame = ({
       source={{uri}}
       onMessage={handleMessage}
       paymentRequestEnabled={true}
+      applicationNameForUserAgent={'GOOGLE_PAY_SUPPORTED'}
       style={styles.webview}
     />
   );
