@@ -12,7 +12,7 @@ import {
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 
 const headlessConfig: BuyCryptoConfig = {
-  transak: {config: {embeddedBuyDisabled: false}},
+  transak: {config: {headlessBuyDisabled: false}},
 };
 
 describe('isTransakHeadlessPaymentMethodEnabled', () => {
@@ -32,7 +32,7 @@ describe('isTransakHeadlessPaymentMethodEnabled', () => {
     expect(
       isTransakHeadlessPaymentMethodEnabled(
         'creditCard',
-        {transak: {config: {embeddedBuyDisabled: true}}},
+        {transak: {config: {headlessBuyDisabled: true}}},
         'US',
       ),
     ).toBe(false);
@@ -109,7 +109,7 @@ describe('isTransakHeadlessPaymentMethodEnabled', () => {
     expect(
       isTransakHeadlessPaymentMethodEnabled(
         'googlePay',
-        {transak: {config: {embeddedBuyDisabled: true}}},
+        {transak: {config: {headlessBuyDisabled: true}}},
         'US',
         support,
       ),

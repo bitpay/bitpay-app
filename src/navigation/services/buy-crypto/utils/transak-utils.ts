@@ -392,7 +392,7 @@ export interface TransakHeadlessSupport {
   googlePaySupported?: boolean;
 }
 
-// embeddedBuyDisabled is a kill switch for every method, and each method can
+// headlessBuyDisabled is a kill switch for every method, and each method can
 // be turned off on its own, with the same keys as MoonPay embedded: headless
 // is used unless the config turns it off.
 export const isTransakHeadlessPaymentMethodEnabled = (
@@ -402,7 +402,7 @@ export const isTransakHeadlessPaymentMethodEnabled = (
   support: TransakHeadlessSupport = {},
 ): boolean => {
   const transakConfig = buyCryptoConfig?.transak?.config;
-  if (transakConfig?.embeddedBuyDisabled === true) {
+  if (transakConfig?.headlessBuyDisabled === true) {
     return false;
   }
   // UK customers must go through Transak's FCA journey, which only the widget
