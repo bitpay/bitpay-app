@@ -10,18 +10,11 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {sardineRefreshOrderDetails} from '../utils/external-services-status';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import SardineLogo from '../../../../../components/icons/external-services/sardine/sardine-logo';
-import {
-  SardineGetOrderDetailsRequestData,
-  SardineIncomingData,
-  SardinePaymentData,
-} from '../../../../../store/buy-crypto/buy-crypto.models';
-import {
-  useAppDispatch,
-  useLogger,
-  useAppSelector,
-} from '../../../../../utils/hooks';
+import {SardinePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -49,7 +42,6 @@ import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {
-  sardineEnv,
   sardineGetStatusDetails,
   SardineStatus,
 } from '../../../../services/buy-crypto/utils/sardine-utils';
@@ -59,8 +51,6 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
-import {RootState} from '../../../../../store';
-import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
 export interface SardineDetailsProps {
   paymentRequest: SardinePaymentData;
@@ -80,9 +70,6 @@ const SardineDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: SardineDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const [status, setStatus] = useState<SardineStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -98,95 +85,11 @@ const SardineDetails: React.FC = () => {
   };
 
   const getOrderDetails = async (force?: boolean) => {
-    if (
-      (['Complete', 'Declined', 'Expired'].includes(paymentRequest.status) ||
-        !paymentRequest.order_id) &&
-      !force
-    ) {
-      return;
-    }
-
-    const walletIsSupported = (wallet: Wallet): boolean =>
-      !!(wallet.credentials && wallet.isComplete());
-
-    const selectedWallet = Object.values(allKeys)
-      .filter(key => key.backupComplete)
-      .flatMap(key => key.wallets ?? [])
-      .find(walletIsSupported);
-
-    if (!selectedWallet) {
-      logger.error('No supported wallet found for Sardine order details');
-      return;
-    }
-
-    const requestData: SardineGetOrderDetailsRequestData = {
-      env: sardineEnv,
-      orderId: paymentRequest.order_id,
-    };
-
-    try {
-      const _rawData = await selectedWallet.sardineGetOrdersDetails(
-        requestData,
-      );
-      let rawData = _rawData?.body ?? _rawData;
-      const data = Array.isArray(rawData) ? rawData[0] : rawData;
-
-      if (!data) {
-        logger.error('Sardine getOrderDetails Error: No data');
-        return;
-      }
-      let shouldUpdate = false;
-      if (
-        data.data?.quantity &&
-        typeof data.data.quantity === 'number' &&
-        data.data.quantity > 0 &&
-        data.data.quantity != paymentRequest.crypto_amount
-      ) {
-        logger.debug(
-          `Updating crypto_amount from: ${paymentRequest.crypto_amount} to: ${data.data.quantity}`,
-        );
-        paymentRequest.crypto_amount = data.data.quantity;
-        shouldUpdate = true;
-      }
-      if (!paymentRequest.order_id && data.id) {
-        paymentRequest.order_id = data.id;
-        shouldUpdate = true;
-      }
-      if (data.withdrawal?.txHash) {
-        paymentRequest.transaction_id = data.withdrawal.txHash;
-        shouldUpdate = true;
-      }
-      if (
-        data.status &&
-        (!paymentRequest.status || data.status != paymentRequest.status)
-      ) {
-        logger.debug(
-          `Updating status from: ${paymentRequest.status} to: ${data.status}`,
-        );
-        paymentRequest.status = data.status;
-        updateStatusDescription();
-        shouldUpdate = true;
-      }
-
-      if (shouldUpdate) {
-        const stateParams: SardineIncomingData = {
-          sardineExternalId: paymentRequest.external_id,
-          status: paymentRequest.status,
-          cryptoAmount: paymentRequest.crypto_amount,
-          transactionId: paymentRequest.transaction_id,
-        };
-        dispatch(
-          BuyCryptoActions.updatePaymentRequestSardine({
-            sardineIncomingData: stateParams,
-          }),
-        );
-
-        logger.debug(
-          'Saved payment request with: ' + JSON.stringify(paymentRequest),
-        );
-      }
-    } catch (err) {
-      logger.error('Sardine getOrderDetails Error: ' + JSON.stringify(err));
+    const updated = await dispatch(
+      sardineRefreshOrderDetails(paymentRequest, force),
+    );
+    if (updated) {
+      updateStatusDescription();
     }
   };
 

@@ -11,6 +11,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
+import {moonpayRefreshSellTransactionDetails} from '../utils/external-services-status';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
 import {
@@ -45,7 +46,6 @@ import {
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {moonpayGetSellTransactionDetails} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
   moonpaySellEnv,
   moonpaySellGetStatusColor,
@@ -60,7 +60,6 @@ import {
   MoonpayCancelSellTransactionRequestData,
   MoonpaySellOrderData,
   MoonpaySellOrderStatus,
-  MoonpaySellTransactionDetails,
 } from '../../../../../store/sell-crypto/models/moonpay-sell.models';
 import {RootState} from '../../../../../store';
 import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
@@ -102,114 +101,13 @@ const MoonpaySellDetails: React.FC = () => {
     setStatus(moonpaySellGetStatusDetails(sellOrder.status));
   };
 
-  const getSellTransactionDetails = (force?: boolean) => {
-    if (
-      ['bitpayCanceled'].includes(sellOrder.status) ||
-      (['completed', 'failed'].includes(sellOrder.status) && !force)
-    ) {
-      return;
+  const getSellTransactionDetails = async (force?: boolean) => {
+    const updated = await dispatch(
+      moonpayRefreshSellTransactionDetails(sellOrder, force),
+    );
+    if (updated) {
+      updateStatusDescription();
     }
-
-    moonpayGetSellTransactionDetails(
-      sellOrder.transaction_id,
-      sellOrder.external_id,
-    )
-      .then((data: MoonpaySellTransactionDetails) => {
-        if (!data || data.type === 'NotFoundError') {
-          logger.error(
-            'Moonpay getSellTransactionDetails Error: ' + data.message,
-          );
-          return;
-        }
-
-        let shouldUpdate = false;
-        if (
-          !sellOrder.status ||
-          data.status != sellOrder.status ||
-          (data.status === 'failed' && data.failureReason)
-        ) {
-          if (
-            sellOrder.status === 'bitpayTxSent' &&
-            data.status === 'waitingForDeposit'
-          ) {
-            logger.debug(
-              `Status not updated: Current status is: ${sellOrder.status}, but Moonpay is still waiting for deposit. Ask for support.`,
-            );
-          } else {
-            logger.debug(
-              `Updating status from: ${sellOrder.status} to: ${data.status}`,
-            );
-            sellOrder.status = data.status;
-            if (
-              data.status === 'failed' &&
-              data.failureReason &&
-              sellOrder.failure_reason !== data.failureReason
-            ) {
-              logger.debug(
-                `Updating failure reason from: ${sellOrder.failure_reason} to: ${data.failureReason}`,
-              );
-              sellOrder.failure_reason = data.failureReason;
-            }
-            updateStatusDescription();
-            shouldUpdate = true;
-          }
-        }
-
-        if (
-          data.id &&
-          (!sellOrder.transaction_id || sellOrder.transaction_id !== data.id)
-        ) {
-          logger.debug(
-            `Updating transaction_id from: ${sellOrder.transaction_id} to: ${data.id}`,
-          );
-          sellOrder.transaction_id = data.id;
-          shouldUpdate = true;
-        }
-
-        if (!sellOrder.address_to && data.depositWallet?.walletAddress) {
-          logger.debug(
-            `Updating address_to from: ${sellOrder.address_to} to: ${data.depositWallet.walletAddress}`,
-          );
-          sellOrder.address_to = data.depositWallet.walletAddress;
-          shouldUpdate = true;
-        }
-
-        if (
-          data.quoteCurrencyAmount &&
-          typeof data.quoteCurrencyAmount === 'number' &&
-          sellOrder.fiat_receiving_amount !== data.quoteCurrencyAmount
-        ) {
-          logger.debug(
-            `Updating fiat_receiving_amount from: ${sellOrder.fiat_receiving_amount} to: ${data.quoteCurrencyAmount}`,
-          );
-          sellOrder.fiat_receiving_amount = data.quoteCurrencyAmount;
-          shouldUpdate = true;
-        }
-
-        if (shouldUpdate) {
-          const stateParams = {
-            externalId: sellOrder.external_id,
-            transactionId: sellOrder.transaction_id,
-            status: sellOrder.status,
-            depositWalletAddress: sellOrder.address_to,
-            failureReason: sellOrder.failure_reason,
-            fiatAmount: sellOrder.fiat_receiving_amount,
-          };
-
-          dispatch(
-            SellCryptoActions.updateSellOrderMoonpay({
-              moonpaySellIncomingData: stateParams,
-            }),
-          );
-
-          logger.debug('Saved sell order with: ' + JSON.stringify(sellOrder));
-        }
-      })
-      .catch(err => {
-        logger.error(
-          'Moonpay getSellTransactionDetails Error: ' + JSON.stringify(err),
-        );
-      });
   };
 
   const onRefresh = async () => {

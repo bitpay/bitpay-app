@@ -17,25 +17,20 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {moonpayRefreshTransactionDetails} from '../utils/external-services-status';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
 import {
   MoonpayPaymentData,
-  MoonpayTransactionDetailsEmbeddedData,
   MoonpayTransactionStage,
 } from '../../../../../store/buy-crypto/buy-crypto.models';
-import {
-  useAppDispatch,
-  useLogger,
-  useAppSelector,
-} from '../../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {BuyCryptoActions} from '../../../../../store/buy-crypto';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {
   RowDataContainer,
   CryptoAmountContainer,
@@ -57,7 +52,6 @@ import {
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
-import {moonpayGetTransactionDetailsEmbedded} from '../../../../../store/buy-crypto/effects/moonpay/moonpay';
 import {
   MOONPAY_SUPPORT_URL,
   moonpayGetSepaStatusDetails,
@@ -76,16 +70,12 @@ import {
 } from '../../../../../styles/colors';
 import {
   getMoonpayEmbeddedAnonymousCredentials,
-  getMoonpayEmbeddedCredentials,
-  isMoonpayEmbeddedCredentialsValid,
   setMoonpayEmbeddedCredentials,
   setMoonpayEmbeddedStatus,
 } from '../../../../../store/buy-crypto/buy-crypto.effects';
 import {MoonpayClientCredentials} from '../../../../services/utils/moonpayFrameCrypto';
 import {ExternalServicesScreens} from '../../../../services/ExternalServicesGroup';
-import {moonpaySellEnv} from '../../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {RootState} from '../../../../../store';
-import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 export interface MoonpayDetailsProps {
   paymentRequest: MoonpayPaymentData;
 }
@@ -110,12 +100,8 @@ const MoonpayDetails: React.FC = () => {
     params: {paymentRequest},
   } = useRoute<RouteProp<{params: MoonpayDetailsProps}>>();
   const navigation = useNavigation();
-  const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const user = useAppSelector(
     ({APP, BITPAY_ID}: RootState) => BITPAY_ID.user[APP.network],
   );
@@ -274,244 +260,27 @@ const MoonpayDetails: React.FC = () => {
       return;
     }
     setStatusLoading(true);
-
-    if (paymentRequest.is_embedded && paymentRequest.transaction_id) {
-      const cachedCredentials = getMoonpayEmbeddedCredentials();
-      if (isMoonpayEmbeddedCredentialsValid() && cachedCredentials) {
-        setEmbeddedDisconnected(false);
-        try {
-          const txDetails: MoonpayTransactionDetailsEmbeddedData =
-            await moonpayGetTransactionDetailsEmbedded({
-              transactionId: paymentRequest.transaction_id,
-              accessToken: cachedCredentials.accessToken,
-            });
-
-          console.log('Moonpay embedded transaction details', txDetails);
-
-          if (!txDetails) {
-            logger.error(
-              'Moonpay moonpayGetTransactionDetailsEmbedded Error: ' +
-                'No data returned',
-            );
-            return;
-          }
-          let needUpdate = false;
-          if (
-            !paymentRequest.status ||
-            txDetails.status != paymentRequest.status
-          ) {
-            logger.debug('Updating status to: ' + txDetails.status);
-            paymentRequest.status = txDetails.status;
-            updateStatusDescription();
-            needUpdate = true;
-          }
-
-          if (
-            txDetails?.destination?.amount &&
-            Number(txDetails.destination.amount) > 0 &&
-            Number(txDetails.destination.amount) != paymentRequest.crypto_amount
-          ) {
-            logger.debug(
-              'Updating crypto amount to: ' + txDetails.destination.amount,
-            );
-            paymentRequest.crypto_amount = Number(txDetails.destination.amount);
-
-            if (
-              txDetails?.source?.amount &&
-              Number(txDetails.source.amount) > 0 &&
-              Number(txDetails.source.amount) !=
-                paymentRequest.fiat_total_amount
-            ) {
-              logger.debug(
-                'Updating fiat total amount to: ' + txDetails.source.amount,
-              );
-              paymentRequest.fiat_total_amount = Number(
-                txDetails.source.amount,
-              );
-            }
-            needUpdate = true;
-          }
-
-          // The checkout stores these when the purchase is created, but the
-          // deposit details are generated asynchronously, so they can still be
-          // missing by then.
-          if (
-            !paymentRequest.sepa_details &&
-            txDetails?.bankTransferDepositInfo?.reference
-          ) {
-            const depositInfo = txDetails.bankTransferDepositInfo;
-            paymentRequest.sepa_details = {
-              reference: depositInfo.reference,
-              iban: depositInfo.iban,
-              bic: depositInfo.bic,
-              recipientName: depositInfo.recipientName,
-              recipientAddress: depositInfo.recipientAddress,
-              bankName: depositInfo.bankName,
-              bankAddress: depositInfo.bankAddress,
-            };
-            setSepaDetails(paymentRequest.sepa_details);
-            needUpdate = true;
-          }
-
-          // A bank transfer sits at 'pending' from creation until the money
-          // settles, so the stages are the only place the progress shows. They
-          // are stored with the purchase so the list can tell whether the
-          // customer still has to send the money.
-          if (isEmbeddedSepa) {
-            setSepaStages(txDetails.stages);
-            updateStatusDescription(txDetails.stages);
-            if (txDetails.stages) {
-              paymentRequest.sepa_stages = txDetails.stages;
-              needUpdate = true;
-            }
-
-            // The checkout cannot report the purchase: at that point nothing
-            // has been paid and the transfer may still time out. It is reported
-            // here, once, when MoonPay confirms the deposit arrived.
-            const depositArrived =
-              txDetails.status === 'completed' ||
-              !!txDetails.stages?.some(
-                stage =>
-                  stage.kind === 'waiting_payment' &&
-                  stage.status === 'success',
-              );
-            if (depositArrived && !paymentRequest.sepa_purchase_reported) {
-              dispatch(
-                Analytics.track('Purchased Buy Crypto', {
-                  exchange: 'moonpay',
-                  fiatAmount: paymentRequest.fiat_total_amount || '',
-                  feeAmount:
-                    (paymentRequest.fiat_total_amount &&
-                      paymentRequest.fiat_base_amount &&
-                      Number(paymentRequest.fiat_total_amount) -
-                        Number(paymentRequest.fiat_base_amount)) ||
-                    '',
-                  fiatCurrency: paymentRequest.fiat_total_amount_currency || '',
-                  coin: paymentRequest.coin?.toLowerCase() || '',
-                  chain: paymentRequest.chain?.toLowerCase() || '',
-                  cryptoAmount: paymentRequest.crypto_amount || '',
-                  paymentMethod: paymentRequest.payment_method || '',
-                  exchangeRate:
-                    (paymentRequest.crypto_amount &&
-                      paymentRequest.fiat_base_amount &&
-                      Number(paymentRequest.fiat_base_amount) /
-                        paymentRequest.crypto_amount) ||
-                    '',
-                  isEmbedded: true,
-                }),
-              );
-              paymentRequest.sepa_purchase_reported = true;
-              needUpdate = true;
-            }
-          }
-
-          if (needUpdate || true) {
-            const stateParams = {
-              externalId: paymentRequest.external_id,
-              transactionId: paymentRequest.transaction_id,
-              status: paymentRequest.status,
-              cryptoAmount: paymentRequest.crypto_amount,
-              fiatTotalAmount: paymentRequest.fiat_total_amount,
-              sepaDetails: paymentRequest.sepa_details,
-              sepaStages: paymentRequest.sepa_stages,
-              sepaPurchaseReported: paymentRequest.sepa_purchase_reported,
-            };
-            dispatch(
-              BuyCryptoActions.updatePaymentRequestMoonpay({
-                moonpayIncomingData: stateParams,
-              }),
-            );
-
-            logger.debug(
-              'Saved payment request with: ' + JSON.stringify(paymentRequest),
-            );
-          }
-        } catch (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logger.error(
-            'Moonpay getTransactionDetailsEmbedded Error: ' + errStr,
-          );
-        } finally {
-          setStatusLoading(false);
+    try {
+      const {disconnected, fetched, stages} = await dispatch(
+        moonpayRefreshTransactionDetails(paymentRequest, force),
+      );
+      if (disconnected) {
+        setEmbeddedDisconnected(true);
+        showDisconnectedNotification();
+        return;
+      }
+      setEmbeddedDisconnected(false);
+      setSepaDetails(paymentRequest.sepa_details);
+      if (isEmbeddedSepa) {
+        if (fetched) {
+          setSepaStages(stages);
+          updateStatusDescription(stages);
         }
       } else {
-        logger.warn(
-          'Moonpay getTransactionDetailsEmbedded Error: User disconnected or credentials expired',
-        );
-        setEmbeddedDisconnected(true);
-        setStatusLoading(false);
-        showDisconnectedNotification();
+        updateStatusDescription();
       }
-    } else {
-      try {
-        const walletIsSupported = (wallet: Wallet): boolean =>
-          !!(wallet.credentials && wallet.isComplete());
-
-        const selectedWallet = Object.values(allKeys)
-          .filter(key => key.backupComplete)
-          .flatMap(key => key.wallets ?? [])
-          .find(walletIsSupported);
-
-        if (!selectedWallet) {
-          logger.error(
-            'No supported wallet found for Moonpay transaction details',
-          );
-          return;
-        }
-
-        let body;
-        if (paymentRequest.transaction_id) {
-          body = {
-            transactionId: paymentRequest.transaction_id,
-            env: moonpaySellEnv,
-          };
-        } else if (paymentRequest.external_id) {
-          body = {externalId: paymentRequest.external_id, env: moonpaySellEnv};
-        } else {
-          logger.debug('Moonpay getTransactionDetails: Missing parameters');
-          return;
-        }
-
-        const _data = await selectedWallet.moonpayGetTransactionDetails(body);
-        let data = _data?.body ?? _data;
-        if (Array.isArray(data)) {
-          data = data[0];
-        }
-        if (!data || data.type === 'NotFoundError') {
-          logger.error('Moonpay getTransactionDetails Error: ' + data?.message);
-          return;
-        }
-        if (
-          !paymentRequest.transaction_id ||
-          !paymentRequest.status ||
-          data.status != paymentRequest.status
-        ) {
-          logger.debug('Updating status to: ' + data.status);
-          paymentRequest.status = data.status;
-          paymentRequest.transaction_id = data.id;
-          updateStatusDescription();
-          const stateParams = {
-            externalId: paymentRequest.external_id,
-            transactionId: paymentRequest.transaction_id,
-            status: paymentRequest.status,
-          };
-          dispatch(
-            BuyCryptoActions.updatePaymentRequestMoonpay({
-              moonpayIncomingData: stateParams,
-            }),
-          );
-
-          logger.debug(
-            'Saved payment request with: ' + JSON.stringify(paymentRequest),
-          );
-        }
-      } catch (err) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error('Moonpay getTransactionDetails Error: ' + errStr);
-      } finally {
-        setStatusLoading(false);
-      }
+    } finally {
+      setStatusLoading(false);
     }
   };
 

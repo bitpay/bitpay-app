@@ -7,15 +7,12 @@ import {useTheme} from '../../../../../contexts';
 import moment from 'moment';
 import {Br} from '../../../../../components/styled/Containers';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {thorswapRefreshTxStatus} from '../utils/external-services-status';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {thorswapTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 // import {thorswapGetStatus} from '../../../../../store/swap-crypto/effects/thorswap/thorswap';
 import ThorswapLogo from '../../../../../components/icons/external-services/thorswap/thorswap-logo';
-import {
-  useAppDispatch,
-  useLogger,
-  useAppSelector,
-} from '../../../../../utils/hooks';
+import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -25,7 +22,6 @@ import {
   thorswapGetStatusDetails,
   Status,
   thorswapGetStatusColor,
-  thorswapEnv,
 } from '../../../../../navigation/services/swap-crypto/utils/thorswap-utils';
 import {
   RowDataContainer,
@@ -50,13 +46,6 @@ import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {sleep} from '../../../../../utils/helper-methods';
 import {SlateDark, White} from '../../../../../styles/colors';
-import {
-  ThorswapGetSwapTxData,
-  ThorswapGetSwapTxRequestData,
-  ThorswapTrackingStatus,
-} from '../../../../../store/swap-crypto/models/thorswap.models';
-import {RootState} from '../../../../../store';
-import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
 export interface ThorswapDetailsProps {
   swapTx: thorswapTxData;
@@ -68,12 +57,8 @@ const ThorswapDetails: React.FC = () => {
     params: {swapTx},
   } = useRoute<RouteProp<{params: ThorswapDetailsProps}>>();
   const navigation = useNavigation();
-  const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const [status, setStatus] = useState<Status>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -97,117 +82,18 @@ const ThorswapDetails: React.FC = () => {
     setStatus(thorswapGetStatusDetails(swapTx.status));
   };
 
-  const compareAmounts = (amountTo: number, toAmount: string | number) => {
-    if (typeof toAmount === 'number') {
-      toAmount = toAmount.toString();
-    }
-
-    const amountToString = amountTo.toString();
-    const decimalIndex = amountToString.indexOf('.');
-
-    const decimalPlaces =
-      decimalIndex === -1 ? 0 : amountToString.length - decimalIndex - 1;
-
-    const roundedAmountTo = parseFloat(amountTo.toFixed(decimalPlaces));
-    const roundedToAmount = parseFloat(
-      parseFloat(toAmount).toFixed(decimalPlaces),
-    );
-
-    // Compare the rounded values
-    return roundedAmountTo === roundedToAmount;
-  };
-
   const getStatus = async (force?: boolean) => {
-    if (
-      [
-        ThorswapTrackingStatus.completed,
-        ThorswapTrackingStatus.success,
-      ].includes(swapTx.status) &&
-      !force
-    ) {
-      return;
+    const {updated, error} = await dispatch(
+      thorswapRefreshTxStatus(swapTx, force),
+    );
+    if (updated) {
+      updateStatusDescription();
     }
-
-    const reqData: ThorswapGetSwapTxRequestData = {
-      env: thorswapEnv,
-      hash: swapTx.txHash,
-    };
-
-    const walletIsSupported = (wallet: Wallet): boolean =>
-      !!(wallet.credentials && wallet.isComplete());
-
-    const selectedWallet = Object.values(allKeys)
-      .filter(key => key.backupComplete)
-      .flatMap(key => key.wallets ?? [])
-      .find(walletIsSupported);
-
-    if (!selectedWallet) {
-      logger.error('No supported wallet found for Thorswap status');
-      return;
-    }
-
-    try {
-      const _raw = await selectedWallet.thorswapGetSwapTx(reqData);
-      const swapTxData: ThorswapGetSwapTxData = _raw?.body ?? _raw;
-      let shouldUpdate = false;
-      if (swapTxData?.result) {
-        if (
-          swapTxData.result.legs &&
-          swapTxData.result.legs.length === 1 &&
-          swapTxData.result.legs[0].toAmount &&
-          !compareAmounts(swapTx.amountTo, swapTxData.result.legs[0].toAmount)
-        ) {
-          logger.debug(
-            'Updating amountTo to: ' + swapTxData.result.legs[0].toAmount,
-          );
-          swapTx.amountTo = Number(swapTxData.result.legs[0].toAmount);
-          shouldUpdate = true;
-        }
-        if (swapTxData.status && swapTxData.status != swapTx.status) {
-          logger.debug('Updating status to: ' + swapTxData.status);
-          swapTx.status = swapTxData.status;
-          updateStatusDescription();
-          shouldUpdate = true;
-        }
-        if (shouldUpdate) {
-          dispatch(
-            SwapCryptoActions.successTxThorswap({
-              thorswapTxData: swapTx,
-            }),
-          );
-
-          logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
-        }
-      } else {
-        if (!swapTxData) {
-          logger.error('Thorswap error: No swapTxData received');
-        }
-        if (swapTxData.message && typeof swapTxData.message === 'string') {
-          logger.error('Thorswap error: ' + swapTxData.message);
-        }
-        if (swapTxData.error && typeof swapTxData.error === 'string') {
-          logger.error('Thorswap error: ' + swapTxData.error);
-        }
-        if (
-          swapTxData.error?.message &&
-          typeof swapTxData.error.message === 'string'
-        ) {
-          logger.error('Thorswap error: ' + swapTxData.error.message);
-        }
-        if (swapTxData.errors) {
-          logger.error(swapTxData.errors);
-        }
-        let err = t(
-          "Can't get order details at this moment. Please try again later",
-        );
-        if (swapTxData.code && swapTxData.type && swapTxData.message) {
-          err = swapTxData.message;
-        }
-        showThorswapError(err);
-      }
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error('Thorswap getStatus Error: ' + errStr);
+    if (error) {
+      showThorswapError(
+        error.message ??
+          t("Can't get order details at this moment. Please try again later"),
+      );
     }
   };
 

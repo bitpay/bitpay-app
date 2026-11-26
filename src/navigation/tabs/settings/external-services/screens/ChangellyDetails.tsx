@@ -7,15 +7,12 @@ import {useTheme} from '../../../../../contexts';
 import moment from 'moment';
 import {Br} from '../../../../../components/styled/Containers';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {changellyRefreshTxStatus} from '../utils/external-services-status';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 
 import ChangellyLogo from '../../../../../components/icons/external-services/changelly/changelly-logo';
-import {
-  useAppDispatch,
-  useLogger,
-  useAppSelector,
-} from '../../../../../utils/hooks';
+import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -25,10 +22,7 @@ import {
   changellyGetStatusDetails,
   Status,
   changellyGetStatusColor,
-  generateMessageId,
 } from '../../../../../navigation/services/swap-crypto/utils/changelly-utils';
-import {RootState} from '../../../../../store';
-import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 import {
   RowDataContainer,
   CryptoAmountContainer,
@@ -63,12 +57,8 @@ const ChangellyDetails: React.FC = () => {
     params: {swapTx},
   } = useRoute<RouteProp<{params: ChangellyDetailsProps}>>();
   const navigation = useNavigation();
-  const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const allKeys: {[key: string]: Key} = useAppSelector(
-    ({WALLET}: RootState) => WALLET.keys,
-  );
   const [status, setStatus] = useState<Status>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -94,54 +84,9 @@ const ChangellyDetails: React.FC = () => {
   };
 
   const getStatus = async (force?: boolean) => {
-    if (swapTx.status === 'finished' && !force) {
-      return;
-    }
-
-    const walletIsSupported = (wallet: Wallet): boolean =>
-      !!(wallet.credentials && wallet.isComplete());
-
-    const selectedWallet = Object.values(allKeys)
-      .filter(key => key.backupComplete)
-      .flatMap(key => key.wallets ?? [])
-      .find(walletIsSupported);
-
-    if (!selectedWallet) {
-      logger.error('No supported wallet found for Changelly status');
-      return;
-    }
-
-    try {
-      const reqData = {
-        id: generateMessageId(),
-        exchangeTxId: swapTx.exchangeTxId,
-        useV2: true,
-      };
-      logger.debug(
-        'Making a Changelly request with body: ' + JSON.stringify(reqData),
-      );
-      const _raw = await selectedWallet.changellyGetStatus(reqData);
-      const data = _raw?.body ?? _raw;
-
-      if (data.error) {
-        logger.error('Changelly getStatus Error: ' + data.error.message);
-        return;
-      }
-      if (data.result != swapTx.status) {
-        logger.debug('Updating status to: ' + data.result);
-        swapTx.status = data.result;
-        updateStatusDescription();
-        dispatch(
-          SwapCryptoActions.successTxChangelly({
-            changellyTxData: swapTx,
-          }),
-        );
-
-        logger.debug('Saved swap with: ' + JSON.stringify(swapTx));
-      }
-    } catch (err) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error('Changelly getStatus Error: ' + errStr);
+    const updated = await dispatch(changellyRefreshTxStatus(swapTx, force));
+    if (updated) {
+      updateStatusDescription();
     }
   };
 

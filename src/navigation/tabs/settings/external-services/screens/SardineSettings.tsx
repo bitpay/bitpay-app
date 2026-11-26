@@ -10,6 +10,10 @@ import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  sardineRefreshOrderDetails,
+  refreshPendingOrders,
+} from '../utils/external-services-status';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
@@ -71,7 +75,19 @@ const SardineSettings: React.FC = () => {
       );
       setTransactions(sardinePaymentRequests);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
+  }, [isFocused, sardineHistory]);
+
+  useEffect(() => {
+    if (isFocused) {
+      // Copies, so the refresh does not modify the objects held by the store.
+      refreshPendingOrders(
+        Object.values(sardineHistory)
+          .filter(pr => pr.env === (__DEV__ ? 'dev' : 'prod') && !!pr.order_id)
+          .map(order => ({...order})),
+        order => dispatch(sardineRefreshOrderDetails(order)),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshes the orders that are not final each time the screen gains focus
   }, [isFocused]);
 
   return (

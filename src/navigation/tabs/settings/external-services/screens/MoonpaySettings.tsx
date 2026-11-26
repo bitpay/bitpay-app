@@ -10,6 +10,11 @@ import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  moonpayRefreshSellTransactionDetails,
+  moonpayRefreshTransactionDetails,
+  refreshPendingOrders,
+} from '../utils/external-services-status';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
@@ -268,7 +273,27 @@ const MoonpaySettings: React.FC = () => {
       );
       setSellOrders(moonpaySellOrders);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
+  }, [isFocused, moonpayHistory, moonpaySellHistory]);
+
+  useEffect(() => {
+    if (isFocused) {
+      const isCurrentEnv = (order: {env: string}) =>
+        order.env === (__DEV__ ? 'dev' : 'prod');
+      // Copies, so the refresh does not modify the objects held by the store.
+      refreshPendingOrders(
+        Object.values(moonpayHistory)
+          .filter(isCurrentEnv)
+          .map(pr => ({...pr})),
+        pr => dispatch(moonpayRefreshTransactionDetails(pr)),
+      );
+      refreshPendingOrders(
+        Object.values(moonpaySellHistory)
+          .filter(isCurrentEnv)
+          .map(so => ({...so})),
+        so => dispatch(moonpayRefreshSellTransactionDetails(so)),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshes the orders that are not final each time the screen gains focus
   }, [isFocused]);
 
   return (

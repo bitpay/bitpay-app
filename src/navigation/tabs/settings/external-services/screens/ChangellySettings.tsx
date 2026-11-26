@@ -1,9 +1,13 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  changellyRefreshTxStatus,
+  refreshPendingOrders,
+} from '../utils/external-services-status';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -33,16 +37,24 @@ const ChangellySettings: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const [swapTxs, setSwapTxs] = useState([] as changellyTxData[]);
+
+  const swapTxs = useMemo(
+    () =>
+      (Object.values(changellyHistory) as changellyTxData[]).sort(
+        (a, b) => b.date - a.date,
+      ),
+    [changellyHistory],
+  );
 
   useEffect(() => {
     if (isFocused) {
-      const changellyTransactions = Object.values(
-        changellyHistory,
-      ) as changellyTxData[];
-      setSwapTxs(changellyTransactions.sort((a, b) => b.date - a.date));
+      // Copies, so the refresh does not modify the objects held by the store.
+      refreshPendingOrders(
+        swapTxs.map(swapTx => ({...swapTx})),
+        swapTx => dispatch(changellyRefreshTxStatus(swapTx)),
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshes the swaps that are not final each time the screen gains focus
   }, [isFocused]);
 
   return (
