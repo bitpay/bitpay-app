@@ -894,6 +894,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
           automaticallyAdjustKeyboardInsets={true}>
           <TransakHeadlessDisclaimers
             termsIds={quote.termsIds}
+            paymentMethod={headlessPaymentMethod}
             placement={'banner'}
           />
           <View style={styles.headerContainer}>
@@ -1043,6 +1044,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
         <View style={styles.bottomSection}>
           <TransakHeadlessDisclaimers
             termsIds={quote.termsIds}
+            paymentMethod={headlessPaymentMethod}
             placement={'aboveButton'}
           />
           {isWalletPayment ? (
