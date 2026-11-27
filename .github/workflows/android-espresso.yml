@@ -259,7 +259,7 @@ jobs:
           TESTLIO_DEVICE_ID: ${{ secrets.TESTLIO_ANDROID_DEVICE_ID }}
         run: |
           testlio create-run \
-            --testConfig testlio-cli/test-config.json \
+            --testConfig testlio-cli/test-config-android.json \
             --projectConfig testlio-cli/project-config.json \
             --externalResults true \
             --resultProvider local \

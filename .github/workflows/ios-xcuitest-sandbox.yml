@@ -264,7 +264,7 @@ jobs:
             export TESTLIO_PROJECT_CONFIG="testlio-cli/project-config.json"
           fi
           testlio create-run \
-            --testConfig testlio-cli/test-config.json \
+            --testConfig testlio-cli/test-config-ios.json \
             --projectConfig "$TESTLIO_PROJECT_CONFIG" \
             --externalResults true \
             --resultProvider local \
