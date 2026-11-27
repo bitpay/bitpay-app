@@ -541,6 +541,7 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
   const applePayFrameRef = useRef<ApplePayFrameRef>(null);
   const googlePayFrameRef = useRef<GooglePayFrameRef>(null);
   const buyFrameRef = useRef<BuyFrameRef>(null);
+  const payButtonClickedRef = useRef(false);
   const quoteRefreshTimerRef = useRef<
     ReturnType<typeof setTimeout> | undefined
   >(undefined);
@@ -1960,7 +1961,23 @@ const MoonpayBuyEmbeddedCheckout: React.FC = () => {
                 }}
                 onQuoteExpired={refreshQuote}
                 onButtonPressed={() => {
+                  if (payButtonClickedRef.current) {
+                    return;
+                  }
+                  payButtonClickedRef.current = true;
                   logger.debug('MoonPay Google Pay button pressed');
+                  dispatch(
+                    Analytics.track('Clicked Buy Crypto Pay Button', {
+                      exchange: 'moonpay',
+                      context: 'MoonpayBuyEmbeddedCheckout',
+                      paymentMethod: paymentMethod?.method || '',
+                      amount: Number((offer as CryptoOffer)?.fiatAmount) || '',
+                      coin: wallet?.currencyAbbreviation?.toLowerCase() || '',
+                      chain: wallet?.chain?.toLowerCase() || '',
+                      fiatCurrency: offer?.fiatCurrency || '',
+                      isEmbedded: true,
+                    }),
+                  );
                 }}
                 onCancelled={(code?: string) => {
                   logger.debug(
