@@ -599,8 +599,8 @@ export const GroupTransactionHistory = (history: any[]) => {
   // workaround to show pending transactions first even if it was broadcasted earlier that the confirmed ones
   const [_pendingTransactions, _confirmedTransactions] = partition(
     history.sort((x, y) => y.time - x.time),
-    t => {
-      return t.confirmations === 0;
+    tx => {
+      return tx.confirmations === 0;
     },
   );
   const pendingTransactionsGroup =
@@ -683,7 +683,7 @@ export const GetAccountTransactionHistory =
     };
     sortedCompleteHistory: any[];
   }> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       let allTransactions = [] as any[];
       const transactionPromises = wallets.map(async wallet => {
         try {
@@ -883,7 +883,7 @@ export const GetTransactionHistory =
         }
         if (!skip) {
           fetchedAt = Date.now();
-          let transactionHistory;
+          let pendingCheckHistory;
           let derivedAt: number | undefined;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
@@ -893,16 +893,17 @@ export const GetTransactionHistory =
             const linkedWallet = key.wallets.find(({tokens}: any) =>
               tokens?.includes(walletId),
             );
-            transactionHistory = linkedWallet?.transactionHistory?.transactions;
+            pendingCheckHistory =
+              linkedWallet?.transactionHistory?.transactions;
             derivedAt = linkedWallet?.transactionHistory?.fetchedAt;
           } else {
-            transactionHistory = newHistory;
+            pendingCheckHistory = newHistory;
             derivedAt = Date.now();
           }
 
           // look for sent or moved unconfirmed until find a confirmed
-          if (transactionHistory && transactionHistory[0]) {
-            for (let tx of transactionHistory) {
+          if (pendingCheckHistory && pendingCheckHistory[0]) {
+            for (let tx of pendingCheckHistory) {
               if (tx.action === 'sent' || tx.action === 'moved') {
                 if (tx.confirmations === 0) {
                   hasConfirmingTxs = true;
@@ -1565,12 +1566,12 @@ const GetActionsList = (transaction: any, wallet: Wallet) => {
     by: creatorName,
   });
 
-  actions.forEach((action: any) => {
+  actions.forEach((actionItem: any) => {
     actionList.push({
-      type: action.type,
-      time: action.createdOn,
-      description: actionDescriptions[action.type],
-      by: action.copayerName,
+      type: actionItem.type,
+      time: actionItem.createdOn,
+      description: actionDescriptions[actionItem.type],
+      by: actionItem.copayerName,
     });
   });
 
@@ -1615,7 +1616,7 @@ export const GetInput = async (wallet: Wallet, txid: string) => {
       }
     });
     return input;
-  } catch (err) {
+  } catch {
     return;
   }
 };

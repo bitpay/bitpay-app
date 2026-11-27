@@ -403,6 +403,7 @@ const TSSOnboardingModal: React.FC<TSSOnboardingModalProps> = ({
 
   useEffect(() => {
     if (isVisible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the carousel (state + imperative scrollTo) and tracks analytics each time the modal opens
       setActiveSlideIndex(0);
       ref.current?.scrollTo({index: 0, animated: false});
       dispatch(

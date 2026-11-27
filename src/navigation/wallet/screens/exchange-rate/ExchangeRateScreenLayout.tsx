@@ -506,6 +506,7 @@ const ExchangeRateScreenLayout = ({
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- collapses the About section when the viewed asset changes
     setIsAboutExpanded(false);
   }, [
     shared.assetContext.chain,

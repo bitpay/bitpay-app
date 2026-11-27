@@ -10,19 +10,6 @@ import {
   BWC_TIMEOUT,
 } from '../constants/config';
 
-interface KeyOpts {
-  seedType: string;
-  seedData?: any;
-  passphrase?: string; // seed passphrase
-  password?: string; // encrypting password
-  sjclOpts?: any; // options to SJCL encrypt
-  use0forBCH?: boolean;
-  useLegacyPurpose?: boolean;
-  useLegacyCoinType?: boolean;
-  nonCompliantDerivation?: boolean;
-  language?: string;
-}
-
 export class BwcProvider {
   static instance: BwcProvider;
   static API = BWC;
@@ -65,7 +52,14 @@ export class BwcProvider {
   }
 
   public createKey(opts: KeyOptions) {
-    return new BWC.Key(opts);
+    try {
+      return new BWC.Key(opts);
+    } catch (err) {
+      if (opts.seedType === 'mnemonic') {
+        throw new Error('INVALID_BACKUP');
+      }
+      throw err;
+    }
   }
 
   public getTssKey() {
@@ -78,6 +72,14 @@ export class BwcProvider {
 
   public createTssKey(opts: TssKey.ITssKey) {
     return new TssKey.TssKey(opts);
+  }
+
+  public createTssWallet(opts: any) {
+    return (TssKey as any).createWallet(opts);
+  }
+
+  public joinTssWallet(opts: any) {
+    return (TssKey as any).joinWallet(opts);
   }
 
   public createKeyGen(opts: TssKey.ITssKeyGenConstructorParams) {

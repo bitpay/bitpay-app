@@ -75,7 +75,6 @@ export const clearWalletBalances =
 
 export const getUpdatedWalletBalances =
   ({
-    context,
     force,
     createTokenWalletWithFunds,
     chain,
@@ -130,7 +129,7 @@ export const getUpdatedWalletBalances =
               tokenAddress,
             }),
           );
-        } catch (error) {
+        } catch {
           logManager.info(
             'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
           );
@@ -240,6 +239,7 @@ export const getAndDispatchUpdatedWalletBalances =
     chain,
     tokenAddress,
     skipRateUpdate = false,
+    forceRateUpdate = force,
   }: {
     context?: UpdateAllKeyAndWalletStatusContext;
     force?: boolean;
@@ -247,12 +247,15 @@ export const getAndDispatchUpdatedWalletBalances =
     chain?: string;
     tokenAddress?: string;
     skipRateUpdate?: boolean;
+    // Rates can be forced separately from balances; launch takes cached
+    // rates (5 min) but always refreshes balances.
+    forceRateUpdate?: boolean;
   }): Effect<Promise<void>> =>
-  async (dispatch, getState) => {
+  async dispatch => {
     try {
       // Update rates if needed
       if (!skipRateUpdate) {
-        await dispatch(startGetRates({context, force}));
+        await dispatch(startGetRates({context, force: forceRateUpdate}));
       }
 
       // Get updated balances

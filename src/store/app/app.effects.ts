@@ -1,3 +1,5 @@
+import {mark as perfMark} from '../../perf/PerfMonitor';
+import {whenStartupSettled} from '../../utils/startupSignals';
 import BitAuth from 'bitauth';
 import i18n, {t} from 'i18next';
 import {debounce} from '../../utils/debounce';
@@ -210,8 +212,12 @@ export const reportDeviceIntegrity = (): Effect => dispatch => {
   }
 };
 
+/** Delay after startup settles before the external-services prefetch. */
+const EXTERNAL_SERVICES_PREFETCH_DELAY_MS = 3000;
+
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
+    perfMark('bp_app_init_start');
     logManager.info(
       `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
     );
@@ -237,6 +243,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     } else {
       logManager.warn('SSL pinning is not available on this device');
     }
+    perfMark('bp_ssl_pinning_done');
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
@@ -251,7 +258,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
 
-    dispatch(reportDeviceIntegrity());
+    // Root / hook detection runs synchronous native checks on the JS thread
+    // (filesystem probes, a hooking-framework scan). This call only reports
+    // the result (Sentry tags, analytics), so it waits until the first screen
+    // is up. Sensitive actions re-check on their own, every time
+    // (assertDeviceIntegrityForSensitiveAction), so protection is unchanged.
+    whenStartupSettled(() => dispatch(reportDeviceIntegrity()));
 
     await dispatch(
       migrateWalletSecrets(
@@ -260,6 +272,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         resumePersistRootBackups,
       ),
     );
+    perfMark('bp_wallet_secrets_done');
 
     try {
       const walletStoreInitResult = dispatch(startWalletStoreInit());
@@ -353,6 +366,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
 
+    perfMark('bp_app_init_success');
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
     logManager.info('Initialized app successfully.');
@@ -360,9 +374,18 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
 
-    // Pre-fetch external services config and swap crypto currencies in background
+    // Pre-fetch external services config and swap crypto currencies in
+    // background — once startup has settled. The swap currency lists are
+    // ~0.5 MB of JSON fetched and parsed on every launch; none of it is needed
+    // for the first screen, and swap screens fetch on their own if they open
+    // first.
     await locationDataPromise;
-    dispatch(prefetchExternalServicesData());
+    whenStartupSettled(() => {
+      setTimeout(
+        () => dispatch(prefetchExternalServicesData()),
+        EXTERNAL_SERVICES_PREFETCH_DELAY_MS,
+      );
+    });
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
@@ -627,7 +650,7 @@ const createBrazeEid = (): Effect<string | undefined> => dispatch => {
  * Requests a refresh for Braze content.
  * @returns void
  */
-export const requestBrazeContentRefresh = (): Effect => async dispatch => {
+export const requestBrazeContentRefresh = (): Effect => async () => {
   if (Analytics.isMergingUser()) {
     logManager.debug('Skipping Braze content refresh during user merge.');
     return;
@@ -647,7 +670,7 @@ export const requestBrazeContentRefresh = (): Effect => async dispatch => {
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: WalletKitTypes.EventArguments['session_request'],
+    sessionRequest: WalletKitTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
@@ -666,7 +689,9 @@ export const startInAppNotification =
     // Translate message before show message
     const _message = _InAppNotificationMessages[key];
 
-    dispatch(AppActions.showInAppNotification(context, _message, request));
+    dispatch(
+      AppActions.showInAppNotification(context, _message, sessionRequest),
+    );
   };
 
 /**
@@ -823,7 +848,7 @@ const trackAppInstalled =
 
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  () => {
     const opts = {
       externalUserId: eid,
       platform: Platform.OS,
@@ -846,7 +871,7 @@ export const subscribePushNotifications =
 
 export const unSubscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
-  dispatch => {
+  () => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
         logManager.error(
@@ -866,7 +891,7 @@ export const subscribeEmailNotifications =
     walletClient: any,
     prefs: {email: string; language: string; unit: string},
   ): Effect<Promise<void>> =>
-  async dispatch => {
+  async () => {
     walletClient.savePreferences(prefs, (err: any) => {
       if (err) {
         logManager.error(
@@ -883,7 +908,7 @@ export const subscribeEmailNotifications =
 
 export const unSubscribeEmailNotifications =
   (walletClient: any): Effect<Promise<void>> =>
-  async dispatch => {
+  async () => {
     walletClient.savePreferences({email: ''}, (err: any) => {
       if (err) {
         logManager.error(
@@ -1485,7 +1510,7 @@ export const checkFaceIdPermissions = async () => {
 
 export const isVersionUpdated =
   (currentVersion: string, savedVersion: string): Effect<Promise<boolean>> =>
-  async dispatch => {
+  async () => {
     const verifyTagFormat = (tag: string) => {
       const regex = /^v?\d+\.\d+\.\d+$/i;
       return regex.exec(tag);
@@ -1566,33 +1591,31 @@ export const shortcutListener =
  *
  * @returns
  */
-export const requestInAppReview =
-  (): Effect<Promise<void>> => async dispatch => {
-    try {
-      // Whether the device supports app ratings
-      const isAvailable = InAppReview.isAvailable();
+export const requestInAppReview = (): Effect<Promise<void>> => async () => {
+  try {
+    // Whether the device supports app ratings
+    const isAvailable = InAppReview.isAvailable();
 
-      if (!isAvailable) {
-        logManager.debug('In-app review not available.');
-        return;
-      }
-
-      logManager.debug('Requesting in-app review...');
-
-      // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
-      // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
-      const hasFlowFinishedSuccessfully =
-        await InAppReview.RequestInAppReview();
-
-      logManager.debug(
-        `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
-      );
-    } catch (e: any) {
-      logManager.debug(
-        `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
-      );
+    if (!isAvailable) {
+      logManager.debug('In-app review not available.');
+      return;
     }
-  };
+
+    logManager.debug('Requesting in-app review...');
+
+    // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
+    // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
+    const hasFlowFinishedSuccessfully = await InAppReview.RequestInAppReview();
+
+    logManager.debug(
+      `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
+    );
+  } catch (e: any) {
+    logManager.debug(
+      `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
+    );
+  }
+};
 
 export const joinWaitlist =
   (email: string, attribute: string, context: 'bill-pay'): Effect =>

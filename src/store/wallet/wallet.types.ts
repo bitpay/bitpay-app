@@ -61,7 +61,7 @@ export enum WalletActionTypes {
   REMOVE_PENDING_TSS_SESSION = 'WALLET/REMOVE_PENDING_TSS_SESSION',
   SET_PENDING_JOINER_SESSION = 'WALLET/SET_PENDING_JOINER_SESSION',
   REMOVE_PENDING_JOINER_SESSION = 'WALLET/REMOVE_PENDING_JOINER_SESSION',
-  SET_TSS_ENABLED = 'WALLET/SET_TSS_ENABLED',
+  CLEAR_TSS_SESSION_SECRETS = 'WALLET/CLEAR_TSS_SESSION_SECRETS',
   SET_SHOW_TESTNET_WALLETS = 'WALLET/SET_SHOW_TESTNET_WALLETS',
   SET_SECRETS_MIGRATED = 'WALLET/SET_SECRETS_MIGRATED',
   SUCCESS_MIGRATE_WALLET_SECRETS = 'WALLET/SUCCESS_MIGRATE_WALLET_SECRETS',
@@ -355,14 +355,14 @@ interface removePendingJoinerSession {
   type: typeof WalletActionTypes.REMOVE_PENDING_JOINER_SESSION;
 }
 
+interface clearTssSessionSecrets {
+  type: typeof WalletActionTypes.CLEAR_TSS_SESSION_SECRETS;
+  payload: {keyIds: string[]};
+}
+
 interface setPendingJoinerSession {
   type: typeof WalletActionTypes.SET_PENDING_JOINER_SESSION;
   payload: PendingJoinerSession | null;
-}
-
-interface setTssEnabled {
-  type: typeof WalletActionTypes.SET_TSS_ENABLED;
-  payload: boolean;
 }
 
 interface setShowTestnetWallets {
@@ -443,5 +443,5 @@ export type WalletActionType =
   | successUpdateWalletBalancesAndStatus
   | setPendingJoinerSession
   | removePendingJoinerSession
-  | setTssEnabled
+  | clearTssSessionSecrets
   | setShowTestnetWallets;

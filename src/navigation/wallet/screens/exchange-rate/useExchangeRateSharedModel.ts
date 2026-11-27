@@ -192,9 +192,15 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
     ],
   );
 
-  const resolvedQuoteCurrency = resolveActivePortfolioDisplayQuoteCurrency({
-    defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
-  }).toUpperCase();
+  // Memoized so React Compiler can treat the (pure, string) result as
+  // immutable when it is used as a dependency of the manual memos below.
+  const resolvedQuoteCurrency = useMemo(
+    () =>
+      resolveActivePortfolioDisplayQuoteCurrency({
+        defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+      }).toUpperCase(),
+    [defaultAltCurrency.isoCode],
+  );
 
   const normalizedCoin = normalizeFiatRateSeriesCoin(
     assetContext.currencyAbbreviation,
@@ -219,12 +225,14 @@ const useExchangeRateSharedModel = (): ExchangeRateSharedModel => {
           tokenAddress: assetContext.tokenAddress,
           quoteCurrency: resolvedQuoteCurrency,
         });
-  const fallbackAsOfMsRef = React.useRef<number>(Date.now());
+  // Captured once on mount (lazy initializer), same as the previous
+  // useRef(Date.now()).current.
+  const [fallbackAsOfMs] = React.useState<number>(() => Date.now());
   const asOfMs =
     resolveCurrentRatesAsOfMs({
       ratesUpdatedAt,
       rates,
-    }) ?? fallbackAsOfMsRef.current;
+    }) ?? fallbackAsOfMs;
 
   const formatDisplayPrice = useCallback(
     (value?: number) => {

@@ -13,6 +13,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
   InAppNotificationContextType,
+  OnboardingKeyStatus,
 } from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
@@ -225,6 +226,11 @@ export const pinBannedUntil = (
   payload: bannedUntil,
 });
 
+export const pinFailedAttempts = (attempts: number): AppActionType => ({
+  type: AppActionTypes.PIN_FAILED_ATTEMPTS,
+  payload: attempts,
+});
+
 export const currentPin = (pin: string | undefined): AppActionType => ({
   type: AppActionTypes.CURRENT_PIN,
   payload: pin,
@@ -430,6 +436,17 @@ export const showArchaxBanner = (payload: boolean): AppActionType => ({
 export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
   type: AppActionTypes.DISMISS_MARKETING_CONTENT_CARD,
   payload: cardId,
+});
+
+export const setOnboardingKeyStatus = (
+  payload: OnboardingKeyStatus,
+): AppActionType => ({
+  type: AppActionTypes.SET_ONBOARDING_KEY_STATUS,
+  payload,
+});
+
+export const setBackupNudgeShown = (): AppActionType => ({
+  type: AppActionTypes.SET_BACKUP_NUDGE_SHOWN,
 });
 
 export const setShowKycGetVerifiedModal = (

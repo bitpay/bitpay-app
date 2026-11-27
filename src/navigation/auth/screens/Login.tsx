@@ -237,6 +237,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       navigation.navigate('EmailAuthentication', {onLoginSuccess});
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts to loginStatus transitions; passkeyStatus is read at that time and must not re-trigger the post-login navigation
   }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
 
   const onSubmit = handleSubmit(

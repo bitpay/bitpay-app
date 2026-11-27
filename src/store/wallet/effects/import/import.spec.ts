@@ -18,9 +18,11 @@ import {
   startMigrationMMKVStorage,
   startMigration,
   serverAssistedImport,
+  startImportWithDerivationPath,
 } from './import';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
+import {logManager} from '../../../../managers/LogManager';
 
 // ---------------------------------------------------------------------------
 // Mocks – must appear before any imports that trigger module evaluation
@@ -76,21 +78,24 @@ jest.mock('@react-navigation/native', () => {
 });
 
 // BwcProvider – heavy native module
-jest.mock('../../../../lib/bwc', () => ({
-  BwcProvider: {
-    getInstance: jest.fn(() => ({
-      getConstants: jest.fn(() => ({})),
-      createKey: jest.fn(),
-      getClient: jest.fn(),
-      getBitcore: jest.fn(() => ({})),
-      getBitcoreCash: jest.fn(() => ({})),
-      getBitcoreDoge: jest.fn(() => ({})),
-      getBitcoreLtc: jest.fn(() => ({})),
-      getCore: jest.fn(() => ({})),
-    })),
-    API: {serverAssistedImport: jest.fn()},
-  },
-}));
+jest.mock('../../../../lib/bwc', () => {
+  const instance = {
+    getConstants: jest.fn(() => ({})),
+    createKey: jest.fn(),
+    getClient: jest.fn(),
+    getBitcore: jest.fn(() => ({})),
+    getBitcoreCash: jest.fn(() => ({})),
+    getBitcoreDoge: jest.fn(() => ({})),
+    getBitcoreLtc: jest.fn(() => ({})),
+    getCore: jest.fn(() => ({})),
+  };
+  return {
+    BwcProvider: {
+      getInstance: jest.fn(() => instance),
+      API: {serverAssistedImport: jest.fn()},
+    },
+  };
+});
 
 // Status effects (heavy)
 jest.mock('../status/status', () => ({
@@ -433,5 +438,63 @@ describe('serverAssistedImport – progress queue', () => {
     emitter.emit('done', {key: {id: 'k'}, clients: []});
 
     await expect(result).rejects.toThrow('WALLET_DOES_NOT_EXIST');
+  });
+});
+
+describe('startImportWithDerivationPath – logging', () => {
+  const createKey = BwcProvider.getInstance().createKey as jest.Mock;
+  const phrase = 'secret-word '.repeat(12).trim();
+  const passphrase = 'my-bip39-passphrase';
+  const opts = {
+    coin: 'btc',
+    chain: 'btc',
+    networkName: 'livenet',
+    derivationStrategy: 'BIP44',
+    account: 0,
+    n: 1,
+    passphrase,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    createKey.mockImplementation(() => {
+      throw new Error('INVALID_BACKUP');
+    });
+  });
+
+  afterEach(() => {
+    createKey.mockReset();
+  });
+
+  const loggedText = () =>
+    JSON.stringify(
+      Object.values(logManager).flatMap(fn => (fn as jest.Mock).mock.calls),
+    );
+
+  it('logs only the derivation fields for a recovery phrase', async () => {
+    const store = configureTestStore({});
+
+    await expect(
+      store.dispatch(startImportWithDerivationPath({words: phrase}, {...opts})),
+    ).rejects.toThrow('INVALID_BACKUP');
+
+    expect(logManager.info).toHaveBeenCalledWith(
+      'Importing Wallet with derivation path: {"coin":"btc","chain":"btc","networkName":"livenet","derivationStrategy":"BIP44","account":0,"n":1}',
+    );
+    expect(loggedText()).not.toContain(passphrase);
+    expect(loggedText()).not.toContain('secret-word');
+  });
+
+  it('does not log the extended private key', async () => {
+    const xPrivKey =
+      'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi';
+    const store = configureTestStore({});
+
+    await expect(
+      store.dispatch(startImportWithDerivationPath({xPrivKey}, {...opts})),
+    ).rejects.toThrow('INVALID_BACKUP');
+
+    expect(loggedText()).not.toContain(passphrase);
+    expect(loggedText()).not.toContain(xPrivKey.slice(0, 12));
   });
 });

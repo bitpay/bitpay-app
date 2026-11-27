@@ -3,8 +3,74 @@ import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Effect} from '../../..';
 import {logManager} from '../../../../managers/LogManager';
+import {t} from 'i18next';
+import {BASE_BITPAY_URLS} from '../../../../constants/config';
+import {Network} from '../../../../constants';
 
 const BWC = BwcProvider.getInstance();
+
+// BWC only accepts a payment request signed by a trusted key for the request's
+// domain, so a request to any other host can never succeed. Refuse it before
+// contacting the host at all.
+const getTrustedPayProDomains = (): string[] =>
+  Object.values(BWC.getPayProV2().trustedKeys || {}).flatMap(
+    (key: {domains?: string[]}) => key?.domains || [],
+  );
+
+const isRegtestBitPayOrigin = (protocol: string, host: string): boolean => {
+  const base = BASE_BITPAY_URLS[Network.regtest];
+  if (!base) {
+    return false;
+  }
+  try {
+    const url = new URL(base);
+    return url.protocol === protocol && url.hostname.toLowerCase() === host;
+  } catch {
+    return false;
+  }
+};
+
+const getPayProUrlHost = (paymentUrl: string): string | undefined => {
+  // URL parsers disagree on backslashes, whitespace and control characters (the
+  // RN polyfill reads 'https://bitpay.com\@evil.com' as bitpay.com, BWC's url
+  // module as evil.com), so refuse them outright, along with userinfo.
+  if (
+    typeof paymentUrl !== 'string' ||
+    // eslint-disable-next-line no-control-regex
+    /[\\\s\u0000-\u001f\u007f]/.test(paymentUrl)
+  ) {
+    return undefined;
+  }
+  try {
+    const {protocol, username, password, hostname} = new URL(paymentUrl);
+    const host = hostname.toLowerCase();
+    if (username || password) {
+      return undefined;
+    }
+    // A local regtest BitPay (REGTEST_BASE_BITPAY_URL) may be served over http
+    if (protocol !== 'https:' && !isRegtestBitPayOrigin(protocol, host)) {
+      return undefined;
+    }
+    return host;
+  } catch {
+    return undefined;
+  }
+};
+
+const assertTrustedPayProUrl = (paymentUrl: string): void => {
+  const host = getPayProUrlHost(paymentUrl);
+  if (!host || !getTrustedPayProDomains().includes(host)) {
+    logManager.warn(
+      `PayPro: refused request to untrusted host: ${host || 'invalid URL'}`,
+    );
+    throw new Error(
+      t(
+        'This payment request does not come from BitPay and was blocked for your protection.',
+      ),
+    );
+  }
+};
+
 export interface PayProPaymentOption {
   chain: string;
   currency: string;
@@ -33,6 +99,7 @@ export interface SupportedTransactionCurrencies {
 export const GetPayProOptions =
   (paymentUrl: string, attempt: number = 1): Effect<Promise<PayProOptions>> =>
   async (dispatch): Promise<PayProOptions> => {
+    assertTrustedPayProUrl(paymentUrl);
     logManager.info('PayPro Options: try... ' + attempt);
     const bwc = BWC.getPayProV2();
     const options: any = {
@@ -67,6 +134,7 @@ export const GetPayProDetails =
   }): Effect<Promise<any>> =>
   async (dispatch): Promise<any> => {
     let {paymentUrl, coin, chain, payload, attempt = 1} = params;
+    assertTrustedPayProUrl(paymentUrl);
     logManager.info('PayPro Details: try... ' + attempt);
     const bwc = BWC.getPayProV2();
     const options: any = {

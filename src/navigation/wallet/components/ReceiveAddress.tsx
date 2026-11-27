@@ -292,6 +292,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   const shouldInit = isVisible && !wasInit ? init : null;
   useEffect(() => {
     if (shouldInit) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot guard set alongside kicking off async address creation
       setWasInit(true);
       shouldInit();
     }

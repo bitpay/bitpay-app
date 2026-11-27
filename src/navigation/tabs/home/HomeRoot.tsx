@@ -1,4 +1,5 @@
 import {useIsFocused, useScrollToTop, useTheme} from '@react-navigation/native';
+import {markOnce as perfMarkOnce} from '../../../perf/PerfMonitor';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
@@ -71,6 +72,11 @@ import {
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../constants/wallet';
 import SecurePasskeyBannerGate from './components/SecurePasskeyBannerGate';
 import KycBannerGate from './components/KycBannerGate';
+import BackupBannerGate from './components/BackupBannerGate';
+import {
+  isOnboardingKeyPending,
+  showOnboardingKeyPendingToast,
+} from '../../../store/app/onboardingKey.effects';
 import DefaultMarketingCards from './components/DefaultMarketingCards';
 import AllocationSection from './components/AllocationSection';
 import AssetsSection from './components/AssetsSection';
@@ -93,7 +99,11 @@ import {logReactProfiler} from '../../../utils/reactPerformanceProfiler';
 import PerformanceProfiler from '../../../components/performance/PerformanceProfiler';
 import {scheduleAfterTransitionAndIdle} from '../../../utils/scheduleAfterInteractionsAndFrames';
 import {performanceLog} from '../../../utils/performanceDebug';
+import {useStartupSettled} from '../../../utils/startupSignals';
 import {isHiddenByTestnetMode} from '../../../store/wallet/utils/testnet';
+
+/** After startup settles, before the Receive preload may run. */
+const HOME_FLOW_PRELOAD_STARTUP_DELAY_MS = 2000;
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -444,6 +454,8 @@ const HomeExchangeRatesSection = React.memo(
 );
 
 const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
+  perfMarkOnce('bp_home_render');
+  useEffect(() => perfMarkOnce('bp_home_commit'), []);
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
@@ -465,9 +477,15 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const canStartKyc = useAppSelector(SumSubSelectors.selectCanStartKyc);
+  const kycModalDismissed = useAppSelector(
+    SumSubSelectors.selectGetVerifiedDismissed,
+  );
   const showPinModal = useAppSelector(({APP}) => APP.showPinModal);
   const showBiometricModal = useAppSelector(({APP}) => APP.showBiometricModal);
   const appLocked = showPinModal || showBiometricModal;
+  const onboardingKeyPending = useAppSelector(({APP}) =>
+    isOnboardingKeyPending(APP.onboardingKeyStatus),
+  );
   const kycModalShown = useAppSelector(({APP}) => APP.kycGetVerifiedModalShown);
   const quoteCurrency = getQuoteCurrency({
     portfolioQuoteCurrency,
@@ -538,14 +556,27 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
   // Get Verified modal
   useEffect(() => {
-    if (canStartKyc && isHomeFocused && !appLocked && !kycModalShown) {
+    if (
+      canStartKyc &&
+      !kycModalDismissed &&
+      isHomeFocused &&
+      !appLocked &&
+      !kycModalShown
+    ) {
       const timer = setTimeout(
         () => dispatch(setShowKycGetVerifiedModal(true)),
         1000,
       );
       return () => clearTimeout(timer);
     }
-  }, [dispatch, canStartKyc, isHomeFocused, appLocked, kycModalShown]);
+  }, [
+    dispatch,
+    canStartKyc,
+    kycModalDismissed,
+    isHomeFocused,
+    appLocked,
+    kycModalShown,
+  ]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
@@ -661,6 +692,12 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
       _preloadContent: true,
     });
   }, [canPreloadReceive, navigation]);
+  // Preloading Receive renders the wallet picker (a list of wallets with
+  // their icons) on the UI thread. On a cold start it fired during the first
+  // look at Home; hold it until startup has settled.
+  const startupSettledForPreload = useStartupSettled(
+    HOME_FLOW_PRELOAD_STARTUP_DELAY_MS,
+  );
   const wasHomeFocusedRef = useRef(false);
 
   useEffect(() => {
@@ -679,7 +716,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   }, []);
 
   useEffect(() => {
-    if (!isHomeFocused || appIsLoading) {
+    if (!isHomeFocused || appIsLoading || !startupSettledForPreload) {
       return;
     }
 
@@ -701,11 +738,21 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         homeFlowPreloadTaskRef.current = undefined;
       }
     };
-  }, [appIsLoading, isHomeFocused, navigation, preloadReceiveFlow]);
+  }, [
+    appIsLoading,
+    isHomeFocused,
+    navigation,
+    preloadReceiveFlow,
+    startupSettledForPreload,
+  ]);
 
   const receiveLinkingButton = useMemo(
     () => ({
       cta: () => {
+        if (onboardingKeyPending) {
+          showOnboardingKeyPendingToast();
+          return;
+        }
         cancelHomeFlowPreloads();
         dispatch(
           Analytics.track('Clicked Receive Crypto', {
@@ -715,11 +762,15 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(receiveCrypto(navigation, 'HomeRoot'));
       },
     }),
-    [cancelHomeFlowPreloads, dispatch, navigation],
+    [cancelHomeFlowPreloads, dispatch, navigation, onboardingKeyPending],
   );
   const sendLinkingButton = useMemo(
     () => ({
       cta: () => {
+        if (onboardingKeyPending) {
+          showOnboardingKeyPendingToast();
+          return;
+        }
         cancelHomeFlowPreloads();
         dispatch(
           Analytics.track('Clicked Send Crypto', {
@@ -729,7 +780,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(sendCrypto('HomeRoot'));
       },
     }),
-    [cancelHomeFlowPreloads, dispatch],
+    [cancelHomeFlowPreloads, dispatch, onboardingKeyPending],
   );
 
   return (
@@ -746,6 +797,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           <View onLayout={onHomeViewportLayout} style={styles.viewport}>
             <ScrollView
               ref={scrollViewRef}
+              testID="home-scroll-view"
               onScroll={onHomeScroll}
               scrollEventThrottle={32}
               // Prevent iOS from injecting automatic top insets which creates a gap
@@ -770,8 +822,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                 </PerformanceProfiler>
               </HomeSection>
 
-              {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-              {hasKeys ? (
+              {hasKeys || onboardingKeyPending ? (
                 <HomeSection style={{marginBottom: 25}}>
                   <PerformanceProfiler
                     id="Home:linking-buttons"
@@ -783,6 +834,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                   </PerformanceProfiler>
                 </HomeSection>
               ) : null}
+
+              <BackupBannerGate active={isHomeFocused && !appLocked} />
 
               {/* ////////////////////////////// MARKETING */}
               <PerformanceProfiler

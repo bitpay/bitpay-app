@@ -11,7 +11,7 @@ import {
   InfoTitle,
   TextAlign,
 } from '../../../components/styled/Text';
-import {NeutralSlate, SlateDark} from '../../../styles/colors';
+import {NeutralSlate, SlateDark, Placeholder} from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import AddConnection from '../../../components/add/Add';
 import {HeaderTitle} from '../styled/WalletConnectText';
@@ -141,7 +141,7 @@ const WalletConnectConnections = () => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const [searchVal, setSearchVal] = useState('');
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes('walletconnect')
@@ -174,7 +174,8 @@ const WalletConnectConnections = () => {
       );
       navigation.setParams({showSuccessPopup: undefined});
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to show the success popup passed via route params
+  }, [dispatch, navigation, t]);
 
   const ConnectionItem = ({
     peerName,
@@ -245,10 +246,14 @@ const WalletConnectConnections = () => {
     [dispatch],
   );
 
-  const SessionList = ({sessions}: {sessions: WCV2SessionType[]}) => {
+  const SessionList = ({
+    sessions: sessionList,
+  }: {
+    sessions: WCV2SessionType[];
+  }) => {
     return (
       <>
-        {sessions.map((session, index) => {
+        {sessionList.map((session, index) => {
           const {peer} = session;
           const sessionsAddresses = getSessionAddresses(session);
           return (
@@ -341,6 +346,7 @@ const WalletConnectConnections = () => {
 
   useEffect(() => {
     _setAllKeysAndSelectedWallets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to build the connected accounts list
   }, []);
 
   const disconnectAccount = async (session: WCV2SessionType) => {

@@ -126,6 +126,7 @@ export function usePortfolioRuntimeQuery<T>(args: {
   useEffect(() => {
     return () => {
       unmountedRef.current = true;
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref holds one Set that is never reassigned (only mutated), so clearing .current on unmount targets the intended Set
       inFlightExecutionIdsRef.current.clear();
     };
   }, []);

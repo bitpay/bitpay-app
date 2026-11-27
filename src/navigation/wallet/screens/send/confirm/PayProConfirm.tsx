@@ -91,6 +91,12 @@ export interface PayProConfirmParamList {
 }
 
 const PayProConfirm = () => {
+  // React Compiler opt-out: the hardware-wallet flow relies on render-time
+  // latest-value refs (transportRef / disconnectFnRef, read mid-await while a
+  // transport may be swapped) and on onDisconnect re-attaching itself as a
+  // stable listener. Rewriting that to satisfy the compiler would change
+  // transport/disconnect timing, so keep the existing semantics.
+  'use no memo';
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -192,6 +198,7 @@ const PayProConfirm = () => {
         address: string;
       });
       if (fee) {
+        // eslint-disable-next-line react-hooks/immutability -- checkHighFees is declared later but only called after an await, when it already exists
         checkHighFees(selectedWallet, newTxp, fee);
       }
       dispatch(
@@ -223,7 +230,9 @@ const PayProConfirm = () => {
     useCallback(() => {
       wallet
         ? createTxp(wallet)
-        : setTimeout(() => openKeyWalletSelector(), 500);
+        : // eslint-disable-next-line react-hooks/immutability -- openKeyWalletSelector is declared below but only called from a timeout, when it already exists
+          setTimeout(() => openKeyWalletSelector(), 500);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- runs on each focus with the initial wallet; adding wallet/createTxp would rebuild the txp whenever createTxp updates the wallet
     }, []),
   );
 
@@ -356,17 +365,24 @@ const PayProConfirm = () => {
     );
   };
 
-  const checkHighFees = async (wallet: Wallet, txp: any, fee: TxDetailsFee) => {
-    const {feeUnitAmount} = GetFeeUnits(wallet.chain);
+  const checkHighFees = async (
+    txWallet: Wallet,
+    proposal: any,
+    txFee: TxDetailsFee,
+  ) => {
+    const {feeUnitAmount} = GetFeeUnits(txWallet.chain);
     let feePerKb: number;
-    if (txp.feePerKb) {
-      feePerKb = txp.feePerKb;
+    if (proposal.feePerKb) {
+      feePerKb = proposal.feePerKb;
     } else {
-      feePerKb = await getFeeRatePerKb({wallet, feeLevel: fee.feeLevel});
+      feePerKb = await getFeeRatePerKb({
+        wallet: txWallet,
+        feeLevel: txFee.feeLevel,
+      });
     }
     setShowHighFeeWarningMessage(
-      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[wallet.chain] &&
-        Number(txp.amount) !== 0,
+      feePerKb / feeUnitAmount >= HIGH_FEE_LIMIT[txWallet.chain] &&
+        Number(proposal.amount) !== 0,
     );
   };
 

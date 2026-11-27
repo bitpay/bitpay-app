@@ -136,6 +136,7 @@ const LayoutSelector = memo(
 );
 LayoutSelector.displayName = 'LayoutSelector';
 
+// eslint-disable-next-line @typescript-eslint/no-shadow -- named function expression gives the memoized component its display name
 const VisibleRow = memo(function VisibleRow({
   item,
   onToggle,

@@ -178,6 +178,18 @@ const ScanRoot = () => {
 
   const cameraDevice = useCameraDevice('back');
 
+  // The camera module is created lazily (see the vision-camera patch), so on
+  // the first Scan open useCameraDevice('back') is briefly null while the
+  // device list enumerates. Show a spinner during that initial window rather
+  // than the "no camera" error; once enumeration settles, a still-null device
+  // is treated as genuinely absent. (If the device appears after the window,
+  // the camera renders anyway — cameraDevice is then non-null.)
+  const [enumerationSettled, setEnumerationSettled] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setEnumerationSettled(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     debug(`Camera permission status: ${hasPermission}`);
   }, [hasPermission, debug]);
@@ -203,6 +215,9 @@ const ScanRoot = () => {
   }, [hasPermission, requestPermission, debug]);
 
   if (cameraDevice == null) {
+    if (!enumerationSettled) {
+      return <ActivityIndicator size="large" color="#1C6758" />;
+    }
     return <NoCameraDeviceError />;
   }
   if (cameraDevice && !hasPermission) {

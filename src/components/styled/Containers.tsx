@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   importTextInput: {
     minHeight: 80,
     borderWidth: 0.75,
-    borderColor: Slate,
+    borderColor: LuckySevens,
     borderTopRightRadius: 4,
     borderTopLeftRadius: 4,
     textAlignVertical: 'top',
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#9ba3ae',
+    borderColor: LuckySevens,
     alignItems: 'center',
     borderTopRightRadius: 4,
     borderTopLeftRadius: 4,
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   copyToClipboardContainer: {
     borderWidth: 1,
-    borderColor: '#9ba3ae',
+    borderColor: LuckySevens,
     borderRadius: 4,
     paddingVertical: 8,
     paddingHorizontal: 10,
@@ -1065,15 +1065,10 @@ export const SearchRoundContainer = React.forwardRef<
   View,
   React.ComponentProps<typeof View>
 >(({style, ...rest}, ref) => {
-  const theme = useTheme();
   return (
     <View
       ref={ref}
-      style={[
-        styles.searchRoundContainer,
-        {borderColor: theme.dark ? SlateDark : Slate30},
-        style,
-      ]}
+      style={[styles.searchRoundContainer, {borderColor: LuckySevens}, style]}
       {...rest}
     />
   );

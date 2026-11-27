@@ -16,6 +16,7 @@ import {
   Success25,
   Success50,
   White,
+  Caution,
 } from '../styles/colors';
 import {SellTxIcon, SellTxIconBadge} from '../components/styled/Containers';
 export const TRANSACTION_ICON_SIZE = 40;
@@ -374,7 +375,7 @@ export const TransactionIcons: {[index in string]: ReactElement} = {
     <SellTxIcon width={TRANSACTION_ICON_SIZE} height={TRANSACTION_ICON_SIZE}>
       <TxSellIcon size={TRANSACTION_ICON_SIZE} />
       <SellTxIconBadge>
-        <TxSentIcon size={14} backgroundColor={'#FF647C'} mainColor={White} />
+        <TxSentIcon size={14} backgroundColor={Caution} mainColor={White} />
       </SellTxIconBadge>
     </SellTxIcon>
   ),

@@ -67,7 +67,7 @@ export const runPostUnlockStartupWork = async ({
   runAddressFix,
   runCompleteEvmWalletsAccountFix,
   runCompleteSvmWalletsAccountFix,
-  runPortfolioPopulateOnAppLaunch,
+  runPortfolioPopulateOnAppLaunch: runPortfolioPopulate,
   runSvmAddressCreationFix,
   sleep,
   svmAddressFixComplete,
@@ -87,5 +87,5 @@ export const runPostUnlockStartupWork = async ({
     await runSvmAddressCreationFix();
   }
   void urlHandler();
-  runPortfolioPopulateOnAppLaunch();
+  runPortfolioPopulate();
 };

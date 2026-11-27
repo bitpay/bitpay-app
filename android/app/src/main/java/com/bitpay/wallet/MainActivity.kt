@@ -34,7 +34,10 @@ class MainActivity : ReactActivity() {
         // Integrity check must run before React Native initialises.
         // super.onCreate is called first in the failure path so the activity window token
         // is valid when AlertDialog.Builder tries to attach the dialog.
-        if (!BundleIntegrityVerifier.verify(this)) {
+        PerfMarks.mark("bp_native_activity_create_start")
+        val bundleVerified = BundleIntegrityVerifier.verify(this)
+        PerfMarks.mark("bp_native_integrity_checked")
+        if (!bundleVerified) {
             super.onCreate(savedInstanceState)
             BundleIntegrityVerifier.showTamperedAlert(this)
             return
@@ -45,30 +48,16 @@ class MainActivity : ReactActivity() {
         supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
         super.onCreate(savedInstanceState)
         (application as MainApplication).addActivityToStack(this.javaClass)
+        PerfMarks.mark("bp_native_activity_create_end")
 
-        window.apply {
-            if (!BuildConfig.DEBUG) {
-                // Disable screenshots/screen recording only in production.
-                // Allow automation tools (Espresso/Appium/Layout Inspector)
-                // to capture screenshots in debug builds.
+        // Perf builds leave screen capture on so the UI-parity harness can take
+        // screenshots. PERF_BUILD is false in every production build.
+        if (!BuildConfig.PERF_BUILD) {
+            window.apply {
                 setFlags(
-                        WindowManager.LayoutParams.FLAG_SECURE,
-                        WindowManager.LayoutParams.FLAG_SECURE
+                    WindowManager.LayoutParams.FLAG_SECURE,
+                    WindowManager.LayoutParams.FLAG_SECURE
                 )
-            }
-
-            if (Build.VERSION.SDK_INT in 19..20) {
-                setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true)
-            }
-
-            if (Build.VERSION.SDK_INT >= 19) {
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            }
-
-            // make fully Android Transparent Status bar
-            if (Build.VERSION.SDK_INT >= 21) {
-                setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false)
-                statusBarColor = Color.TRANSPARENT
             }
         }
     }

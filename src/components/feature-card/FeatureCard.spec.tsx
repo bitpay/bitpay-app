@@ -3,6 +3,7 @@ import {fireEvent, render} from '@test/render';
 import FeatureCard from './FeatureCard';
 
 jest.mock('react-native-linear-gradient', () => {
+  // eslint-disable-next-line @typescript-eslint/no-shadow -- jest.mock factories cannot reference the outer import; the JSX below needs React in scope
   const React = require('react');
   const {View} = require('react-native');
   return ({children, ...rest}: any) => <View {...rest}>{children}</View>;

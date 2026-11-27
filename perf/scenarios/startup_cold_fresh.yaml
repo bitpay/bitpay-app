@@ -1,0 +1,16 @@
+appId: com.bitpay.wallet
+---
+# Cold start on a FRESH INSTALL — the new-user first-launch experience.
+#
+# Unlike the other startup flows this asserts the onboarding screen rather than
+# the wallet home, so it runs on a device that has never been logged in. It is
+# also the only startup scenario that is meaningful immediately after
+# `pm clear` / a first install.
+#
+# As with the other startup flows: intentionally no `launchApp` — the harness
+# launches via the real LAUNCHER intent so it can read the framework's timing.
+
+- extendedWaitUntil:
+    visible:
+      id: 'onboarding-start-view'
+    timeout: 120000

@@ -144,7 +144,10 @@ export type WalletGroupParamList = {
   Import: ImportParamList;
   CreateEncryptPassword: {keyId: string};
   ExtendedPrivateKey: {xPrivKey: string};
-  DeleteKey: {keyId: string};
+  DeleteKey: {
+    keyId: string;
+    confirmed?: boolean;
+  };
   KeyInformation: undefined;
   ExportKey: {code: string; keyName: string | undefined};
   WalletAmountScreen: AmountScreenParamList;
@@ -498,6 +501,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         component={TransactionProposalDetails}
       />
       <Wallet.Screen
+        options={{gestureEnabled: false}}
         name={WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS}
         component={TransactionProposalNotifications}
       />

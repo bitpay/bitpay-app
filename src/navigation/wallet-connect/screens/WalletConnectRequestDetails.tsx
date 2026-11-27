@@ -125,7 +125,7 @@ const InfoSubTitle = ({children}: {children: React.ReactNode}) => (
 const WalletConnectRequestDetails = () => {
   const {t} = useTranslation();
   const {
-    params: {request: _request, wallet, peerName, topic},
+    params: {request: _request, wallet, peerName},
   } = useRoute<RouteProp<{params: WalletConnectRequestDetailsParamList}>>();
   const dispatch = useAppDispatch();
   const [address, setAddress] = useState('');
@@ -316,8 +316,8 @@ const WalletConnectRequestDetails = () => {
     return <View>{renderObject(messageObj)}</View>;
   };
 
-  const renderMessage = (message: any) => {
-    const view = getMessageView(message, request.method);
+  const renderMessage = (messageToRender: any) => {
+    const view = getMessageView(messageToRender, request.method);
 
     if (view.kind === 'fields') {
       return parseAndDisplayMessage(view.value);

@@ -199,6 +199,7 @@ const SardineDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getOrderDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest order details; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

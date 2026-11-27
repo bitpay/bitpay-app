@@ -201,6 +201,11 @@ const countSuccessAndFailed = (arrayData: (TransactionProposal | Error)[]) => {
 };
 
 const TransactionProposalNotifications = () => {
+  // React Compiler opt-out: the TSSProgressTracker `date` prop falls back to
+  // `Date.now()` and is a fresh Date on every render (TimeAgo re-subscribes on
+  // each new Date). Memoizing it would freeze that fallback timestamp and the
+  // Date identity. (The compiler currently also bails here on try/finally.)
+  'use no memo';
   const {
     params: {walletId, keyId},
   } =
@@ -567,6 +572,7 @@ const TransactionProposalNotifications = () => {
             new Date(
               (txpsToSign[0]?.createdOn ??
                 txpsToSign[0]?.time ??
+                // eslint-disable-next-line react-hooks/purity -- see 'use no memo' above
                 Date.now() / 1000) * 1000,
             )
           }

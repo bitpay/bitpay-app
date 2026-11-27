@@ -14,13 +14,7 @@ import {
   downsampleTimestamps,
   trimTimestamps,
 } from './rate';
-import type {
-  RatePoint,
-  RatesByCoin,
-  AlignedRatesByCoin,
-  FiatRateTimeframeConfig,
-  FiatRateChangeForTimeframe,
-} from './rate';
+import type {RatePoint, AlignedRatesByCoin} from './rate';
 import type {
   FiatRateSeriesCache,
   FiatRateInterval,

@@ -21,7 +21,71 @@ export type PortfolioSnapshotBalanceMismatch = {
   computedUnitsHeld: string;
   currentWalletBalance: string;
   delta: string;
+  /**
+   * Set when this mismatch survived a completed populate: the history was
+   * rebuilt and still could not reproduce the live balance (interest-bearing
+   * / rebasing tokens such as Aave aTokens). Absent on records from before
+   * this field existed, which keeps the previous behaviour.
+   */
+  verifiedAfterPopulateAt?: number;
+  /** The snapshot index checkpoint (nextSkip) at that populate. */
+  verifiedCheckpointNextSkip?: number | null;
+  /**
+   * The delta that populate left behind. Drift skips record each newer
+   * delta in `deltaAtomic`, so this is what "unchanged" is measured against
+   * once the drift throttle stops applying.
+   */
+  verifiedDeltaAtomic?: string;
 };
+
+/**
+ * How long a mismatch that a completed populate could not resolve is left
+ * alone while only the live balance drifts. Without it, a rebasing token's
+ * interest changed the delta on most launches and each change repopulated —
+ * a rebuild that cannot succeed (~4 s of JS CPU in ~1 in 5 launches on a test
+ * wallet holding Aave aUSDC).
+ *
+ * Trade-off: on such a wallet a genuine new transfer looks the same as drift
+ * (the computed balance and checkpoint only move after a populate), so its
+ * history and chart can lag by up to this interval. The live balance is
+ * unaffected, and any user refresh (forceRetryQuarantined) repopulates at
+ * once.
+ */
+export const PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS = 60 * 60 * 1000;
+
+/**
+ * The most the live balance may move between populates and still count as
+ * interest drift rather than a real transfer, as a fraction of the computed
+ * balance (numerator over PORTFOLIO_DRIFT_TOLERANCE_BASIS, so the check stays
+ * in integer BigInt math). An hour of rebasing interest is well under 0.1% of
+ * the balance even at an extreme APY, so 0.1% covers any realistic rebasing
+ * rate; a genuine transfer is almost always a larger share of the balance, so
+ * it clears the bound and defeats the throttle. Without this bound the throttle
+ * only looked at the computed balance and checkpoint — which a populate leaves
+ * untouched — so an incoming transfer looked identical to drift and its history
+ * could lag the whole recheck interval.
+ */
+export const PORTFOLIO_DRIFT_TOLERANCE_NUMERATOR = 1n;
+export const PORTFOLIO_DRIFT_TOLERANCE_BASIS = 1000n; // 0.1% of the balance
+
+const checkpointNextSkip = (
+  index: SnapshotIndexV2 | null | undefined,
+): number | null => {
+  const nextSkip = index?.checkpoint?.nextSkip;
+  return typeof nextSkip === 'number' ? nextSkip : null;
+};
+
+/** Mark a mismatch as one a just-completed populate could not resolve. */
+export const stampMismatchVerifiedAfterPopulate = (
+  mismatch: PortfolioSnapshotBalanceMismatch,
+  index: SnapshotIndexV2 | null | undefined,
+  at: number,
+): PortfolioSnapshotBalanceMismatch => ({
+  ...mismatch,
+  verifiedAfterPopulateAt: at,
+  verifiedCheckpointNextSkip: checkpointNextSkip(index),
+  verifiedDeltaAtomic: mismatch.deltaAtomic,
+});
 
 export type PortfolioPopulateDecisionReason =
   | 'missing_index'
@@ -30,6 +94,7 @@ export type PortfolioPopulateDecisionReason =
   | 'invalid_snapshot_balance'
   | 'balance_mismatch'
   | 'unchanged_balance_mismatch'
+  | 'drift_within_recheck_interval'
   | 'excessive_balance_mismatch'
   | 'zero_balance_token_missing_index'
   | 'invalid_decimals'
@@ -347,15 +412,96 @@ const buildBalanceMismatchDecision = (args: {
   mismatch: PortfolioSnapshotBalanceMismatch;
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
   extras: Partial<PortfolioPopulateDecision>;
-}): PortfolioPopulateDecision =>
-  buildPortfolioPopulateDecision(
+  nowMs: number;
+  /** A user refresh: skip the drift throttle (not the unchanged-delta rule). */
+  bypassDriftThrottle?: boolean;
+}): PortfolioPopulateDecision => {
+  const previous = args.previousMismatch;
+  const carryVerified = (): PortfolioSnapshotBalanceMismatch =>
+    previous?.verifiedAfterPopulateAt !== undefined
+      ? {
+          ...args.mismatch,
+          verifiedAfterPopulateAt: previous.verifiedAfterPopulateAt,
+          verifiedCheckpointNextSkip: previous.verifiedCheckpointNextSkip,
+          verifiedDeltaAtomic: previous.verifiedDeltaAtomic,
+        }
+      : args.mismatch;
+
+  // A drift skip overwrites deltaAtomic with the newer delta, so for a
+  // verified mismatch compare against the delta the populate left behind.
+  // Otherwise the skipped delta reads as unchanged and blocks the repopulate
+  // that the recheck interval or a user refresh is meant to allow. A verified
+  // record without verifiedDeltaAtomic has no trustworthy anchor, so neither
+  // throttle applies to it and it repopulates once (until it is re-stamped).
+  const lastPopulatedDeltaAtomic =
+    previous?.verifiedAfterPopulateAt !== undefined
+      ? previous.verifiedDeltaAtomic
+      : previous?.deltaAtomic;
+
+  // The throttle only holds while the live balance is still drifting by
+  // interest: a change larger than a small fraction of the balance since the
+  // verified populate is a real transfer, which a repopulate *can* incorporate,
+  // so it must defeat the throttle. Requires the verified delta as an anchor.
+  const driftWithinBound = ((): boolean => {
+    if (previous?.verifiedDeltaAtomic === undefined) {
+      return false;
+    }
+    try {
+      const balance = absBigInt(BigInt(args.mismatch.computedAtomic));
+      const bound =
+        (balance * PORTFOLIO_DRIFT_TOLERANCE_NUMERATOR) /
+        PORTFOLIO_DRIFT_TOLERANCE_BASIS;
+      const change = absBigInt(
+        BigInt(args.mismatch.deltaAtomic) -
+          BigInt(previous.verifiedDeltaAtomic),
+      );
+      return change <= bound;
+    } catch {
+      return false;
+    }
+  })();
+
+  // A completed populate already failed to reproduce this balance, the history
+  // is unchanged since, and the live balance has only drifted within the
+  // interest bound: a repopulate cannot help until the recheck interval passes.
+  const driftOnlyAfterVerifiedPopulate =
+    args.bypassDriftThrottle !== true &&
+    previous?.verifiedAfterPopulateAt !== undefined &&
+    previous.computedAtomic === args.mismatch.computedAtomic &&
+    (previous.verifiedCheckpointNextSkip ?? null) ===
+      checkpointNextSkip(args.extras.index) &&
+    args.nowMs - previous.verifiedAfterPopulateAt <
+      PORTFOLIO_DRIFT_RECHECK_INTERVAL_MS &&
+    driftWithinBound;
+
+  if (driftOnlyAfterVerifiedPopulate) {
+    return buildPortfolioPopulateDecision(
+      args.walletId,
+      false,
+      'drift_within_recheck_interval',
+      {...args.extras, mismatch: carryVerified()},
+    );
+  }
+
+  if (
+    lastPopulatedDeltaAtomic !== undefined &&
+    lastPopulatedDeltaAtomic === args.mismatch.deltaAtomic
+  ) {
+    return buildPortfolioPopulateDecision(
+      args.walletId,
+      false,
+      'unchanged_balance_mismatch',
+      {...args.extras, mismatch: carryVerified()},
+    );
+  }
+
+  return buildPortfolioPopulateDecision(
     args.walletId,
-    args.previousMismatch?.deltaAtomic !== args.mismatch.deltaAtomic,
-    args.previousMismatch?.deltaAtomic === args.mismatch.deltaAtomic
-      ? 'unchanged_balance_mismatch'
-      : 'balance_mismatch',
+    true,
+    'balance_mismatch',
     {...args.extras, mismatch: args.mismatch},
   );
+};
 
 function normalizeUnitDecimalsResolution(
   value: PortfolioUnitDecimalsResolution | number | undefined,
@@ -392,6 +538,7 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
   previousMismatch?: PortfolioSnapshotBalanceMismatch;
   forceRetryQuarantined?: boolean;
   zeroBalanceTokenMissingIndexErrorMessage?: string;
+  nowMs?: number;
 }): Promise<PortfolioPopulateDecision> {
   const walletId = String(args.wallet?.id || '').trim();
   const invalidHistory = await args.client.getInvalidHistory({walletId});
@@ -453,6 +600,8 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
         mismatch,
         previousMismatch: args.previousMismatch,
         extras: {index},
+        nowMs: args.nowMs ?? Date.now(),
+        bypassDriftThrottle: args.forceRetryQuarantined === true,
       });
     }
 
@@ -498,6 +647,8 @@ export async function getPortfolioPopulateDecisionForWallet(args: {
       mismatch,
       previousMismatch: args.previousMismatch,
       extras: snapshotDecisionExtras,
+      nowMs: args.nowMs ?? Date.now(),
+      bypassDriftThrottle: args.forceRetryQuarantined === true,
     });
   }
 
@@ -579,6 +730,7 @@ export async function getPortfolioPopulateDecisionsForWallets(args: {
         forceRetryQuarantined: args.forceRetryQuarantined,
         zeroBalanceTokenMissingIndexErrorMessage:
           args.zeroBalanceTokenMissingIndexErrorByWalletId?.[walletId],
+        nowMs,
       });
     if (quarantine?.reason === 'zero_balance_token_missing_index') {
       const liveAtomic = getWalletLiveAtomicBalance({

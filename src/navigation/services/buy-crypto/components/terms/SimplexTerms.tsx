@@ -22,10 +22,10 @@ const SimplexTerms: React.FC<{
       <ExchangeTermsText>
         {t('What service fees am I paying?')}
       </ExchangeTermsText>
-      {paymentMethod?.method == 'sepaBankTransfer' ? (
+      {paymentMethod?.method === 'sepaBankTransfer' ? (
         <ExchangeTermsText>{t('1.5% of the amount.')}</ExchangeTermsText>
       ) : null}
-      {paymentMethod?.method != 'sepaBankTransfer' ? (
+      {paymentMethod?.method !== 'sepaBankTransfer' ? (
         <>
           <ExchangeTermsText>
             {t(

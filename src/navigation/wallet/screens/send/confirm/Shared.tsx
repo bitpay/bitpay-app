@@ -667,6 +667,7 @@ export const WalletSelector = ({
         dispatch(showNoWalletsModal({navigation}));
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- memoized without keys, as before; keys are read when walletsAndAccounts or the callbacks change
     [dispatch, navigation, onWalletSelect, selectOption, walletsAndAccounts],
   );
 
@@ -687,9 +688,17 @@ export const WalletSelector = ({
     isVisible
       ? !hasWallets(walletsAndAccounts)
         ? dispatch(showNoWalletsModal({navigation}))
-        : showSelector(autoSelectSingleWallet)
+        : // eslint-disable-next-line react-hooks/set-state-in-effect -- the selector is opened imperatively when the isVisible prop flips (it may also auto-select and close)
+          showSelector(autoSelectSingleWallet)
       : setSelectorVisible(false);
-  }, [isVisible, walletsAndAccounts, autoSelectSingleWallet]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when visibility, the wallet list or the auto-select flag change; showSelector is read at that time
+  }, [
+    isVisible,
+    walletsAndAccounts,
+    autoSelectSingleWallet,
+    dispatch,
+    navigation,
+  ]);
 
   return (
     <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>

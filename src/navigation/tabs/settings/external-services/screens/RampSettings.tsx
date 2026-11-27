@@ -120,7 +120,7 @@ const RampSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
-    [paymentRequests],
+    [paymentRequests, navigation, t],
   );
 
   const memoizedSellCryptoHistory = useCallback(
@@ -192,7 +192,7 @@ const RampSettings: React.FC = () => {
         </ExternalServiceContainer>
       </SettingsComponent>
     ),
-    [sellOrders],
+    [sellOrders, navigation, t],
   );
 
   useEffect(() => {
@@ -207,6 +207,7 @@ const RampSettings: React.FC = () => {
         `Coming from sell order: rampExternalId: ${incomingPaymentRequest.rampExternalId}`,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs the incoming payment request once on mount
   }, []);
 
   useEffect(() => {
@@ -221,6 +222,7 @@ const RampSettings: React.FC = () => {
       );
       setSellOrders(rampSellOrders);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads the history list only when the screen gains focus
   }, [isFocused]);
 
   return (

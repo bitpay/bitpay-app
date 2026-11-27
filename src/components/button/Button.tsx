@@ -26,6 +26,7 @@ import {
   SlateDark,
   Success,
   White,
+  Caution70,
 } from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {ActiveOpacity} from '../styled/Containers';
@@ -273,7 +274,7 @@ const getButtonTextColor = ({
         ? Caution50
         : Caution60
       : theme.dark
-      ? Caution60
+      ? Caution70
       : White;
   }
   return White;
@@ -341,14 +342,16 @@ const StatefulButtonContent: React.FC<
     }
 
     previousHiddenRef.current = hidden;
-    childOpacity.value = withDelay(
-      hidden ? 0 : DURATION,
-      withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+    childOpacity.set(
+      withDelay(
+        hidden ? 0 : DURATION,
+        withTiming(hidden ? 0 : 1, {duration: 0, easing: Easing.linear}),
+      ),
     );
   }, [childOpacity, hidden]);
 
   const childrenStyle = useAnimatedStyle(() => ({
-    opacity: childOpacity.value,
+    opacity: childOpacity.get(),
   }));
 
   return <Animated.View style={childrenStyle}>{children}</Animated.View>;
@@ -458,7 +461,7 @@ const getPillTextColor = ({
         ? Caution50
         : Caution60
       : theme.dark
-      ? Caution60
+      ? Caution70
       : White;
   }
   return theme?.dark ? White : Action;

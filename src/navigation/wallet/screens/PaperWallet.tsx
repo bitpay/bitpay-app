@@ -261,7 +261,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   >([]);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const {scannedPrivateKey} = route.params;
-  const isPkEncrypted = scannedPrivateKey.substring(0, 2) == '6P';
+  const isPkEncrypted = scannedPrivateKey.substring(0, 2) === '6P';
   const _walletsAvailable = Object.values(keys)
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets)
@@ -284,7 +284,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       await sleep(1000);
       navigation.goBack();
     },
-    [dispatch],
+    [dispatch, navigation],
   );
 
   const _sweepWallet = async (): Promise<any> => {
@@ -461,7 +461,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         try {
           provider.getProvider().PrivateKey(privateKey, network);
           return network;
-        } catch (err) {
+        } catch {
           // Continue to the next iteration if an error occurs
         }
       }
@@ -501,12 +501,17 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
             // const bwcClient = BWC.getClient(); // unfortunately, we need to create a new client for each coin with credentials. Check getBalanceFromPrivateKey implementation in bwc
             logger.debug(`getting balance for ${coin}...`);
 
-            getBalance(privateKey, coin, wallet, (err, balance: number) => {
-              if (err) {
-                return reject(err);
-              }
-              return resolve({privateKey, coin, balance});
-            });
+            getBalance(
+              privateKey,
+              coin,
+              wallet,
+              (balanceErr, balance: number) => {
+                if (balanceErr) {
+                  return reject(balanceErr);
+                }
+                return resolve({privateKey, coin, balance});
+              },
+            );
           },
         );
       } catch (err: any) {
@@ -523,15 +528,15 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     try {
       showOngoingProcess(
         passphrase === '' ? 'SCANNING_FUNDS' : 'SCANNING_FUNDS_WITH_PASSPHRASE',
-      ),
-        await sleep(500);
+      );
+      await sleep(500);
       const scanResults = await Promise.all(
         PAPER_WALLET_SUPPORTED_COINS.map((coin: string) =>
           _scanFunds({coin, passphrase}).catch(error => error),
         ),
       );
 
-      const data = scanResults.filter(data => !(data instanceof Error)) as {
+      const data = scanResults.filter(result => !(result instanceof Error)) as {
         privateKey: string;
         coin: string;
         balance: number;
@@ -563,12 +568,12 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       setBalances(_balances);
 
       const availableCoins = new Set(_balances.map(d => d.coin));
-      const walletsAvailable = _walletsAvailable.filter(w =>
+      const matchingWallets = _walletsAvailable.filter(w =>
         availableCoins.has(w.currencyAbbreviation),
       );
 
-      setWalletsAvailable(walletsAvailable);
-      setSelectedWallet(walletsAvailable[0]);
+      setWalletsAvailable(matchingWallets);
+      setSelectedWallet(matchingWallets[0]);
       hideOngoingProcess();
     } catch (error) {
       hideOngoingProcess();
@@ -635,16 +640,17 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       }
     };
     _scan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to scan the private key passed in route params
   }, []);
 
   const openKeyWalletSelector = () => {
     setWalletSelectorVisible(true);
   };
 
-  const onDismiss = (selectedWallet?: Wallet) => {
+  const onDismiss = (dismissedWallet?: Wallet) => {
     setWalletSelectorVisible(false);
-    if (selectedWallet?.currencyAbbreviation) {
-      setSelectedWallet(selectedWallet);
+    if (dismissedWallet?.currencyAbbreviation) {
+      setSelectedWallet(dismissedWallet);
     }
   };
 

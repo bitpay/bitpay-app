@@ -20,6 +20,7 @@ import {
   White,
   Slate,
   LightBlue,
+  Placeholder,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 
@@ -450,7 +451,7 @@ const ChainSelectorModalContent = ({
             </SearchIconContainer>
             <SearchRoundInput
               placeholder={t('Search Networks')}
-              placeholderTextColor={theme.dark ? Slate : Slate}
+              placeholderTextColor={theme.dark ? Slate : Placeholder}
               onChangeText={updateSearchResults}
             />
           </SearchRoundContainer>

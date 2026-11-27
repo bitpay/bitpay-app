@@ -19,6 +19,17 @@ jest.mock('../../../../managers/TokenManager', () => ({
   tokenManager: {getTokenOptions: () => ({tokenOptionsByAddress: {}})},
 }));
 
+const mockStartTSSSigning = jest.fn();
+jest.mock('../tss-send/tss-send', () => ({
+  ...jest.requireActual('../tss-send/tss-send'),
+  startTSSSigning: (...args: any[]) => mockStartTSSSigning(...args),
+}));
+
+jest.mock('../status/status', () => ({
+  ...jest.requireActual('../status/status'),
+  startUpdateWalletStatus: jest.fn(() => ({type: 'TEST/UPDATE_WALLET_STATUS'})),
+}));
+
 import configureTestStore from '@test/store';
 import {processSwapRequest} from '../../../../utils/helper-methods';
 import {
@@ -28,6 +39,7 @@ import {
   publishAndSign,
   sendCrypto,
   startSendPayment,
+  verifyIdentity,
 } from './send';
 import * as Root from '../../../../Root';
 import {ethers} from 'ethers';
@@ -284,6 +296,36 @@ describe('hardware wallet keys', () => {
   });
 });
 
+describe('publishAndSign with a TSS key', () => {
+  it('reports TSS progress complete without broadcasting again when the proposal is already broadcasted', async () => {
+    const broadcasted = {id: 'txp1', status: 'broadcasted', txid: 'tx1'};
+    mockStartTSSSigning.mockReturnValue(() => Promise.resolve(broadcasted));
+    const store = configureTestStore({});
+    const wallet = {
+      id: 'tss-wallet',
+      tssKeyId: 'tss-key',
+      chain: 'btc',
+      credentials: {chain: 'btc', coin: 'btc', network: 'livenet'},
+      broadcastTxProposal: jest.fn(),
+    } as any;
+    const key = {id: 'tss-key', wallets: [wallet]} as any;
+    const onStatusChange = jest.fn();
+
+    const result = await store.dispatch(
+      publishAndSign({
+        txp: {id: 'txp1', status: 'pending', chain: 'btc'} as any,
+        key,
+        wallet,
+        tssCallbacks: {onStatusChange} as any,
+      }) as any,
+    );
+
+    expect(result).toBe(broadcasted);
+    expect(onStatusChange).toHaveBeenCalledWith('complete');
+    expect(wallet.broadcastTxProposal).not.toHaveBeenCalled();
+  });
+});
+
 const SOL_RECIPIENT = '2or9p8ZY6yWi3pd28Qg2oiNEDycbKSm73NkGDtwF1LcT';
 const SOLANA_PAY_MEMO =
   'v43SXMgaP9xHQawB5AGy4VZDQaYmoFYYCsJs7SzxgcEDAyrSRrx3BBNBTJFH';
@@ -371,5 +413,45 @@ describe('sendCrypto', () => {
       context: 'send',
       assetContext,
     });
+  });
+});
+
+describe('verifyIdentity', () => {
+  it.each([
+    [true, 'resolves'],
+    [false, 'rejects'],
+  ])('with PIN lock, a %s check %s', async (checked, outcome) => {
+    const store = configureTestStore({
+      APP: {pinLockActive: true, biometricLockActive: false},
+    });
+
+    const verification = store.dispatch(verifyIdentity());
+    store.getState().APP.pinModalConfig?.onClose?.(checked);
+
+    if (outcome === 'resolves') {
+      await expect(verification).resolves.toBeUndefined();
+    } else {
+      await expect(verification).rejects.toThrow();
+    }
+  });
+
+  it('rejects without a prompt when no app lock is set', async () => {
+    const store = configureTestStore({
+      APP: {pinLockActive: false, biometricLockActive: false},
+    });
+
+    await expect(store.dispatch(verifyIdentity())).rejects.toThrow();
+    expect(store.getState().APP.pinModalConfig).toBeUndefined();
+  });
+
+  it('does not replace an active app lock prompt', async () => {
+    const pinModalConfig = {type: 'check' as const};
+    const store = configureTestStore({
+      APP: {pinLockActive: true, showPinModal: true, pinModalConfig},
+    });
+
+    await expect(store.dispatch(verifyIdentity())).rejects.toThrow();
+
+    expect(store.getState().APP.pinModalConfig).toBe(pinModalConfig);
   });
 });

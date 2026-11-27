@@ -1,279 +1,404 @@
-import React, {useCallback} from 'react';
-import RNFS from 'react-native-fs';
-import {Platform, SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {ScrollView, StyleSheet} from 'react-native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {
-  ActionContainer,
-  CtaContainerAbsolute,
-  ImageContainer,
-  isNarrowHeight,
-  TextContainer,
-  TitleContainer,
-} from '../../../components/styled/Containers';
-import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
+import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
-import {OnboardingImage} from '../../../navigation/onboarding/components/Containers';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useAppDispatch,
+  useLogger,
+  useAppSelector,
+  useMount,
+} from '../../../utils/hooks';
+import {StackActions, useNavigation, useRoute} from '@react-navigation/native';
 import {
   checkEncryptedKeysForEddsaMigration,
-  getMnemonic,
   sleep,
 } from '../../../utils/helper-methods';
 import {AppActions} from '../../../store/app';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {ShareOptions} from 'react-native-share';
-import {shareFile} from '../../../utils/share';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {
-  CustomErrorMessage,
-  WrongPasswordError,
-} from '../components/ErrorMessages';
-import {checkBiometricForSending} from '../../../store/wallet/effects/send/send';
+import {WrongPasswordError} from '../components/ErrorMessages';
 import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
+import {verifyIdentity} from '../../../store/wallet/effects/send/send';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useBackupColors} from '../../../components/backup/colors';
+import {PenGlyph} from '../../../components/backup/glyphs';
+import {
+  AdvancedMethods,
+  BackupMethodCard,
+  BannerLink,
+} from '../../../components/backup/BackupCards';
 
 export type BackupOnboardingParamList = {
   keyId: string;
+  context?: string;
+  viewRecoveryPhrase?: boolean;
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'stretch',
-  },
-  scrollViewContent: {
-    alignItems: 'center',
-  },
-  ctaContainer: {
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
+  container: {flex: 1},
+  content: {gap: 14, paddingTop: 10, paddingHorizontal: 12, paddingBottom: 20},
+  paragraph: {fontSize: 16, lineHeight: 25},
+  sectionTitle: {fontSize: 18, lineHeight: 24, fontWeight: '700', marginTop: 6},
 });
 
-const KeyImage = {
-  light: (
-    <OnboardingImage
-      style={{
-        width: isNarrowHeight ? 145 : 217,
-        height: isNarrowHeight ? 130 : 195,
-      }}
-      source={require('../../../../assets/img/onboarding/light/backup.png')}
-    />
-  ),
-  dark: (
-    <OnboardingImage
-      style={{
-        width: isNarrowHeight ? 145 : 217,
-        height: isNarrowHeight ? 110 : 165,
-      }}
-      source={require('../../../../assets/img/onboarding/dark/backup.png')}
-    />
-  ),
-};
+interface DecryptedKey {
+  mnemonic: string;
+  mnemonicHasPassphrase: boolean;
+  xPrivKey: string;
+}
 
 const BackupOnboarding: React.FC = () => {
   const {t} = useTranslation();
-  const themeType = useThemeType();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const logger = useLogger();
+  const colors = useBackupColors();
+  const route = useRoute<RouteProp<WalletGroupParamList, 'BackupOnboarding'>>();
+  const {keyId, context, viewRecoveryPhrase} = route.params;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
   const biometricLockActive = useAppSelector(
     ({APP}) => APP.biometricLockActive,
   );
+  const pinLockActive = useAppSelector(({APP}) => APP.pinLockActive);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [identityVerified, setIdentityVerified] = useState(false);
+  const pendingSecretOperation = useRef<symbol | undefined>(undefined);
+  const hasAppLock = biometricLockActive || pinLockActive;
+  const hasMnemonic = !!(
+    key?.properties?.mnemonic || key?.properties?.mnemonicEncrypted
+  );
+  const manualBackedUp = !!key?.backupComplete;
+  const hasPrivateKey = !!(
+    key?.properties?.xPrivKey || key?.properties?.xPrivKeyEncrypted
+  );
+  const canOpen =
+    !!key &&
+    !key.isReadOnly &&
+    !isTSSKey(key) &&
+    !key.wallets?.some(wallet => wallet.pendingTssSession) &&
+    (viewRecoveryPhrase ? hasMnemonic : hasMnemonic || hasPrivateKey);
 
-  const route = useRoute<RouteProp<WalletGroupParamList, 'BackupOnboarding'>>();
-  const {keyId} = route.params;
-  const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
+  const headerTitle = useMemo(() => {
+    return () => (
+      <HeaderTitle>
+        {viewRecoveryPhrase
+          ? t('View Recovery Phrase')
+          : hasMnemonic
+          ? t('Back Up Recovery Phrase')
+          : t('Backup')}
+      </HeaderTitle>
+    );
+  }, [hasMnemonic, t, viewRecoveryPhrase]);
 
-  const buildEncryptModalConfig = (
-    onDecrypted: (decryptedKey: {
-      mnemonic: string;
-      mnemonicHasPassphrase: boolean;
-      xPrivKey: string;
-    }) => void,
-  ) => ({
-    onSubmitHandler: async (encryptPassword: string) => {
-      try {
-        dispatch(checkEncryptedKeysForEddsaMigration(key, encryptPassword));
-        const decryptedKey = key.methods!.get(encryptPassword);
-        dispatch(AppActions.dismissDecryptPasswordModal());
-        await sleep(300);
-        onDecrypted(decryptedKey);
-      } catch (err) {
-        const errMessage =
-          err instanceof Error ? err.message : JSON.stringify(err);
-        logger.error(`[BackupOnboarding] Decrypt Error: ${errMessage}`);
-        await dispatch(AppActions.dismissDecryptPasswordModal());
-        await sleep(500);
-        dispatch(showBottomNotificationModal(WrongPasswordError()));
-      }
-    },
-    description: t('To continue please enter your encryption password.'),
-    onCancelHandler: () => null,
-  });
+  useLayoutEffect(() => {
+    navigation.setOptions({headerTitle});
+  }, [navigation, headerTitle]);
 
-  const printBackupTemplate = async () => {
-    logger.debug('Print backup template clicked.');
+  useEffect(() => {
+    const cancelPendingOperation = () => {
+      pendingSecretOperation.current = undefined;
+    };
+    const unsubscribe = navigation.addListener('blur', cancelPendingOperation);
+    return () => {
+      unsubscribe();
+      cancelPendingOperation();
+    };
+  }, [navigation]);
 
-    let sourceStoragePath: string;
-    if (Platform.OS === 'ios') {
-      // IOS
-      // The file must be placed from xcode in BitPayApp -> Resources (Right click -> "Add files to BitPayApp") as bitpay-recovery-phrase-template.pdf
-      // to be accessed from MainBundlePath
-
-      sourceStoragePath = RNFS.MainBundlePath;
-    } else {
-      // ANDROID
-      // The file must be placed in android/app/src/main/assets/bitpay-recovery-phrase-template.pdf
-      // To access the file on android, we must copy it to the cache directory first
-      const s = 'bitpay-recovery-phrase-template.pdf'; // Ruta al PDF en tus activos
-      const d = `${RNFS.CachesDirectoryPath}/bitpay-recovery-phrase-template.pdf`;
-
-      try {
-        await RNFS.copyFileAssets(s, d);
-      } catch (err) {
-        let errMsg = '';
-        if (err instanceof Error) {
-          errMsg = err.message;
-        } else {
-          errMsg = JSON.stringify(err);
-        }
-
-        logger.error(
-          `Failed trying to execute RNFS.copyFileAssets. Error: ${errMsg}`,
-        );
-        await sleep(500);
-        await showErrorMessage(
-          CustomErrorMessage({
-            errMsg: t('The file could not be shared'),
-            title: t('Uh oh, something went wrong'),
-          }),
-        );
-        return;
-      }
-
-      sourceStoragePath = RNFS.CachesDirectoryPath;
+  useEffect(() => {
+    if (!canOpen) {
+      navigation.goBack();
     }
+  }, [canOpen, navigation]);
 
-    const sourceFilePath =
-      sourceStoragePath + '/bitpay-recovery-phrase-template.pdf';
+  const withDecryptedKey = (
+    onDecrypted: (decrypted: DecryptedKey) => void,
+    onCancel = () => {},
+  ) => {
+    if (!checkPrivateKeyEncrypted(key)) {
+      onDecrypted({
+        mnemonic: key.properties?.mnemonic || '',
+        mnemonicHasPassphrase: !!key.properties?.mnemonicHasPassphrase,
+        xPrivKey: key.properties?.xPrivKey || '',
+      });
+      return;
+    }
+    dispatch(
+      AppActions.showDecryptPasswordModal({
+        onSubmitHandler: async (encryptPassword: string) => {
+          try {
+            dispatch(checkEncryptedKeysForEddsaMigration(key, encryptPassword));
+            const decryptedKey = key.methods!.get(encryptPassword);
+            dispatch(AppActions.dismissDecryptPasswordModal());
+            await sleep(300);
+            onDecrypted(decryptedKey);
+          } catch (err) {
+            const errMessage =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`[BackupOnboarding] Decrypt Error: ${errMessage}`);
+            await dispatch(AppActions.dismissDecryptPasswordModal());
+            await sleep(500);
+            onCancel();
+            dispatch(showBottomNotificationModal(WrongPasswordError()));
+          }
+        },
+        description: t('To continue please enter your encryption password.'),
+        onCancelHandler: onCancel,
+      }),
+    );
+  };
 
-    try {
-      const opts: ShareOptions = {
-        title: t('BitPay Backup Template'),
-        url: `file://${sourceFilePath}`,
-        type: 'application/pdf',
-        subject: 'BitPay Backup Template',
-        failOnCancel: false,
-      };
-
-      logger.debug('Trying to execute Share.open');
-      dispatch(shareFile(opts));
-    } catch (err) {
-      let errMsg = '';
-      if (err instanceof Error) {
-        errMsg = err.message;
-      } else {
-        errMsg = JSON.stringify(err);
-      }
-
-      logger.error(`Failed trying to execute Share.open. Error: ${errMsg}`);
-      await sleep(500);
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: t('The file could not be shared'),
-          title: t('Uh oh, something went wrong'),
-        }),
-      );
+  const openRecoveryPhrase = (
+    words: string[],
+    mode?: 'view' | 'privateKey',
+    xPrivKey?: string,
+  ) => {
+    const params = {
+      keyId,
+      words,
+      xPrivKey,
+      context,
+      mode,
+      walletTermsAccepted: true,
+    };
+    if (viewRecoveryPhrase) {
+      navigation.dispatch(StackActions.replace('RecoveryPhrase', params));
+    } else {
+      navigation.navigate('RecoveryPhrase', params);
     }
   };
 
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
+  const onManualBackupPress = () => {
+    if (!identityVerified) {
+      return;
+    }
+    haptic('impactLight');
+    dispatch(Analytics.track('Clicked Write Down Backup'));
+    withDecryptedKey(({mnemonic}) =>
+      openRecoveryPhrase(mnemonic.trim().split(/[\u3000\s]+/)),
+    );
+  };
 
-  return (
-    <SafeAreaView style={styles.container} testID="backup-onbloarding-view">
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <ImageContainer>{KeyImage[themeType]}</ImageContainer>
-        <TitleContainer>
-          <TextAlign align={'center'}>
-            <H3>{t('Would you like to backup your wallet?')}</H3>
-          </TextAlign>
-        </TitleContainer>
-        <TextContainer>
-          <TextAlign align={'center'}>
-            <Paragraph>
-              {t(
-                'If you delete the BitPay app or lose your device, you’ll need your recovery phrase regain acess to your funds.',
-              )}
-            </Paragraph>
-          </TextAlign>
-        </TextContainer>
-      </ScrollView>
+  const continueLabel = biometricLockActive
+    ? t('Continue with Biometrics')
+    : t('Continue with PIN');
 
-      <CtaContainerAbsolute background={true} style={styles.ctaContainer}>
-        <ActionContainer>
-          <Button
-            testID="write-down-backup-button"
-            accessibilityLabel={t('Write Down Recovery Phrase')}
-            buttonStyle={'primary'}
-            onPress={async () => {
-              haptic('impactLight');
-              if (!checkPrivateKeyEncrypted(key)) {
-                if (biometricLockActive) {
-                  await dispatch(checkBiometricForSending());
+  const viewSecret = (secret: 'phrase' | 'privateKey') => {
+    if (!identityVerified && !viewRecoveryPhrase) {
+      return;
+    }
+    const cancel = () => {
+      pendingSecretOperation.current = undefined;
+      if (viewRecoveryPhrase && navigation.isFocused()) {
+        navigation.goBack();
+      }
+    };
+    haptic('impactLight');
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Make sure no one can see your screen'),
+        message:
+          secret === 'phrase'
+            ? t(
+                'Anyone who sees your recovery phrase can take your funds. BitPay will never ask for it.',
+              )
+            : t(
+                'Anyone who sees your private key can take your funds. BitPay will never ask for it.',
+              ),
+        enableBackdropDismiss: !viewRecoveryPhrase,
+        actions: [
+          {
+            text: continueLabel,
+            action: async () => {
+              if (pendingSecretOperation.current || !navigation.isFocused()) {
+                return;
+              }
+              const operation = Symbol();
+              pendingSecretOperation.current = operation;
+              const isCurrentOperation = () =>
+                pendingSecretOperation.current === operation &&
+                navigation.isFocused();
+              const cancelOperation = () => {
+                if (isCurrentOperation()) {
+                  cancel();
                 }
-                navigation.navigate('RecoveryPhrase', {
-                  keyId: key.id,
-                  words: getMnemonic(key),
-                  walletTermsAccepted: true,
-                  context: 'keySettings',
-                });
-              } else {
+              };
+              await sleep(500);
+              if (!isCurrentOperation()) {
+                return;
+              }
+              try {
+                await dispatch(verifyIdentity());
+              } catch {
                 dispatch(
-                  AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(
-                      async ({mnemonic}: {mnemonic: string}) => {
-                        navigation.navigate('RecoveryPhrase', {
-                          keyId: key.id,
-                          words: mnemonic.trim().split(' '),
-                          walletTermsAccepted: true,
-                          context: 'keySettings',
-                        });
-                      },
-                    ),
+                  Analytics.track('Failed Backup Authentication', {context}),
+                );
+                cancelOperation();
+                return;
+              }
+              dispatch(
+                Analytics.track('Passed Backup Authentication', {context}),
+              );
+              if (!isCurrentOperation()) {
+                return;
+              }
+              withDecryptedKey(({mnemonic, xPrivKey}) => {
+                if (!isCurrentOperation()) {
+                  return;
+                }
+                pendingSecretOperation.current = undefined;
+                dispatch(
+                  Analytics.track(
+                    secret === 'phrase'
+                      ? 'Viewed Recovery Phrase'
+                      : 'Viewed Private Key',
+                    {context},
                   ),
                 );
-              }
-            }}>
-            {t('Write Down Recovery Phrase')}
-          </Button>
-        </ActionContainer>
-        <ActionContainer>
-          <Button
-            testID="print-backup-button"
-            accessibilityLabel={t('Print Recovery Template')}
-            buttonStyle={'secondary'}
-            onPress={() => {
-              printBackupTemplate();
-            }}>
-            {t('Print Recovery Template')}
-          </Button>
-        </ActionContainer>
-      </CtaContainerAbsolute>
-    </SafeAreaView>
+                if (secret === 'phrase') {
+                  openRecoveryPhrase(
+                    mnemonic.trim().split(/[\u3000\s]+/),
+                    'view',
+                  );
+                } else {
+                  openRecoveryPhrase([], 'privateKey', xPrivKey);
+                }
+              }, cancelOperation);
+            },
+            primary: true,
+          },
+          {text: t('Cancel'), action: cancel},
+        ],
+      }),
+    );
+  };
+
+  useMount(() => {
+    if (!canOpen || !hasAppLock) {
+      return;
+    }
+    if (viewRecoveryPhrase) {
+      viewSecret('phrase');
+    } else {
+      dispatch(verifyIdentity())
+        .then(() => {
+          dispatch(Analytics.track('Passed Backup Authentication', {context}));
+          setIdentityVerified(true);
+        })
+        .catch(() => {
+          dispatch(Analytics.track('Failed Backup Authentication', {context}));
+          navigation.goBack();
+        });
+    }
+  });
+
+  if (!canOpen) {
+    return null;
+  }
+
+  if (!hasAppLock) {
+    return (
+      <ScrollView contentContainerStyle={styles.content}>
+        <BaseText>
+          {t('Set up an extra layer of security to keep your wallet secure.')}
+        </BaseText>
+        <Button
+          onPress={() =>
+            dispatch(
+              AppActions.showPinModal({
+                type: 'set',
+                onClose: checked => {
+                  if (checked) {
+                    setIdentityVerified(true);
+                    if (viewRecoveryPhrase) {
+                      viewSecret('phrase');
+                    }
+                  }
+                },
+              }),
+            )
+          }>
+          {t('Set a PIN')}
+        </Button>
+      </ScrollView>
+    );
+  }
+
+  if (viewRecoveryPhrase || !identityVerified) {
+    return null;
+  }
+
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      testID="backup-onbloarding-view">
+      {hasMnemonic ? (
+        <BaseText style={[styles.paragraph, {color: colors.textDescription}]}>
+          {t(
+            'If you lose this phone, your recovery phrase is the only way to get the funds in {{keyName}} back. BitPay can’t recover it for you.',
+            {keyName: key.keyName},
+          )}
+        </BaseText>
+      ) : null}
+      <BaseText accessibilityRole="header" style={styles.sectionTitle}>
+        {t('Back Up Methods')}
+      </BaseText>
+      {hasMnemonic ? (
+        <BackupMethodCard
+          testID="write-down-backup-button"
+          icon={<PenGlyph color={colors.iconButtonGlyph} />}
+          title={t('Manual Backup')}
+          tag={manualBackedUp ? t('Completed') : null}
+          tagTone="on"
+          description={t(
+            'Write down your recovery phrase and keep it somewhere safe and offline.',
+          )}
+          action={
+            manualBackedUp ? (
+              <BannerLink onPress={onManualBackupPress}>
+                {t('Write It Down Again')}
+              </BannerLink>
+            ) : null
+          }
+          onPress={manualBackedUp ? undefined : onManualBackupPress}
+        />
+      ) : null}
+      <AdvancedMethods
+        title={t('Advanced Methods')}
+        open={advancedOpen}
+        onToggle={() => setAdvancedOpen(open => !open)}
+        items={[
+          ...(hasMnemonic
+            ? [
+                {
+                  label: t('View Recovery Phrase'),
+                  onPress: () => viewSecret('phrase'),
+                },
+              ]
+            : []),
+          ...(hasPrivateKey
+            ? [
+                {
+                  label: t('View Private Key'),
+                  onPress: () => viewSecret('privateKey'),
+                },
+              ]
+            : []),
+        ]}
+      />
+    </ScrollView>
   );
 };
 

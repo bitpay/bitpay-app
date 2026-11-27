@@ -310,7 +310,7 @@ const SwapCryptoExpandibleCard: React.FC<
               : SlateDark
             : selected
             ? Action
-            : '#e6e8ec',
+            : Slate30,
           backgroundColor: theme.dark
             ? selected
               ? '#2240C440'
@@ -546,8 +546,6 @@ const SwapCryptoOfferSelectorModal: React.FC<
   amountFrom,
   showOffersLoading,
   selectedOffer,
-  country,
-  preSetPartner,
   offerSelectorOnDismiss,
 }) => {
   const {t} = useTranslation();
@@ -556,7 +554,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
   const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>(
     {},
   );
-  const [forceRerender, setForceRerender] = useState(0);
+  const [, setForceRerender] = useState(0);
   useEffect(() => {
     setForceRerender(f => f + 1);
   }, [amountFrom, selectedOffer?.amountReceiving]);

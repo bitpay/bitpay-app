@@ -14,18 +14,37 @@ export const createDklsWebViewHost = (reply: (data: string) => void) => {
     objects.set(objId, value);
     return {objId};
   };
-  const toU8 = (x: any) => (Array.isArray(x) ? new Uint8Array(x) : x);
+  const toU8 = (x: any) =>
+    typeof x?.__dklsBytes === 'string'
+      ? Buffer.from(x.__dklsBytes, 'base64')
+      : Array.isArray(x)
+      ? new Uint8Array(x)
+      : x;
   const deproxy = (x: any): any => {
     if (Array.isArray(x)) {
       return x.map(deproxy);
+    }
+    if (typeof x?.__dklsBytes === 'string') {
+      return toU8(x);
     }
     return x && typeof x._id === 'number' ? objects.get(x._id) : x;
   };
   const norm = (x: any): any => {
     if (x instanceof Uint8Array) {
-      return Array.from(x);
+      return x.length < 128
+        ? Array.from(x)
+        : {__dklsBytes: Buffer.from(x).toString('base64')};
     }
-    if (x instanceof dkls.Message || x instanceof dkls.Keyshare) {
+    if (x instanceof dkls.Message) {
+      const message = {
+        payload: norm(x.payload),
+        from_id: x.from_id,
+        to_id: x.to_id,
+      };
+      x.free();
+      return message;
+    }
+    if (x instanceof dkls.Keyshare) {
       return register(x);
     }
     return Array.isArray(x) ? x.map(norm) : x;
@@ -45,9 +64,14 @@ export const createDklsWebViewHost = (reply: (data: string) => void) => {
     switch (type) {
       case 'init':
         return 'ok';
-      case 'free':
+      case 'free': {
+        const obj = objects.get(objId);
         objects.delete(objId);
+        if (obj?.__wbg_ptr) {
+          obj.free();
+        }
         return 'freed';
+      }
       case 'construct': {
         const a = deproxy(args);
         if (className === 'KeygenSession' && a.length >= 4) {

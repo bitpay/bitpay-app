@@ -234,7 +234,21 @@ jest.mock('@shopify/react-native-skia', () => ({
   __esModule: true,
   Canvas: 'Canvas',
   Path: 'Path',
-  Skia: {Path: jest.fn(() => ({moveTo: jest.fn(), lineTo: jest.fn(), close: jest.fn()}))},
+  Skia: {
+    Path: Object.assign(
+      jest.fn(() => ({moveTo: jest.fn(), lineTo: jest.fn(), close: jest.fn()})),
+      {
+        Make: jest.fn(() => ({
+          moveTo: jest.fn(),
+          lineTo: jest.fn(),
+          cubicTo: jest.fn(),
+          close: jest.fn(),
+        })),
+      },
+    ),
+  },
+  LinearGradient: 'LinearGradient',
+  vec: jest.fn((x = 0, y = 0) => ({x, y})),
   useValue: jest.fn(() => ({current: 0})),
   useComputedValue: jest.fn(() => ({current: 0})),
   runTiming: jest.fn(),
@@ -321,17 +335,19 @@ jest.mock('@solana-program/token-2022', () => ({findAssociatedTokenPda: jest.fn(
 
 // Ethers — large lib, mock for unit tests. Unit conversion is kept real: it is money arithmetic.
 jest.mock('ethers', () => {
-  const {utils: actual} = jest.requireActual('ethers');
+  const {utils: actual, wordlists} = jest.requireActual('ethers');
   const utils = {
     isAddress: jest.fn(() => true),
     getAddress: jest.fn(a => a),
     parseUnits: actual.parseUnits,
     formatUnits: actual.formatUnits,
     commify: actual.commify,
+    isValidMnemonic: actual.isValidMnemonic,
   };
   return {
     ethers: {utils, BigNumber: {from: jest.fn()}},
     utils,
+    wordlists,
     BigNumber: {from: jest.fn()},
   };
 });
@@ -373,6 +389,10 @@ jest.mock('react-native-vision-camera', () => ({
   useCodeScanner: jest.fn(() => ({})),
   getCameraDevice: jest.fn(() => null),
 }));
+
+jest.mock('@react-native-community/netinfo', () =>
+  require('@react-native-community/netinfo/jest/netinfo-mock.js'),
+);
 
 // react-native-document-picker — TurboModule; mock to avoid native errors
 jest.mock('react-native-document-picker', () => ({

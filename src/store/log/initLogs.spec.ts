@@ -90,6 +90,59 @@ describe('initLogs', () => {
     ]);
   });
 
+  it('redacts private keys on every line before persisting a log', () => {
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(
+        'walletPrivKey=fake-wallet-key\n{"xPrivKey":"fake-xprv"}\nsafe line\n{"XPRIVKEY":"fake-xprv-2"}\nwalletprivkey=fake-wallet-key-2',
+      ).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(JSON.parse(written)[0].message).toBe(
+      'walletPrivKey:[...]\n{"[...]\nsafe line\n{"[...]\nwalletPrivKey:[...]',
+    );
+  });
+
+  it('redacts extended private keys logged without a field name', () => {
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(
+        'xprv9s21ZrQH143KfakeKey\nderive failed for tprv8ZgxMBicQKsPfakeKey at m/0',
+      ).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(JSON.parse(written)[0].message).toBe(
+      '[...]\nderive failed for [...] at m/0',
+    );
+  });
+
+  it('redacts the recovery phrase from bitcore-mnemonic errors', () => {
+    const Mnemonic = require('@bitpay-labs/bitcore-mnemonic');
+    const phrase =
+      'abandon abandon abandon\nabandon abandon abandon abandon abandon abandon abandon abandon about';
+    let errorMessage = '';
+    try {
+      Mnemonic(phrase);
+    } catch (err) {
+      errorMessage = (err as Error).message;
+    }
+    const {appendPersistedLog} = getFreshModule();
+
+    appendPersistedLog(
+      entry(`Error creating key with opts: ${errorMessage}`).payload,
+    );
+
+    const [, written] = mockStorage.set.mock.calls[0];
+    expect(errorMessage).toContain(phrase);
+    expect(JSON.parse(written)[0].message).toBe(
+      'Error creating key with opts: Could not detect the used word list: [...]',
+    );
+  });
+
   it('keeps only the newest 500 entries', () => {
     const {add, drainAndDispatch} = getFreshModule();
     drainAndDispatch(jest.fn());

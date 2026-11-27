@@ -33,6 +33,7 @@ import {
   NeutralSlate,
   SlateDark,
   White,
+  Placeholder,
 } from '../../../../styles/colors';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
@@ -248,7 +249,7 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
   );
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
   const [searchInput, setSearchInput] = useState('');
   const [walletSearchInput, setWalletSearchInput] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
@@ -583,7 +584,10 @@ const SendToContent = ({wallet}: {wallet: Wallet}) => {
   };
 
   const validateAndNavigateToConfirmRef = useRef(validateAndNavigateToConfirm);
-  validateAndNavigateToConfirmRef.current = validateAndNavigateToConfirm;
+  // Latest-callback ref: only read from event handlers / debounced callbacks.
+  useLayoutEffect(() => {
+    validateAndNavigateToConfirmRef.current = validateAndNavigateToConfirm;
+  });
 
   const debouncedValidateSearchInput = useDebouncedSendToValidation(text => {
     setWalletSearchInput(text);

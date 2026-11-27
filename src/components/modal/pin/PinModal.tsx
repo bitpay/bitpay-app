@@ -1,7 +1,8 @@
 import {navigationRef} from '../../../Root';
+import {StackActions} from '@react-navigation/native';
 import {isEqual} from '../../../utils/object';
 import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
-import {shallowEqual} from 'react-redux';
+import {useStore} from 'react-redux';
 import {useTranslation} from 'react-i18next';
 import {
   Animated,
@@ -17,6 +18,7 @@ import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboar
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {AppActions} from '../../../store/app';
+import type {RootState} from '../../../store';
 import {BitPay, Warning75, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
@@ -27,7 +29,12 @@ import {H5, H7} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import useModalContentLifecycle from '../base/useModalContentLifecycle';
 import PinDots from './PinDots';
-import {verifyAndMigratePin, createPin, PIN_CONFIG} from '../../../utils/pin';
+import {
+  verifyAndMigratePin,
+  createPin,
+  PIN_CONFIG,
+  getPinLockoutSeconds,
+} from '../../../utils/pin';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -85,8 +92,9 @@ const Pin = gestureHandlerRootHOC(
     const {t} = useTranslation();
     const logger = useLogger();
     const dispatch = useAppDispatch();
-    const {type, context, onClose} =
-      useAppSelector(({APP}) => APP.pinModalConfig, shallowEqual) || {};
+    const store = useStore<RootState>();
+    const pinModalConfig = useAppSelector(({APP}) => APP.pinModalConfig);
+    const {type, context, onClose} = pinModalConfig || {};
     const [pinStatus, setPinStatus] = useState<{
       pin: Array<string | undefined>;
       firstPinEntered: Array<string | undefined>;
@@ -94,14 +102,9 @@ const Pin = gestureHandlerRootHOC(
     const [message, setMessage] = useState<string>(t('Please enter your PIN'));
     const [messageError, setMessageError] = useState<string | null>(null);
     const [shakeDots, setShakeDots] = useState(false);
-    const [showBackButton, setShowBackButton] = useState<boolean>();
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-      if (type === 'set' || onClose) {
-        setShowBackButton(true);
-      }
-      // fade in
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 300,
@@ -109,48 +112,65 @@ const Pin = gestureHandlerRootHOC(
       }).start();
     }, [type, onClose, fadeAnim]);
 
-    // checkPin
     const currentPin = useAppSelector(({APP}) => APP.currentPin);
     const currentSalt = useAppSelector(({APP}) => APP.currentSalt);
     const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
-    const [attempts, setAttempts] = useState<number>(0);
+    const attempts = useAppSelector(({APP}) => APP.pinFailedAttempts);
 
     const reset = useCallback(() => {
       setMessage(t('Please enter your PIN'));
       setPinStatus({pin: [], firstPinEntered: []});
-      setAttempts(0);
-    }, [setMessage, setAttempts, setPinStatus, t]);
+    }, [setMessage, setPinStatus, t]);
+
+    const checkInFlightRef = useRef<PinModalConfig | undefined>(undefined);
+
+    useEffect(() => {
+      setPinStatus({pin: [], firstPinEntered: []});
+    }, [pinModalConfig]);
 
     const checkPin = useCallback(
       async (pinToCheck: Array<string>) => {
+        if (
+          checkInFlightRef.current === pinModalConfig ||
+          store.getState().APP.pinModalConfig !== pinModalConfig
+        ) {
+          return;
+        }
+        checkInFlightRef.current = pinModalConfig;
         try {
           const result = verifyAndMigratePin(
             pinToCheck,
             currentPin,
-            currentSalt, // from storage (undefined for legacy users)
+            currentSalt,
           );
 
           if (!result.isValid) {
             setShakeDots(true);
             setMessage(t('Incorrect PIN, try again'));
             setPinStatus({pin: [], firstPinEntered: []});
-            setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
+            const nextAttempts = attempts + 1;
+            dispatch(AppActions.pinFailedAttempts(nextAttempts));
+            if (nextAttempts % PIN_CONFIG.ATTEMPT_LIMIT === 0) {
+              dispatch(AppActions.pinBannedUntil(Number.MAX_SAFE_INTEGER));
+            }
             return;
           }
 
-          // Correct PIN
+          dispatch(AppActions.pinFailedAttempts(0));
           if (result.needsMigration) {
-            // Legacy user - save the new salt and hash
             dispatch(AppActions.currentPin(result.hashedPin));
             dispatch(AppActions.currentSalt(result.salt));
             logger.debug('PIN migrated to secure hash');
           }
 
-          dispatch(AppActions.showBlur(false));
           const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+          if (store.getState().APP.pinModalConfig !== pinModalConfig) {
+            return;
+          }
           const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+          dispatch(AppActions.showBlur(false));
           dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
-          dispatch(AppActions.dismissPinModal()); // Correct PIN dismiss modal
+          dispatch(AppActions.dismissPinModal());
           reset();
           onClose?.(true);
           DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
@@ -158,41 +178,60 @@ const Pin = gestureHandlerRootHOC(
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
           logger.error(`checkPin error: ${errStr}`);
+        } finally {
+          if (checkInFlightRef.current === pinModalConfig) {
+            checkInFlightRef.current = undefined;
+          }
         }
       },
-      [currentPin, currentSalt, dispatch, logger, onClose, reset, t],
+      [
+        attempts,
+        currentPin,
+        currentSalt,
+        dispatch,
+        logger,
+        onClose,
+        pinModalConfig,
+        reset,
+        store,
+        t,
+      ],
     );
     const checkPinRef = useRef(checkPin);
     checkPinRef.current = checkPin;
 
-    const gotoCreateKey = useCallback(async () => {
+    const gotoTermsOfUse = useCallback(async () => {
       dispatch(AppActions.dismissPinModal());
       await sleep(10);
-      navigationRef.navigate('CreateKey' as any);
+      navigationRef.dispatch(StackActions.replace('TermsOfUse'));
     }, [dispatch]);
 
-    const gotoCreateKeyRef = useRef(gotoCreateKey);
-    gotoCreateKeyRef.current = gotoCreateKey;
+    const gotoTermsOfUseRef = useRef(gotoTermsOfUse);
+    gotoTermsOfUseRef.current = gotoTermsOfUse;
 
     const setCurrentPin = useCallback(
       async (newPin: {firstPinEntered: Array<string>; pin: Array<string>}) => {
         try {
           if (isEqual(newPin.firstPinEntered, newPin.pin)) {
             const {hashedPin, salt} = createPin(newPin.pin);
+            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+            if (store.getState().APP.pinModalConfig !== pinModalConfig) {
+              return;
+            }
+            const authorizedUntil =
+              Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
             dispatch(AppActions.pinLockActive(true));
             dispatch(AppActions.currentPin(hashedPin));
             dispatch(AppActions.currentSalt(salt));
             dispatch(AppActions.showBlur(false));
-            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-            const authorizedUntil =
-              Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
             dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
 
             if (context === 'onboarding') {
               dispatch(AppActions.setPinInteractionDone());
-              gotoCreateKeyRef.current();
+              gotoTermsOfUseRef.current();
             } else {
               dispatch(AppActions.dismissPinModal());
+              onClose?.(true);
             }
           } else {
             setShakeDots(true);
@@ -207,19 +246,16 @@ const Pin = gestureHandlerRootHOC(
           setShakeDots(true);
         }
       },
-      [context, dispatch, logger, reset],
+      [context, dispatch, logger, onClose, pinModalConfig, reset, store],
     );
     const setCurrentPinRef = useRef(setCurrentPin);
     setCurrentPinRef.current = setCurrentPin;
-    const typeRef = useRef(type);
-    typeRef.current = type;
     const translateRef = useRef(t);
     translateRef.current = t;
 
     const handleCellPress = useCallback(
       (value: string) => {
-        if (pinBannedUntil) {
-          // banned wait for entering new pin
+        if (pinBannedUntil || checkInFlightRef.current === pinModalConfig) {
           return;
         }
         setMessageError(null);
@@ -253,18 +289,18 @@ const Pin = gestureHandlerRootHOC(
             break;
         }
       },
-      [pinBannedUntil, reset],
+      [pinBannedUntil, pinModalConfig, reset],
     );
 
     useEffect(() => {
-      const onCellPress = async () => {
-        if (pinStatus.pin.length !== PIN_CONFIG.PIN_LENGTH) {
-          // Waiting for more PIN digits
+      if (!pinModalConfig || pinStatus.pin.length !== PIN_CONFIG.PIN_LENGTH) {
+        return;
+      }
+      const timer = setTimeout(() => {
+        if (store.getState().APP.pinModalConfig !== pinModalConfig) {
           return;
         }
-        // Give some time for dot to fill
-        await sleep(0);
-        if (typeRef.current === 'set') {
+        if (pinModalConfig.type === 'set') {
           if (pinStatus.firstPinEntered.length) {
             setCurrentPinRef.current(
               pinStatus as {firstPinEntered: Array<string>; pin: Array<string>},
@@ -276,100 +312,93 @@ const Pin = gestureHandlerRootHOC(
         } else {
           checkPinRef.current(pinStatus.pin as Array<string>);
         }
-      };
-      onCellPress();
-    }, [pinStatus]);
+      }, 0);
+      return () => clearTimeout(timer);
+    }, [pinModalConfig, pinStatus, store]);
 
-    const setCountDown = useCallback(
-      (bannedUntil: number, timeSinceBoot: number, count: number = 0) => {
-        const intervalId = setInterval(() => {
-          count = count + 1;
-          const totalSecs = bannedUntil - timeSinceBoot - count;
+    const attemptsRef = useRef(attempts);
+    attemptsRef.current = attempts;
 
-          if (totalSecs < 0) {
+    useEffect(() => {
+      if (!pinBannedUntil) {
+        return;
+      }
+
+      let cancelled = false;
+      let intervalId: ReturnType<typeof setInterval> | undefined;
+
+      const tick = async () => {
+        try {
+          const now = Number(await NativeModules.Timer.getRelativeTime());
+          if (cancelled || !Number.isFinite(now) || now < 0) {
+            return;
+          }
+          const remaining = pinBannedUntil - now;
+
+          if (remaining <= 0) {
+            cancelled = true;
+            if (intervalId) {
+              clearInterval(intervalId);
+            }
             dispatch(AppActions.pinBannedUntil(undefined));
-            clearInterval(intervalId);
             reset();
             return;
           }
 
-          const m = Math.floor(totalSecs / 60);
-          const s = totalSecs % 60;
+          // Clamps the placeholder deadline and a deadline from before a reboot.
+          const cap =
+            attemptsRef.current > 0
+              ? getPinLockoutSeconds(attemptsRef.current)
+              : PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
+          if (remaining > cap) {
+            cancelled = true;
+            dispatch(AppActions.pinBannedUntil(now + cap));
+            return;
+          }
+
+          const m = Math.floor(remaining / 60);
+          const s = remaining % 60;
           setMessage(
             t('Try again in ', {
               time: ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2),
             }),
           );
-        }, 1000);
-        return intervalId;
-      },
-      [dispatch, reset, t],
-    );
-
-    useEffect(() => {
-      const checkAttempts = async () => {
-        try {
-          if (attempts === PIN_CONFIG.ATTEMPT_LIMIT) {
-            setAttempts(0);
-            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-            const bannedUntil =
-              Number(timeSinceBoot) + PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
-            dispatch(AppActions.pinBannedUntil(bannedUntil));
-            const timer = setCountDown(bannedUntil, Number(timeSinceBoot));
-            return () => {
-              clearInterval(timer);
-            };
-          }
-        } catch (err) {
-          const errStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logger.error(`checkAttempts error: ${errStr}`);
-        }
-      };
-      checkAttempts();
-    }, [attempts, dispatch, logger, setCountDown]);
-
-    useEffect(() => {
-      const checkIfBanned = async () => {
-        try {
-          const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-          if (pinBannedUntil && Number(timeSinceBoot) < pinBannedUntil) {
-            const totalSecsToRelease = pinBannedUntil - Number(timeSinceBoot);
-            // workaround for inconsistencies between the stored timeSinceBoot with the timeSinceBoot that results after the system been hibernated or suspended
-            if (totalSecsToRelease > PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME) {
-              const bannedUntil =
-                Number(timeSinceBoot) + PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
-              dispatch(AppActions.pinBannedUntil(bannedUntil));
-              return;
-            }
-            const timer = setCountDown(pinBannedUntil, Number(timeSinceBoot));
-            return () => {
-              clearInterval(timer);
-            };
-          } else if (pinBannedUntil) {
-            dispatch(AppActions.pinBannedUntil(undefined));
-          }
         } catch (err) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
           logger.error(`checkIfBanned error: ${errStr}`);
         }
       };
-      checkIfBanned();
-    }, [dispatch, pinBannedUntil, setCountDown, logger]);
+
+      tick();
+      intervalId = setInterval(tick, 1000);
+      return () => {
+        cancelled = true;
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+      };
+    }, [dispatch, logger, pinBannedUntil, reset, t]);
 
     const handleBackPress = useCallback(() => {
+      const activeModal = store.getState().APP.pinModalConfig;
+      if (activeModal?.type !== 'set' && !activeModal?.onClose) {
+        return;
+      }
       dispatch(AppActions.dismissPinModal());
       reset();
-    }, [dispatch, reset]);
+      activeModal.onClose?.(false);
+    }, [dispatch, reset, store]);
 
     const animatedStyle = useMemo(() => ({opacity: fadeAnim}), [fadeAnim]);
 
     return (
       <Animated.View style={[styles.pinContainer, animatedStyle]}>
-        {showBackButton ? (
+        {type === 'set' || onClose ? (
           <View style={[styles.sheetHeaderContainer, headerStyle]}>
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('Back')}
               activeOpacity={ActiveOpacity}
               onPress={handleBackPress}>
               <Back
@@ -417,10 +446,13 @@ const PinModalContent: React.FC<{onModalHide: () => void}> = React.memo(
   ({onModalHide}) => {
     const isVisible = useAppSelector(({APP}) => APP.showPinModal);
     const dispatch = useAppDispatch();
+    const store = useStore<RootState>();
 
     const handleBackdropPress = useCallback(() => {
+      const {pinModalConfig} = store.getState().APP;
       dispatch(AppActions.dismissPinModal());
-    }, [dispatch]);
+      pinModalConfig?.onClose?.(false);
+    }, [dispatch, store]);
 
     return (
       <SheetModal

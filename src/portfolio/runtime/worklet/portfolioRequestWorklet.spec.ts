@@ -181,12 +181,6 @@ describe('portfolioRequestWorklet', () => {
 
   it('sorts out-of-order worklet snapshots before persisting rows', async () => {
     const storage = createFakeWorkletStorage();
-    const config = {
-      storage,
-      storageId: 'test',
-      registryKey: '__registry__',
-    };
-
     const meta = buildWorkletWalletMetaForStore({
       wallet: {
         walletId: 'w2',

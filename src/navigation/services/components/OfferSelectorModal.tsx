@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   SafeAreaView as RNSafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -26,6 +25,8 @@ import {
   Slate30,
   Success25,
   LightBlue,
+  Caution,
+  CautionBright,
 } from '../../../styles/colors';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {BuyCryptoExchangeKey} from '../buy-crypto/utils/buy-crypto-utils';
@@ -46,10 +47,6 @@ import {
   Small,
   TextAlign,
 } from '../../../components/styled/Text';
-import {
-  TermsContainerOffer,
-  TermsText,
-} from '../buy-crypto/styled/BuyCryptoTerms';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import PaymentMethodsModal from '../buy-crypto/components/PaymentMethodModal';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
@@ -231,7 +228,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   offerDataWarningMsg: {
-    color: '#df5264',
     marginRight: 10,
     fontSize: 12,
   },
@@ -437,7 +433,7 @@ const BuyCryptoExpandibleCard: React.FC<
               : SlateDark
             : selected
             ? Action
-            : '#e6e8ec',
+            : Slate30,
           backgroundColor: theme.dark
             ? selected
               ? '#2240C440'
@@ -474,20 +470,6 @@ const OfferRowLeft: React.FC<ViewProps> = ({style, ...rest}) => (
 const BestOfferTagContainer: React.FC<ViewProps> = ({style, ...rest}) => (
   <View style={[styles.bestOfferTagContainer, style]} {...rest} />
 );
-
-const BestOfferTag: React.FC<ViewProps> = ({style, ...rest}) => {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        styles.bestOfferTag,
-        {backgroundColor: theme.dark ? '#2FCFA4' : '#cbf3e8'},
-        style,
-      ]}
-      {...rest}
-    />
-  );
-};
 
 const BestOfferTagText = React.forwardRef<
   Text,
@@ -567,9 +549,20 @@ const OfferDataWarningContainer: React.FC<ViewProps> = ({style, ...rest}) => (
 const OfferDataWarningMsg = React.forwardRef<
   Text,
   React.ComponentProps<typeof BaseText>
->(({style, ...rest}, ref) => (
-  <BaseText ref={ref} style={[styles.offerDataWarningMsg, style]} {...rest} />
-));
+>(({style, ...rest}, ref) => {
+  const theme = useTheme();
+  return (
+    <BaseText
+      ref={ref}
+      style={[
+        styles.offerDataWarningMsg,
+        {color: theme.dark ? CautionBright : Caution},
+        style,
+      ]}
+      {...rest}
+    />
+  );
+});
 OfferDataWarningMsg.displayName = 'OfferDataWarningMsg';
 
 const OfferDataInfoText = React.forwardRef<
@@ -728,7 +721,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const logger = useLogger();
+  useLogger();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -736,7 +729,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
 
-  const [updateView, setUpdateView] = useState<number>(0);
+  const [, setUpdateView] = useState<number>(0);
 
   useEffect(() => {
     setUpdateView(Math.random());

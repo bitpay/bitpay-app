@@ -38,7 +38,6 @@ jest.mock('../../../../managers/TokenManager', () => ({
 }));
 
 jest.mock('../../../../utils/helper-methods', () => ({
-  sleep: jest.fn(() => Promise.resolve()),
   addTokenChainSuffix: jest.fn(
     (addr: string, chain: string) => `${addr}_e.${chain}`,
   ),
@@ -144,7 +143,7 @@ const mockBwcClient = {
     token: undefined,
     walletId: 'mock-wallet-id',
     rootPath: undefined,
-    getTokenCredentials: jest.fn((tokenOpts: any, chain: string) => ({
+    getTokenCredentials: jest.fn(() => ({
       walletId: 'mock-token-wallet-id',
       token: {address: '0xTokenAddress'},
     })),
@@ -243,7 +242,7 @@ const makeMockWallet = (overrides: Record<string, any> = {}): any => ({
     token: undefined,
     walletId: 'mock-wallet-1',
     rootPath: undefined,
-    getTokenCredentials: jest.fn((tokenOpts: any) => ({
+    getTokenCredentials: jest.fn(() => ({
       walletId: `mock-wallet-1-0xtoken`,
       token: {address: '0xToken'},
     })),
@@ -295,6 +294,52 @@ describe('startCreateKey', () => {
     );
 
     expect(Analytics.track).not.toHaveBeenCalled();
+  });
+
+  it('does not store or subscribe an onboarding key if its request is cancelled', async () => {
+    jest.useFakeTimers();
+    try {
+      const {subscribePushNotifications} = require('../../../app/app.effects');
+      const store = configureTestStore({
+        ...baseState,
+        APP: {...baseState.APP, notificationsAccepted: true, brazeEid: 'eid'},
+      });
+
+      await expect(
+        store.dispatch(
+          startCreateKey(
+            [{chain: 'btc', currencyAbbreviation: 'btc', isToken: false}],
+            'onboarding',
+            () => false,
+          ),
+        ),
+      ).rejects.toThrow('Key creation cancelled');
+
+      jest.runOnlyPendingTimers();
+      expect(store.getState().WALLET.keys).toEqual({});
+      expect(subscribePushNotifications).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not store an onboarding key if no wallet was created', async () => {
+    mockBwcClient.createWallet.mockImplementationOnce(
+      (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) =>
+        cb(Object.assign(new Error('wallet fail'), {name: 'bwc.ErrorOTHER'})),
+    );
+    const store = configureTestStore(baseState);
+
+    await expect(
+      store.dispatch(
+        startCreateKey(
+          [{chain: 'btc', currencyAbbreviation: 'btc', isToken: false}],
+          'onboarding',
+        ),
+      ),
+    ).rejects.toThrow('No wallets were created');
+
+    expect(store.getState().WALLET.keys).toEqual({});
   });
 
   it('dispatches Analytics.track when context is not "onboarding"', async () => {

@@ -31,6 +31,7 @@ import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
 import ArchaxBanner from './components/archax/archax-banner';
 import {AppEffects, AppActions} from './store/app';
+import type {RootState} from './store';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
 import {
@@ -128,6 +129,15 @@ import BillGroup, {
 } from './navigation/tabs/shop/bill/BillGroup';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
+import {
+  mark as perfMark,
+  flushStartup as perfFlushStartup,
+  scheduleLoadProfile as perfScheduleLoadProfile,
+  onNavigationStateChange as perfOnNavigationStateChange,
+  startNavigationReporting as perfStartNavigationReporting,
+} from './perf/PerfMonitor';
+import {reportFullyDrawn} from './perf/fullyDrawn';
+import {markFirstScreenShown} from './utils/startupSignals';
 import {showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
@@ -148,6 +158,7 @@ import {PERF_DEBUG, performanceLog} from './utils/performanceDebug';
 import PerformanceProfiler from './components/performance/PerformanceProfiler';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
+import {TopToast} from './components/backup/TopToast';
 import AllAssets from './navigation/tabs/home/screens/AllAssets';
 import Allocation from './navigation/tabs/home/screens/Allocation';
 import {
@@ -324,6 +335,7 @@ const StartupGate = () => {
     }
 
     hasRoutedRef.current = true;
+    perfMark('bp_startup_route');
 
     navigation.reset({
       index: 0,
@@ -576,7 +588,7 @@ export default () => {
       subscriptionAppStateChange.remove();
       stopSilentInterval();
     };
-  }, []);
+  }, [dispatch]);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
@@ -587,7 +599,11 @@ export default () => {
         if (biometricLockActive) {
           dispatch(AppActions.showBiometricModal({}));
         } else if (pinLockActive) {
-          dispatch(AppActions.showPinModal({type: 'check'}));
+          const {pinModalConfig} = (reduxStore.getState() as RootState).APP;
+          if (pinModalConfig?.type !== 'check' || pinModalConfig.onClose) {
+            dispatch(AppActions.showPinModal({type: 'check'}));
+            pinModalConfig?.onClose?.(false);
+          }
         } else {
           dispatch(AppActions.showBlur(false));
         }
@@ -608,9 +624,9 @@ export default () => {
               dispatch(AppActions.lockAuthorizedUntil(undefined));
               showLockOption();
             } else {
-              const timeSinceBoot = await Timer.getRelativeTime();
+              const currentTimeSinceBoot = await Timer.getRelativeTime();
               const authorizedUntil =
-                Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
+                Number(currentTimeSinceBoot) + LOCK_AUTHORIZED_TIME;
               dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
               dispatch(AppActions.showBlur(false));
             }
@@ -643,6 +659,7 @@ export default () => {
       onAppStateChange,
     );
     return () => subscriptionAppStateChange.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- blurScreenList is a constant array rebuilt every render; listing it would re-subscribe on every render
   }, [
     dispatch,
     onboardingCompleted,
@@ -651,6 +668,7 @@ export default () => {
     biometricLockActive,
     checkingBiometricForSending,
     failedAppInit,
+    reduxStore,
   ]);
 
   // Silent Push Notifications
@@ -721,7 +739,7 @@ export default () => {
             if (message.length < 800) {
               console.debug(`[BWC] ${message}`);
             }
-          } catch (_) {}
+          } catch {}
         };
       });
     };
@@ -746,6 +764,8 @@ export default () => {
           theme={theme}
           linking={linking}
           onReady={async () => {
+            perfMark('bp_nav_ready');
+            perfStartNavigationReporting();
             DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
             dispatch(showBlur(pinLockActive || biometricLockActive));
@@ -1058,11 +1078,16 @@ export default () => {
               lastNavStartTsRef.current = Date.now();
             }
 
+            const currentRoute = navigationRef.getCurrentRoute()?.name;
+
+            // Deliberately NOT debounced: the analytics listener above can
+            // afford to coalesce events, but a transition timer that waits
+            // 300ms would measure the debounce instead of the navigation.
+            perfOnNavigationStateChange(currentRoute);
+
             if (splashHiddenRef.current) {
               return;
             }
-
-            const currentRoute = navigationRef.getCurrentRoute()?.name;
 
             if (currentRoute && currentRoute !== 'StartupGate') {
               splashHiddenRef.current = true;
@@ -1076,6 +1101,15 @@ export default () => {
                       }`,
                     );
                   });
+
+                  // This is the app's real time-to-interactive: the splash is
+                  // gone and a navigable screen is on-screen. Everything the
+                  // harness reports as TTFD is anchored here.
+                  perfMark('bp_splash_hidden');
+                  markFirstScreenShown();
+                  reportFullyDrawn();
+                  perfFlushStartup();
+                  perfScheduleLoadProfile();
                 });
               });
             }
@@ -1246,6 +1280,7 @@ export default () => {
             onRender={logReactProfiler}>
             <MoonpayEmbeddedCredentialManager />
           </PerformanceProfiler>
+          <TopToast />
         </NavigationContainer>
       </HeaderShownContext.Provider>
     </SafeAreaView>

@@ -89,7 +89,7 @@ import {
 } from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White, Slate} from '../../../styles/colors';
 import {
   createMultipleWallets,
   getActiveWalletStoreInitPromise,
@@ -370,6 +370,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 8,
+    // Room for the address badge's 19pt hitSlop (taken from the 22pt gap
+    // above via contentTopMargin), so touches there reach the badge.
+    paddingTop: 19,
   },
 });
 
@@ -398,9 +401,14 @@ const WalletListHeader: React.FC<TouchableOpacityProps> = ({
 const WalletListHeaderLabel: React.FC<{
   isActive: boolean;
   children?: React.ReactNode;
-}> = ({isActive, children}) => (
-  <View style={{opacity: isActive ? 1 : 0.4}}>{children}</View>
-);
+}> = ({isActive, children}) => {
+  const theme = useTheme();
+  return (
+    <H5 style={isActive ? undefined : {color: theme.dark ? Slate : SlateDark}}>
+      {children}
+    </H5>
+  );
+};
 
 const CopyToClipboardContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
@@ -456,9 +464,15 @@ const AssetsDataContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
 }) => <View style={styles.assetsDataContainer}>{children}</View>;
 
+// The Wallets / Allocation / Activity row is a tab bar for screen readers
+// ("tab 1 of 3").
 const HeaderListContainer: React.FC<{children?: React.ReactNode}> = ({
   children,
-}) => <View style={styles.headerListContainer}>{children}</View>;
+}) => (
+  <View style={styles.headerListContainer} accessibilityRole="tablist">
+    {children}
+  </View>
+);
 
 const AddCustomTokenContainer: React.FC<TouchableOpacityProps> = ({
   style,
@@ -512,6 +526,7 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 
   return (
     <BadgeContainerTouchable
+      hitSlop={{top: 19, bottom: 0}}
       onPress={copyToClipboard}
       activeOpacity={ActiveOpacity}
       style={{alignSelf: 'center', width: 'auto', minHeight: 25}}>
@@ -524,6 +539,12 @@ const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
 };
 
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
+  // React Compiler opt-out: the compiler already skips this screen because of
+  // its existing exhaustive-deps lint suppressions, and
+  // accountDropdownList caches its last value in a ref read/written inside
+  // useMemo (keeps the previous list while the dropdown is closed), which has
+  // no behaviour-identical compiler-safe form. Keep it uncompiled explicitly.
+  'use no memo';
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
@@ -596,6 +617,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     if (!showPortfolioValue && activeTab === 'allocation') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- falls back to the wallets tab when the allocation tab becomes unavailable
       setActiveTab('wallets');
     }
   }, [activeTab, showPortfolioValue]);
@@ -697,6 +719,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     }
 
     hasHydratedHistoryRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot hydration from the cached history once content is ready
     setAccountTransactionsHistory(cachedAccountHistory);
     setGroupedHistory(GroupTransactionHistory(transactions));
     setLoadMore(
@@ -740,6 +763,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     shouldRenderZeroBalanceChart: shouldRenderZeroAccountBalanceChart,
     shouldPreserveStaleBalanceChart: shouldPreserveStaleAccountBalanceChart,
     isBalanceChartDataReadyToQuery: isAccountBalanceChartDataReadyToQuery,
+    populateProgress: accountChartPopulateProgress,
     chartableWallets: chartableAccountWallets,
   } = usePortfolioBalanceChartReadiness({
     wallets: cacheEligibleAccountWallets,
@@ -791,6 +815,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     useRef<typeof activeAccountList>(activeAccountList);
   const accountDropdownList = useMemo(() => {
     if (!showAccountDropdown) {
+      // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
       return accountDropdownListRef.current;
     }
 
@@ -802,6 +827,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       {filterByHideWallet: true},
     ).filter(({chains}) => IsVMChain(chains[0]));
 
+    // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
     accountDropdownListRef.current = accountsForDropdown;
     return accountsForDropdown;
   }, [defaultAltCurrency.isoCode, dispatch, key, rates, showAccountDropdown]);
@@ -1202,6 +1228,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const updateWalletStatusAndProfileBalanceRef = useRef(
     updateWalletStatusAndProfileBalance,
   );
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   updateWalletStatusAndProfileBalanceRef.current =
     updateWalletStatusAndProfileBalance;
 
@@ -1426,6 +1453,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       dispatch(
         showBottomNotificationModal(
           RbfTransaction(
+            // eslint-disable-next-line react-hooks/immutability -- see 'use no memo' above
             () => speedupTransaction(transaction),
             () => goToTransactionDetails(transaction),
           ),
@@ -1695,6 +1723,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [keyFullWalletObjs],
   );
   const preloadWalletDetailsRef = useRef(preloadWalletDetails);
+  // eslint-disable-next-line react-hooks/refs -- see 'use no memo' above
   preloadWalletDetailsRef.current = preloadWalletDetails;
   const stablePreloadWalletDetails = useCallback(
     (walletId: string) => preloadWalletDetailsRef.current(walletId),
@@ -1857,6 +1886,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       }),
     [defaultAltCurrency.isoCode, key, keyFullWalletObjs, rates],
   );
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- see 'use no memo' above
   const memorizedAssetsByChainList = useMemo(() => {
     if (!contentReady) {
       return (
@@ -1969,13 +1999,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <BalanceHeaderSupplement
                   changeRowData={accountHeaderChangeRowData}
                   content={accountChartPreContent}
+                  contentTopMargin={3}
                   reserveChangeRowSpace={
                     shouldRenderAccountBalanceChart ||
                     shouldShowAccountChartPlaceholder
                   }
                 />
                 {shouldShowAccountChartPlaceholder ? (
-                  <BalanceChartLoadingPlaceholder />
+                  <BalanceChartLoadingPlaceholder
+                    populateProgress={accountChartPopulateProgress}
+                  />
                 ) : null}
                 {shouldRenderAccountBalanceChart ? (
                   <View
@@ -1983,6 +2016,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       shouldShowAccountChartPlaceholder
                         ? styles.hiddenChart
                         : undefined
+                    }
+                    accessibilityElementsHidden={
+                      shouldShowAccountChartPlaceholder
+                    }
+                    importantForAccessibility={
+                      shouldShowAccountChartPlaceholder
+                        ? 'no-hide-descendants'
+                        : 'auto'
                     }>
                     <BalanceHistoryChart
                       wallets={chartableAccountWallets}
@@ -2015,6 +2056,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       onRenderableSeriesChange={
                         onAccountChartRenderableSeriesChange
                       }
+                      populateProgress={accountChartPopulateProgress}
+                      // Only the visible placeholder animates while this chart is hidden.
+                      skeletonVariant={
+                        shouldShowAccountChartPlaceholder ? 'static' : 'drawing'
+                      }
+                      // Reveal the chart's own error state (with Retry).
+                      onErrorStateChange={onAccountChartRenderableSeriesChange}
                     />
                   </View>
                 ) : null}
@@ -2106,41 +2154,44 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             <WalletListHeader
               activeOpacity={1}
               testID="account-details-wallets-tab"
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityLabel={t('Wallets')}
+              accessibilityState={{selected: isWalletsTab}}
               onPress={() => {
                 setActiveTab('wallets');
               }}>
               <WalletListHeaderLabel isActive={isWalletsTab}>
-                <H5>{t('Wallets')}</H5>
+                {t('Wallets')}
               </WalletListHeaderLabel>
             </WalletListHeader>
             {showPortfolioValue ? (
               <WalletListHeader
                 activeOpacity={1}
                 testID="account-details-allocation-tab"
-                accessibilityRole="button"
+                accessibilityRole="tab"
                 accessibilityLabel={t('Allocation')}
+                accessibilityState={{selected: isAllocationTab}}
                 onPress={() => {
                   setActiveTab('allocation');
                 }}>
                 <WalletListHeaderLabel isActive={isAllocationTab}>
-                  <H5>{t('Allocation')}</H5>
+                  {t('Allocation')}
                 </WalletListHeaderLabel>
               </WalletListHeader>
             ) : null}
             <WalletListHeader
               activeOpacity={1}
               testID="account-details-activity-tab"
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityLabel={t('Activity')}
+              accessibilityState={{selected: isActivityTab}}
               onPress={async () => {
                 setActiveTab('activity');
                 await sleep(200);
                 loadInitialHistory();
               }}>
               <WalletListHeaderLabel isActive={isActivityTab}>
-                <H5>{t('Activity')}</H5>
+                {t('Activity')}
               </WalletListHeaderLabel>
             </WalletListHeader>
           </HeaderListContainer>
@@ -2185,6 +2236,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [
     activeTab,
+    accountChartPopulateProgress,
     accountChartPreContent,
     accountHeaderChangeRowData,
     accountItem?.fiatLockedBalanceFormat,

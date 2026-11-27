@@ -20,6 +20,7 @@ interface RippleProps {
   onLongPress?: () => void;
   isSmallScreen?: boolean;
   context?: KeyboardSizesContext;
+  accessibilityLabel?: string;
   children: React.ReactNode;
 }
 
@@ -29,6 +30,7 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   onLongPress,
   isSmallScreen,
   context,
+  accessibilityLabel,
   children,
 }) => {
   const didLongPress = useRef(false);
@@ -51,6 +53,8 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       android_ripple={{color: backgroundColor, borderless: true}}
       delayLongPress={1000}
       onLongPress={handleLongPress}

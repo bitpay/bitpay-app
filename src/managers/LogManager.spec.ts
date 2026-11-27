@@ -66,6 +66,21 @@ describe('LogManager', () => {
     );
   });
 
+  it('redacts private data from the Sentry breadcrumb and the session log', () => {
+    const {logManager} = require('./LogManager');
+
+    logManager.error('Mnemonic string is invalid: abandon\nability able');
+
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'log',
+      message: 'Mnemonic string is invalid: [...]',
+      level: 'error',
+    });
+    expect(logManager.getLogs()).toEqual([
+      expect.objectContaining({message: 'Mnemonic string is invalid: [...]'}),
+    ]);
+  });
+
   it('keeps custom Sentry breadcrumb messages unchanged when session logs are disabled', () => {
     (isSessionLogsEnabled as jest.Mock).mockReturnValue(false);
     const {logManager} = require('./LogManager');
@@ -78,5 +93,57 @@ describe('LogManager', () => {
       level: 'warning',
     });
     expect(logManager.getLogs()).toEqual([]);
+  });
+
+  it.each([
+    [
+      'walletPrivKey',
+      'failed with walletPrivKey: deadbeef01',
+      'failed with walletPrivKey:[...]',
+    ],
+    [
+      'xprv',
+      'failed with xprv9s21ZrQH143K3QTDL4LXw2F7HEK3 here',
+      'failed with [...] here',
+    ],
+    [
+      'tprv',
+      'failed with tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSbrd here',
+      'failed with [...] here',
+    ],
+  ])(
+    'redacts a %s value in the session log and Sentry breadcrumb',
+    (_kind, input, expected) => {
+      const {logManager} = require('./LogManager');
+
+      logManager.error(input);
+
+      expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+        category: 'log',
+        message: expected,
+        level: 'error',
+      });
+      expect(logManager.getLogs()).toEqual([
+        expect.objectContaining({message: expected}),
+      ]);
+    },
+  );
+
+  it('redacts key material in a custom Sentry breadcrumb message', () => {
+    const {logManager} = require('./LogManager');
+
+    logManager.warnWithSentryMessage(
+      'local walletPrivKey=cafebabe',
+      'sentry tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSbrd here',
+    );
+
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'log',
+      message: 'sentry [...] here',
+      level: 'warning',
+    });
+    expect(logManager.getLogs()).toEqual([
+      expect.objectContaining({message: 'local walletPrivKey:[...]'}),
+    ]);
   });
 });

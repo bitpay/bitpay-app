@@ -25,6 +25,15 @@ jest.mock('@braze/react-native-sdk', () => ({
 }));
 
 jest.mock('react-native-bootsplash', () => ({hide: jest.fn()}));
+jest.mock('../../utils/deviceIntegrity', () => ({
+  getDeviceIntegrity: jest.fn(() => ({
+    isCompromised: false,
+    hookDetected: false,
+    mockLocationEnabled: false,
+    reason: null,
+  })),
+  reportDeviceIntegrityToSentry: jest.fn(),
+}));
 jest.mock('../wallet-secrets/wallet-secrets.effects', () => ({
   migrateWalletSecrets: jest.fn(() => async () => {}),
 }));
@@ -47,7 +56,7 @@ jest.mock('react-native-permissions', () => ({
   PERMISSIONS: {},
   request: jest.fn(),
   requestNotifications: jest.fn(),
-  RESULTS: {},
+  RESULTS: {GRANTED: 'granted', DENIED: 'denied', BLOCKED: 'blocked'},
 }));
 jest.mock('react-native-quick-actions', () => ({
   clearShortcutItems: jest.fn(),
@@ -332,6 +341,7 @@ import {
   incomingLink,
   openExternalUrl,
   openUrlWithInAppBrowser,
+  requestNotificationsPermissions,
   startAppInit,
   TOKEN_WALLET_LOOKUP_INTERVAL,
   TOKEN_WALLET_LOOKUP_TIMEOUT,
@@ -339,6 +349,7 @@ import {
 import {logManager} from '../../managers/LogManager';
 import {sleep} from '../../utils/helper-methods';
 import {Linking} from 'react-native';
+import {requestNotifications, RESULTS} from 'react-native-permissions';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {navigationRef} from '../../Root';
 import {findWalletByIdHashed} from '../wallet/utils/wallet';
@@ -398,6 +409,42 @@ const makeState = () =>
     },
   } as any);
 
+describe('requestNotificationsPermissions', () => {
+  beforeEach(() => {
+    (requestNotifications as jest.Mock).mockReset();
+  });
+
+  it.each([
+    [RESULTS.GRANTED, true],
+    [RESULTS.DENIED, false],
+    [RESULTS.BLOCKED, false],
+  ])('resolves %s notifications as %s', async (status, accepted) => {
+    (requestNotifications as jest.Mock).mockResolvedValueOnce({status});
+
+    await expect(requestNotificationsPermissions()).resolves.toBe(accepted);
+
+    expect(requestNotifications).toHaveBeenCalledWith([
+      'alert',
+      'badge',
+      'sound',
+    ]);
+  });
+
+  it('resolves false when the native notification request rejects', async () => {
+    (requestNotifications as jest.Mock).mockRejectedValueOnce(
+      new Error('Native notification request failed'),
+    );
+
+    await expect(requestNotificationsPermissions()).resolves.toBe(false);
+
+    expect(requestNotifications).toHaveBeenCalledWith([
+      'alert',
+      'badge',
+      'sound',
+    ]);
+  });
+});
+
 describe('startAppInit', () => {
   const originalDev = global.__DEV__;
 
@@ -438,6 +485,28 @@ describe('startAppInit', () => {
     await initPromise;
 
     expect(mockCleanupDisabledSessionLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs the startup device-integrity report only once startup has settled', async () => {
+    const {getDeviceIntegrity} = jest.requireMock(
+      '../../utils/deviceIntegrity',
+    );
+    const startupSignals = jest.requireActual('../../utils/startupSignals');
+    startupSignals.resetStartupSignalsForTests();
+    const dispatch = jest.fn(action =>
+      typeof action === 'function'
+        ? action(dispatch, jest.fn(makeState), undefined)
+        : action,
+    );
+
+    await startAppInit()(dispatch, jest.fn(makeState), undefined as any);
+    expect(getDeviceIntegrity).not.toHaveBeenCalled();
+
+    startupSignals.markFirstScreenShown();
+    await new Promise(resolve => setTimeout(resolve, 10));
+    await flushMicrotasks();
+
+    expect(getDeviceIntegrity).toHaveBeenCalledTimes(1);
   });
 
   it('does not clean session logs again after the production cleanup has run', async () => {

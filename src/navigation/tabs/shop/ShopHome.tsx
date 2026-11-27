@@ -32,6 +32,7 @@ import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {HEIGHT} from '../../../components/styled/Containers';
+import {createScrollSignal, ShopScrollContext} from './shopScroll';
 import {useTheme} from '../../../contexts';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
@@ -187,6 +188,8 @@ const ShopHome: React.FC<
   const categoriesAndCurations = useAppSelector(selectCategoriesAndCurations);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  // Lists inside the tab navigator read the offset to mount rows on demand.
+  const scrollSignal = useMemo(createScrollSignal, []);
   useScrollToTop(scrollViewRef);
 
   const availableGiftCards = useMemo(
@@ -206,6 +209,7 @@ const ShopHome: React.FC<
         categoriesAndCurations,
         purchasedGiftCards,
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is an intentional trigger: getGiftCardCurations translates curation titles via the global i18n t
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards, t],
   );
 
@@ -322,7 +326,7 @@ const ShopHome: React.FC<
         dispatch(ShopEffects.startSyncGiftCards());
         setInitialSyncComplete(true);
       }
-    }, [initialSyncComplete]),
+    }, [dispatch, initialSyncComplete]),
   );
 
   return (
@@ -332,6 +336,8 @@ const ShopHome: React.FC<
       </HeaderContainer>
       <ScrollView
         ref={scrollViewRef}
+        onScroll={e => scrollSignal.set(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={100}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={Keyboard.dismiss}
@@ -351,43 +357,45 @@ const ShopHome: React.FC<
             />
           ) : undefined
         }>
-        <ShopInnerContainer>
-          {isEuLocation ? (
-            <GeoBlockedMessage />
-          ) : (
-            <Tab.Navigator
-              style={{
-                height: scrollViewHeight,
-              }}
-              screenOptions={ScreenOptions({
-                fontSize: 16,
-                marginHorizontal: 5,
-                numTabs: 2,
-                tabWidth: 120,
-                langAdjustments: true,
-              })}
-              screenListeners={{
-                tabPress: tab => {
-                  if (tab.target) {
-                    setActiveTab(
-                      tab.target.includes(ShopTabs.GIFT_CARDS)
-                        ? ShopTabs.GIFT_CARDS
-                        : ShopTabs.SHOP_ONLINE,
-                    );
-                  }
-                },
-              }}>
-              <Tab.Screen
-                name={t('Gift Cards')}
-                component={memoizedGiftCardCatalog}
-              />
-              <Tab.Screen
-                name={t('Shop Online')}
-                component={memoizedShopOnline}
-              />
-            </Tab.Navigator>
-          )}
-        </ShopInnerContainer>
+        <ShopScrollContext.Provider value={scrollSignal}>
+          <ShopInnerContainer>
+            {isEuLocation ? (
+              <GeoBlockedMessage />
+            ) : (
+              <Tab.Navigator
+                style={{
+                  height: scrollViewHeight,
+                }}
+                screenOptions={ScreenOptions({
+                  fontSize: 16,
+                  marginHorizontal: 5,
+                  numTabs: 2,
+                  tabWidth: 120,
+                  langAdjustments: true,
+                })}
+                screenListeners={{
+                  tabPress: tab => {
+                    if (tab.target) {
+                      setActiveTab(
+                        tab.target.includes(ShopTabs.GIFT_CARDS)
+                          ? ShopTabs.GIFT_CARDS
+                          : ShopTabs.SHOP_ONLINE,
+                      );
+                    }
+                  },
+                }}>
+                <Tab.Screen
+                  name={t('Gift Cards')}
+                  component={memoizedGiftCardCatalog}
+                />
+                <Tab.Screen
+                  name={t('Shop Online')}
+                  component={memoizedShopOnline}
+                />
+              </Tab.Navigator>
+            )}
+          </ShopInnerContainer>
+        </ShopScrollContext.Provider>
       </ScrollView>
     </TabContainer>
   );

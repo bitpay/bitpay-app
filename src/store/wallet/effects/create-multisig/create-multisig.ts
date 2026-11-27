@@ -13,6 +13,7 @@ import {
   successUpdateKey,
   setPendingJoinerSession,
   removePendingJoinerSession,
+  clearTssSessionSecrets,
 } from '../../wallet.actions';
 import {
   JoinerSessionId,
@@ -33,7 +34,11 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
 import {createWalletAddress} from '../address/address';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedEvmCoins,
+  SUPPORTED_EVM_COINS,
+} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 
@@ -129,7 +134,6 @@ export const startCreateKeyMultisig =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {keys},
         } = getState();
 
         const _key = BWC.createKey({
@@ -281,22 +285,12 @@ export const startCreateTSSKey =
     network: string;
     m: number;
     n: number;
-    password?: string;
     myName: string;
     walletName: string;
   }): Effect<Promise<{key: Key}>> =>
   async (dispatch): Promise<{key: Key}> => {
     try {
-      const {
-        coin,
-        chain: _chain,
-        network,
-        m,
-        n,
-        password,
-        walletName,
-        myName,
-      } = opts;
+      const {coin, chain: _chain, network, m, n, walletName, myName} = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
       const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
@@ -316,7 +310,6 @@ export const startCreateTSSKey =
       await tssKeyGen.newKey({
         m: m,
         n: n,
-        password: password,
       });
 
       const sessionId = tssKeyGen.id;
@@ -384,7 +377,6 @@ export const startCreateTSSKey =
         network,
         m,
         n,
-        password,
         myName,
         walletName,
         createdAt: Date.now(),
@@ -454,17 +446,19 @@ export const addCoSignerToTSS =
       await tssKeyGen.restoreSession({session: key.tssSession.sessionExport});
       logManager.debug(`[TSS] Session restored with ID: ${tssKeyGen.id}`);
 
-      if (!getState().WALLET.keys[opts.keyId]) {
-        throw new Error('Key not found or no TSS session');
-      }
-
-      const joinCode = tssKeyGen.createJoinCode({
+      const joinCode = await tssKeyGen.createJoinCode({
         partyId: opts.partyId,
         partyPubKey: joinerData.pubKey,
         opts: {encoding: 'base64'},
       });
 
+      if (!getState().WALLET.keys[opts.keyId]) {
+        throw new Error('Key not found or no TSS session');
+      }
+
       logManager.debug(`[TSS] Created joinCode for party ${opts.partyId}`);
+
+      const sessionExport = tssKeyGen.exportSession();
 
       const updatedCopayers = [...(key.tssSession.copayers || [])];
       const copayerIndex = updatedCopayers.findIndex(
@@ -488,6 +482,7 @@ export const addCoSignerToTSS =
         ...key,
         tssSession: {
           ...key.tssSession,
+          sessionExport,
           copayers: updatedCopayers,
           status: newStatus,
         },
@@ -501,6 +496,225 @@ export const addCoSignerToTSS =
       logManager.error(`Error adding co-signer: ${errorStr}`);
       throw err;
     }
+  };
+
+const activeChainWallets = new Map<string, Promise<Key | undefined>>();
+
+// Exposed so tests on slow/contended machines can extend the 20s default.
+export const tssChainWalletsConfig = {timeoutMs: 20_000};
+
+export const createTSSChainWallets =
+  (keyId: string): Effect<Promise<Key | undefined>> =>
+  (dispatch, getState) => {
+    const active = activeChainWallets.get(keyId);
+    if (active) {
+      return active;
+    }
+
+    const createWallets = async () => {
+      const key = getState().WALLET.keys[keyId];
+      const primaryWallet = key?.wallets[0];
+      const tssKey = key?.methods as any;
+      if (
+        !tssKey?.metadata ||
+        !primaryWallet ||
+        !SUPPORTED_EVM_COINS.includes(primaryWallet.chain)
+      ) {
+        return key;
+      }
+
+      const baseCredentials = primaryWallet.credentials;
+      const {network, copayerName} = baseCredentials;
+      const n = tssKey.metadata.n;
+      if ((baseCredentials.publicKeyRing?.length || 0) < n) {
+        return key;
+      }
+      const currencies = Object.values(BitpaySupportedEvmCoins).filter(
+        currency =>
+          !key.wallets.some(
+            wallet =>
+              wallet.chain === currency.chain && wallet.network === network,
+          ),
+      );
+      if (!currencies.length) {
+        return key;
+      }
+
+      const deadline = Date.now() + tssChainWalletsConfig.timeoutMs;
+      const isCurrentKey = () =>
+        getState().WALLET.keys[keyId]?.methods === tssKey;
+      const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+      const chainWallets = await Promise.all(
+        currencies.map(async currency => {
+          let timeoutId: ReturnType<typeof setTimeout> | undefined;
+          try {
+            return await Promise.race([
+              (async () => {
+                let result: any;
+                let client: any;
+                while (Date.now() < deadline && isCurrentKey()) {
+                  try {
+                    if (!result) {
+                      const params = {
+                        baseKey: tssKey,
+                        baseCredentials,
+                        baseUrl: BASE_BWS_URL,
+                        copayerName,
+                        opts: {
+                          chain: currency.chain,
+                          coin:
+                            currency.coin === 'pol' ? 'matic' : currency.coin,
+                          network,
+                        },
+                      };
+                      result =
+                        tssKey.metadata.partyId === 0
+                          ? await BWC.createTssWallet({
+                              ...params,
+                              walletName: primaryWallet.walletName,
+                            })
+                          : await BWC.joinTssWallet(params);
+                    }
+                    if (Date.now() >= deadline || !isCurrentKey()) {
+                      return;
+                    }
+                    if (!client) {
+                      client = BWC.getClient();
+                      client.fromObj(result.credentials.toObj());
+                    }
+                    const status = await client.openWallet({forceOpen: true});
+                    if (Date.now() >= deadline || !isCurrentKey()) {
+                      return;
+                    }
+                    if ((client.credentials.publicKeyRing?.length || 0) >= n) {
+                      const walletFromBWS = status.wallet;
+                      const {currencyAbbreviation, currencyName} = dispatch(
+                        mapAbbreviationAndName(
+                          walletFromBWS.coin,
+                          walletFromBWS.chain,
+                          undefined,
+                        ),
+                      );
+                      const wallet = merge(
+                        client,
+                        walletFromBWS,
+                        buildWalletObj(
+                          {
+                            ...client.credentials.toObj(),
+                            currencyAbbreviation,
+                            currencyName,
+                            tssMetadata: tssKey.metadata,
+                          } as any,
+                          tokenOptionsByAddress,
+                        ),
+                      ) as Wallet;
+                      await dispatch(
+                        createWalletAddress({wallet, newAddress: false}),
+                      );
+                      if (Date.now() < deadline && isCurrentKey()) {
+                        return wallet;
+                      }
+                      return;
+                    }
+                  } catch (err) {
+                    const message =
+                      err instanceof Error ? err.message : String(err);
+                    if (
+                      !message.includes('TSS_BWS_JOIN_SECRET_NOT_FOUND') &&
+                      !(result && message.includes('CONNECTION_ERROR'))
+                    ) {
+                      throw err;
+                    }
+                  }
+                  await new Promise(resolve =>
+                    setTimeout(resolve, Math.min(1000, deadline - Date.now())),
+                  );
+                }
+              })(),
+              new Promise<undefined>(resolve => {
+                timeoutId = setTimeout(
+                  () => resolve(undefined),
+                  Math.max(0, deadline - Date.now()),
+                );
+              }),
+            ]);
+          } catch (err) {
+            logManager.warn(
+              `[TSS] Could not add ${currency.chain} wallet: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        }),
+      );
+
+      const currentKey = getState().WALLET.keys[keyId];
+      if (!isCurrentKey()) {
+        return currentKey;
+      }
+      const wallets = chainWallets.filter((wallet): wallet is Wallet =>
+        Boolean(wallet),
+      );
+      const addedWallets = wallets.filter(
+        wallet =>
+          !currentKey.wallets.some(existing => existing.id === wallet.id),
+      );
+      if (!addedWallets.length) {
+        return currentKey;
+      }
+      const updatedKey = {
+        ...currentKey,
+        properties: tssKey.toObj(),
+        wallets: [...currentKey.wallets, ...addedWallets],
+      };
+      dispatch(successUpdateKey({key: updatedKey}));
+      const {
+        notificationsAccepted,
+        brazeEid,
+        emailNotifications,
+        defaultLanguage,
+      } = getState().APP;
+      for (const wallet of addedWallets) {
+        try {
+          if (notificationsAccepted) {
+            await dispatch(subscribePushNotifications(wallet, brazeEid!));
+          }
+          if (emailNotifications?.accepted && emailNotifications?.email) {
+            await dispatch(
+              subscribeEmailNotifications(wallet, {
+                email: emailNotifications.email,
+                language: defaultLanguage,
+                unit: 'btc',
+              }),
+            );
+          }
+        } catch (err) {
+          logManager.warn(
+            `[TSS] Could not subscribe ${wallet.chain} notifications: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        }
+      }
+      return updatedKey;
+    };
+
+    const pending = createWallets()
+      .catch(err => {
+        logManager.warn(
+          `[TSS] Could not add chain wallets: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+        return getState().WALLET.keys[keyId];
+      })
+      .finally(() => {
+        activeChainWallets.delete(keyId);
+      });
+    activeChainWallets.set(keyId, pending);
+    return pending;
   };
 
 export const startTSSCeremony =
@@ -603,12 +817,9 @@ export const startTSSCeremony =
         );
 
         let walletFromBWS: any;
-        const Bitcore = BWC.getBitcore();
-        const walletPrivKey = new Bitcore.PrivateKey().toString();
-
         await Promise.race([
-          new Promise<void>((resolve, reject) => {
-            rejectCeremony = reject;
+          new Promise<void>((resolveCeremony, rejectKeyGen) => {
+            rejectCeremony = rejectKeyGen;
             let roundsStarted = false;
             let stuckErrorCount = 0;
             tssKeyGen
@@ -616,7 +827,7 @@ export const startTSSCeremony =
                 if (!roundsStarted && r === 2) {
                   roundsStarted = true;
                   ceremonyTimeoutId = setTimeout(
-                    () => reject(new Error('CEREMONY_TIMEOUT')),
+                    () => rejectCeremony(new Error('CEREMONY_TIMEOUT')),
                     getCeremonyTimeoutMs(key.tssSession!.n),
                   );
                 }
@@ -645,7 +856,7 @@ export const startTSSCeremony =
                       },
                     }),
                   );
-                } catch (e) {}
+                } catch {}
               })
               .on('roundsubmitted', (r: number) => {
                 stuckErrorCount = 0;
@@ -668,7 +879,7 @@ export const startTSSCeremony =
                       },
                     }),
                   );
-                } catch (e) {}
+                } catch {}
               })
               .on('wallet', (w: any) => {
                 logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
@@ -692,7 +903,7 @@ export const startTSSCeremony =
                       activeCeremonies.delete(keyId);
                       clearCeremonyStats(keyId);
                       tssKeyGen.unsubscribe();
-                      reject(new Error('CEREMONY_STUCK'));
+                      rejectCeremony(new Error('CEREMONY_STUCK'));
                       return;
                     }
                   }
@@ -709,11 +920,11 @@ export const startTSSCeremony =
                 activeCeremonies.delete(keyId);
                 clearCeremonyStats(keyId);
                 tssKeyGen.unsubscribe();
-                reject(toCeremonyError(e));
+                rejectCeremony(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Ceremony complete]`);
-                resolve();
+                resolveCeremony();
               });
 
             logManager.info(
@@ -726,7 +937,6 @@ export const startTSSCeremony =
                 network,
                 coin,
                 chain,
-                walletPrivKey,
               },
             });
           }),
@@ -753,7 +963,6 @@ export const startTSSCeremony =
           chain,
           network,
           account: 0,
-          walletPrivKey,
         });
 
         credentials.addWalletInfo(
@@ -808,6 +1017,11 @@ export const startTSSCeremony =
                       status.wallet?.copayers?.length >= key.tssSession!.n
                     ) {
                       walletFromBWS = status.wallet;
+                      if (status.customData?.walletPrivKey) {
+                        credentials.addWalletPrivateKey(
+                          status.customData.walletPrivKey,
+                        );
+                      }
                       if (status.wallet?.publicKeyRing) {
                         credentials.addPublicKeyRing(
                           status.wallet.publicKeyRing,
@@ -843,13 +1057,16 @@ export const startTSSCeremony =
                   key.tssSession!.n
                 } copayers found, retrying in ${delayMs}ms...`,
               );
-              await new Promise(resolve => setTimeout(resolve, delayMs));
+              await new Promise(resolveDelay =>
+                setTimeout(resolveDelay, delayMs),
+              );
             } else {
               logManager.warn(
                 `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
                   key.tssSession!.n
-                } copayers found. Continuing anyway...`,
+                } copayers found.`,
               );
+              throw new Error('CEREMONY_TIMEOUT');
             }
           }
         };
@@ -908,6 +1125,7 @@ export const startTSSCeremony =
         }
 
         dispatch(successUpdateKey({key: finalKey}));
+        dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(keyId, 'complete');
         activeCeremonies.delete(keyId);
         clearCeremonyStats(keyId);
@@ -915,7 +1133,8 @@ export const startTSSCeremony =
         logManager.info(
           `[TSS Ceremony] Complete! Wallet ID: ${walletFromBWS.id} | active=${activeCeremonies.size}`,
         );
-        resolve(finalKey);
+        const completedKey = await dispatch(createTSSChainWallets(finalKey.id));
+        resolve(completedKey || finalKey);
       } catch (err) {
         clearTimeout(ceremonyTimeoutId);
         const errorStr =
@@ -938,7 +1157,7 @@ export const generateJoinerSessionId =
   (opts?: {
     name?: string;
   }): Effect<Promise<{sessionId: string; partyKey: any}>> =>
-  async (dispatch, getState): Promise<{sessionId: string; partyKey: any}> => {
+  async (dispatch): Promise<{sessionId: string; partyKey: any}> => {
     try {
       const partyKey = BWC.createKey({seedType: 'new'});
 
@@ -979,12 +1198,12 @@ export const clearPendingJoinerSession = (): Effect<void> => dispatch => {
 export const validateJoinCode =
   (joinCode: string, partyKey: any): Effect<void> =>
   () => {
-    const BWC = BwcProvider.getInstance();
-    const restoredKey = BWC.createKey({
+    const bwc = BwcProvider.getInstance();
+    const restoredKey = bwc.createKey({
       seedType: 'object',
       seedData: partyKey,
     });
-    const tempTssKeyGen = BWC.createKeyGen({
+    const tempTssKeyGen = bwc.createKeyGen({
       coin: 'btc',
       chain: 'btc',
       network: 'livenet',
@@ -1235,7 +1454,7 @@ export const joinTSSWithCode =
         let walletFromBWS: any;
 
         await Promise.race([
-          new Promise<void>((resolve, reject) => {
+          new Promise<void>((resolveCeremony, rejectCeremony) => {
             let roundsStarted = false;
             let stuckErrorCount = 0;
             tssKeyGen
@@ -1243,7 +1462,7 @@ export const joinTSSWithCode =
                 if (!roundsStarted && r === 2) {
                   roundsStarted = true;
                   joinTimeoutId = setTimeout(
-                    () => reject(new Error('CEREMONY_TIMEOUT')),
+                    () => rejectCeremony(new Error('CEREMONY_TIMEOUT')),
                     getCeremonyTimeoutMs(tssSession.n),
                   );
                 }
@@ -1274,7 +1493,7 @@ export const joinTSSWithCode =
                       }),
                     );
                   }
-                } catch (e) {}
+                } catch {}
               })
               .on('roundsubmitted', (r: number) => {
                 stuckErrorCount = 0;
@@ -1299,7 +1518,7 @@ export const joinTSSWithCode =
                       }),
                     );
                   }
-                } catch (e) {}
+                } catch {}
               })
               .on('wallet', (w: any) => {
                 logManager.debug(`[TSS Join wallet] ${w?.id}`);
@@ -1333,7 +1552,7 @@ export const joinTSSWithCode =
                       activeCeremonies.delete(key.id);
                       clearCeremonyStats(key.id);
                       tssKeyGen.unsubscribe();
-                      reject(new Error('CEREMONY_STUCK'));
+                      rejectCeremony(new Error('CEREMONY_STUCK'));
                       return;
                     }
                   }
@@ -1350,11 +1569,11 @@ export const joinTSSWithCode =
                 activeCeremonies.delete(key.id);
                 clearCeremonyStats(key.id);
                 tssKeyGen.unsubscribe();
-                reject(toCeremonyError(e));
+                rejectCeremony(toCeremonyError(e));
               })
               .on('complete', () => {
                 logManager.debug(`[TSS Join complete]`);
-                resolve();
+                resolveCeremony();
               });
 
             logManager.info(
@@ -1480,16 +1699,26 @@ export const joinTSSWithCode =
               logManager.debug(
                 `[TSS Ceremony] Only ${currentCopayersCount}/${tssSession.n} copayers found, retrying in ${delayMs}ms...`,
               );
-              await new Promise(resolve => setTimeout(resolve, delayMs));
+              await new Promise(resolveDelay =>
+                setTimeout(resolveDelay, delayMs),
+              );
             } else {
               logManager.warn(
-                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${tssSession.n} copayers found. Continuing anyway...`,
+                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${tssSession.n} copayers found.`,
               );
+              throw new Error('CEREMONY_TIMEOUT');
             }
           }
         };
 
         await refreshWalletWithRetry(5, 1000);
+
+        if (
+          !getState().WALLET.keys[key.id] ||
+          activeCeremonies.get(key.id) !== tssKeyGen
+        ) {
+          throw new Error('CEREMONY_CANCELLED');
+        }
 
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(finalWalletClient, brazeEid!));
@@ -1508,6 +1737,13 @@ export const joinTSSWithCode =
           createWalletAddress({wallet: finalWalletClient, newAddress: false}),
         )) as string;
         logManager.info(`[TSS Join] Address retrieved: ${walletAddress}`);
+
+        if (
+          !getState().WALLET.keys[key.id] ||
+          activeCeremonies.get(key.id) !== tssKeyGen
+        ) {
+          throw new Error('CEREMONY_CANCELLED');
+        }
 
         const finalWallet = merge(
           finalWalletClient,
@@ -1538,6 +1774,7 @@ export const joinTSSWithCode =
         };
 
         dispatch(successUpdateKey({key: finalKey}));
+        dispatch(clearTssSessionSecrets([finalKey.id]));
         logCeremonyStats(finalKey.id, 'complete');
         activeCeremonies.delete(finalKey.id);
         clearCeremonyStats(finalKey.id);
@@ -1545,7 +1782,8 @@ export const joinTSSWithCode =
         logManager.info(
           `[TSS Join] Complete! Wallet ID: ${walletFromBWS.id} | active=${activeCeremonies.size}`,
         );
-        resolve(finalKey);
+        const completedKey = await dispatch(createTSSChainWallets(finalKey.id));
+        resolve(completedKey || finalKey);
       } catch (err) {
         clearTimeout(joinTimeoutId);
         const errorStr =

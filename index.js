@@ -1,3 +1,5 @@
+// First: starts the Keychain read the store waits for (src/startup).
+import './src/startup/startEncryptionKeyPrefetch';
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
 import {install as installQuickCrypto} from 'react-native-quick-crypto';
 import '@ethersproject/shims';
@@ -6,10 +8,18 @@ import './shim';
 import '@walletconnect/react-native-compat';
 import {AppRegistry, Alert, StatusBar, LogBox} from 'react-native';
 import {IS_MAESTRO} from '@env';
+import {mark} from './src/perf/PerfMonitor';
 
 if (IS_MAESTRO === 'true') {
   LogBox.ignoreAllLogs();
 }
+
+// ES imports are hoisted, so this runs after every module index.js imports
+// (Root and the graph it pulls in) has been evaluated, not before them: the
+// "RN start -> JS entry" phase includes that module graph. To run something
+// before it, put it in a side-effect module imported first (see
+// src/startup/startEncryptionKeyPrefetch.ts).
+mark('bp_js_entry');
 import Root from './src/Root';
 import React, {useState, useEffect} from 'react';
 import './i18n';
@@ -48,6 +58,10 @@ import {useAppSelector} from './src/utils/hooks';
 import {useResolvedColorScheme} from './src/utils/hooks/useResolvedColorScheme';
 import {DklsWorkerHost} from './src/dkls/DklsWorker';
 import * as Sentry from '@sentry/react-native';
+import {
+  redactExtendedPrivateKeys,
+  sanitizeLogMessage,
+} from './src/store/log/log.models';
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -73,12 +87,22 @@ Sentry.init({
     if (event.breadcrumbs) {
       event.breadcrumbs = event.breadcrumbs.filter(b => b.category === 'log');
     }
+    if (typeof event.message === 'string') {
+      event.message = redactExtendedPrivateKeys(event.message);
+    }
+    event.exception?.values?.forEach(v => {
+      if (typeof v?.value === 'string') {
+        v.value = redactExtendedPrivateKeys(v.value);
+      }
+    });
     return event;
   },
   beforeBreadcrumb(breadcrumb) {
     // Only keep our custom log breadcrumbs, discard everything else
     if (breadcrumb.category === 'log') {
-      return breadcrumb;
+      return typeof breadcrumb.message === 'string'
+        ? {...breadcrumb, message: sanitizeLogMessage(breadcrumb.message)}
+        : breadcrumb;
     }
     return null;
   },
@@ -170,6 +194,7 @@ const ReduxProvider = () => {
           return;
         }
 
+        mark('bp_store_ready');
         setStore({store, persistor});
         setStoreReady(true);
         setJSExceptionHandler(makeErrorHandler(store), true);
@@ -202,7 +227,17 @@ const ReduxProvider = () => {
 
   return (
     <Provider store={reduxStore}>
-      <PersistGate loading={null} persistor={reduxPersistor}>
+      <PersistGate
+        loading={null}
+        persistor={reduxPersistor}
+        onBeforeLift={() => {
+          // redux-persist rehydration runs an encryption transform over the
+          // persisted state — historically one of the larger startup costs, so
+          // it gets its own mark. onBeforeLift fires once when rehydration
+          // completes, before the gated children render, so this marks at the
+          // right moment and does not duplicate on later re-renders.
+          mark('bp_store_rehydrated');
+        }}>
         {storeRehydrated => (storeRehydrated ? <AppWrapper /> : null)}
       </PersistGate>
     </Provider>

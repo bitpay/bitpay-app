@@ -61,7 +61,6 @@ import {
   IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {LogActions} from '../../../store/log';
 import {CommonActions, useTheme} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -235,6 +234,7 @@ const AddWallet = ({
         );
       },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- header is set when navigation or t change; currencyAbbreviation (route param) is read at that time
   }, [navigation, t]);
 
   const toggleUseNativeSegwit = () => {
@@ -318,7 +318,7 @@ const AddWallet = ({
           await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
           await sleep(1000);
           dispatch(updatePortfolioBalance());
-        } catch (error) {
+        } catch {
           // ignore error
         }
 

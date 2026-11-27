@@ -2,7 +2,7 @@ import * as appActions from '../app/app.actions';
 import {logManager} from '../../managers/LogManager';
 import * as Root from '../../Root';
 import * as PayPro from '../wallet/effects/paypro/paypro';
-import {incomingData, setBuyerProvidedEmail, goToAmount} from './scan.effects';
+import {incomingData, setBuyerProvidedEmail} from './scan.effects';
 import configureTestStore from '@test/store';
 import axios from 'axios';
 import {BwcProvider} from '@/lib/bwc';
@@ -14,7 +14,6 @@ import {
   BitpaySupportedEvmCoins,
   BitpaySupportedSvmCoins,
 } from '@/constants/currencies';
-import {startCreateKey} from '../wallet/effects';
 import {waitFor} from '@testing-library/react-native';
 import BitPayIdApi from '../../api/bitpay';
 import {Network} from '../../constants';
@@ -60,12 +59,10 @@ describe('incomingData', () => {
   it('Should handle Join Wallet with one created key', async () => {
     const data =
       '9QRqDLbtasN5Wd37tRag7TKxMJVnCc2979pgs5CEBmGRmYU7kNrVynHdNtuBYxgfNgdj3EEJkHLbtc';
-    const store = configureTestStore({});
-    const key = await store.dispatch(
-      startCreateKey([
-        {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
-      ]),
-    );
+    const key = {id: 'key-1', wallets: []};
+    const store = configureTestStore({
+      WALLET: {keys: {[key.id]: key}},
+    });
     const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
@@ -82,17 +79,14 @@ describe('incomingData', () => {
   it('Should handle Join Wallet with more than one created key', async () => {
     const data =
       '9QRqDLbtasN5Wd37tRag7TKxMJVnCc2979pgs5CEBmGRmYU7kNrVynHdNtuBYxgfNgdj3EEJkHLbtc';
-    const store = configureTestStore({});
-    await store.dispatch(
-      startCreateKey([
-        {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
-      ]),
-    );
-    await store.dispatch(
-      startCreateKey([
-        {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
-      ]),
-    );
+    const store = configureTestStore({
+      WALLET: {
+        keys: {
+          'key-1': {id: 'key-1', wallets: []},
+          'key-2': {id: 'key-2', wallets: []},
+        },
+      },
+    });
     const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
@@ -1356,7 +1350,7 @@ describe('incomingData', () => {
   it('Should handle any type of address/coin using BitPay URI', async () => {
     const extractAddress = (data: string) => {
       const address = data.replace(/^[a-z]+:/i, '').replace(/\?.*/, '');
-      const params = /([\?\&]+[a-z]+=(\d+([\,\.]\d+)?))+/i;
+      const params = /([?&]+[a-z]+=(\d+([,.]\d+)?))+/i;
       return address.replace(params, '');
     };
 
@@ -1462,15 +1456,9 @@ describe('incomingData', () => {
     ];
     const store = configureTestStore({});
     const promises: any[] = [];
-    const keys = await store.dispatch(
-      startCreateKey([
-        {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
-      ]),
-    );
+    const wallet = {id: 'wallet-1', chain: 'btc'} as Wallet;
     data.forEach(element =>
-      promises.push(
-        store.dispatch(incomingData(element, {wallet: keys.wallets[0]})),
-      ),
+      promises.push(store.dispatch(incomingData(element, {wallet}))),
     );
     const promisesResult = await Promise.all(promises);
     expect(promisesResult).toStrictEqual([false, false, false, false, false]);

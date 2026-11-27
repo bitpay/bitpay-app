@@ -103,3 +103,11 @@ yalc.lock
 # Sentry
 ios/sentry.properties
 android/sentry.properties
+# Performance harness run outputs (baselines under perf/baselines are committed)
+perf/results/
+*.perf-backup
+.env.production.perf-backup
+
+# Perf build byproducts (module id map)
+perf/build/
+perf/loop/state/

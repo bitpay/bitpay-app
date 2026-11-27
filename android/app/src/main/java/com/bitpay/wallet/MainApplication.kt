@@ -20,21 +20,28 @@ class MainApplication : Application(), ReactApplication {
     override val reactHost: ReactHost by lazy {
         getDefaultReactHost(
           context = applicationContext,
+          // View managers are served on demand: see OnDemandViewManagers.
           packageList =
-                PackageList(this).packages.apply {
-                    // Add custom packages
-                    add(SilentPushPackage())
-                    add(TimerPackage())
-                    add(InAppMessagePackage())
-                    add(CrashTestPackage())
-                },
+                OnDemandViewManagers.wrap(
+                    PackageList(this).packages.apply {
+                        // Add custom packages
+                        add(SilentPushPackage())
+                        add(TimerPackage())
+                        add(InAppMessagePackage())
+                        add(CrashTestPackage())
+                        add(AppPerfPackage())
+                    },
+                ),
             )
         }
 
     override fun onCreate() {
+        PerfMarks.processStart()
+        PerfMarks.mark("bp_native_app_create_start")
         super.onCreate()
         val context: Context = this
         loadReactNative(context)
+        PerfMarks.startJsProfiler()
 
         // Set custom OkHttpClient
         OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory(context))
@@ -57,6 +64,7 @@ class MainApplication : Application(), ReactApplication {
                 registerInAppMessageManager = false
             )
         )
+        PerfMarks.mark("bp_native_app_create_end")
     }
 
     fun notifyReactNativeAppLoaded() {

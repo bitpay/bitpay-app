@@ -8,7 +8,7 @@ import {
 import Button from '../../../components/button/Button';
 import {useTheme} from '../../../contexts';
 import {H5, SubText} from '../../../components/styled/Text';
-import {NeutralSlate} from '../../../styles/colors';
+import {NeutralSlate, Placeholder} from '../../../styles/colors';
 import {useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
@@ -46,7 +46,7 @@ const SendToContact = () => {
   const {t} = useTranslation();
   const theme = useTheme();
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
-  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+  const placeHolderTextColor = theme.dark ? NeutralSlate : Placeholder;
   const [searchInput, setSearchInput] = useState('');
   const route = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
   const {wallet, context} = route.params;
@@ -81,6 +81,7 @@ const SendToContact = () => {
         />
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- context is a route param; memoized only on wallet and the setters, as before
     [wallet, setRecipientListContext, setRecipientAmountContext],
   );
 

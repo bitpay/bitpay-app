@@ -119,7 +119,6 @@ describe('walletReducer — default state', () => {
     expect(state.accountSvmCreationMigrationComplete).toBe(false);
     expect(state.svmAddressFixComplete).toBe(false);
     expect(state.pendingJoinerSession).toBeNull();
-    expect(state.tssEnabled).toBe(false);
   });
 
   it('has the correct initial feeLevel defaults', () => {
@@ -995,7 +994,50 @@ describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
     expect(state.keys['key-2']).toBe(untouchedKey);
     expect(state.portfolioBalance).toBe(base.portfolioBalance);
     expect(state.balanceCacheKey['key-1']).toBe(123456);
-    expect(state.balanceCacheKey['wallet-1']).toBeUndefined();
+    // Wallet screens check freshness per wallet, so the bulk refresh stamps
+    // each wallet it updated as well as the key.
+    expect(state.balanceCacheKey['wallet-1']).toBe(123456);
+  });
+
+  it('stamps only wallets that exist in state and were in the update', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(777);
+    const updated = makeWallet({id: 'wallet-1'});
+    const notUpdated = makeWallet({id: 'wallet-2'});
+    const base: WalletState = {
+      ...freshState(),
+      keys: {'key-1': makeKey({wallets: [updated, notUpdated]})},
+    };
+
+    const state = walletReducer(base, {
+      type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+      payload: {
+        keyBalances: [],
+        walletBalances: [
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-1',
+            status: {
+              balance: makeBalance({sat: 5}),
+              pendingTxps: [],
+              singleAddress: false,
+            },
+          },
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-gone',
+            status: {
+              balance: makeBalance({sat: 5}),
+              pendingTxps: [],
+              singleAddress: false,
+            },
+          },
+        ],
+      },
+    });
+
+    expect(state.balanceCacheKey['wallet-1']).toBe(777);
+    expect(state.balanceCacheKey['wallet-2']).toBeUndefined();
+    expect(state.balanceCacheKey['wallet-gone']).toBeUndefined();
   });
 
   it('only replaces wallets and keys whose status actually changed', () => {
@@ -1096,7 +1138,10 @@ describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
       },
     });
 
-    expect(state.balanceCacheKey).toEqual({'key-1:address-1': 654321});
+    expect(state.balanceCacheKey).toEqual({
+      'key-1:address-1': 654321,
+      'wallet-1': 654321,
+    });
   });
 
   it('updates key totalBalance and totalBalanceLastDay', () => {
@@ -1234,6 +1279,42 @@ describe('REMOVE_PENDING_JOINER_SESSION', () => {
   });
 });
 
+describe('CLEAR_TSS_SESSION_SECRETS', () => {
+  const tssSession = {
+    id: 'session-1',
+    partyKey: {xPrivKey: 'party-xpriv'},
+    status: 'complete',
+    isCreator: true,
+  } as any;
+
+  it('drops partyKey from the listed keys and keeps the rest of the session', () => {
+    const base: WalletState = {
+      ...freshState(),
+      keys: {
+        'key-1': makeKey({id: 'key-1', tssSession}),
+        'key-2': makeKey({id: 'key-2', tssSession}),
+        'key-3': makeKey({id: 'key-3'}),
+      },
+    };
+    const state = walletReducer(base, {
+      type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+      payload: {keyIds: ['key-1', 'key-3']},
+    });
+
+    expect(state.keys['key-1'].tssSession).toEqual({
+      id: 'session-1',
+      status: 'complete',
+      isCreator: true,
+    });
+    expect(state.keys['key-2'].tssSession!.partyKey).toEqual({
+      xPrivKey: 'party-xpriv',
+    });
+    expect(state.keys['key-3'].tssSession).toBeUndefined();
+    // the input session object is not mutated
+    expect(tssSession.partyKey).toEqual({xPrivKey: 'party-xpriv'});
+  });
+});
+
 describe('SET_SHOW_TESTNET_WALLETS', () => {
   it('starts unset so existing users keep their current view', () => {
     expect(initialState.showTestnetWallets).toBeNull();
@@ -1252,24 +1333,5 @@ describe('SET_SHOW_TESTNET_WALLETS', () => {
     expect(state.keys[key.id]).not.toBe(key);
     expect(state.keys[key.id].wallets).not.toBe(key.wallets);
     expect(state.keys[key.id].wallets).toEqual(key.wallets);
-  });
-});
-
-describe('SET_TSS_ENABLED', () => {
-  it('sets tssEnabled to true', () => {
-    const state = walletReducer(freshState(), {
-      type: WalletActionTypes.SET_TSS_ENABLED,
-      payload: true,
-    });
-    expect(state.tssEnabled).toBe(true);
-  });
-
-  it('sets tssEnabled back to false', () => {
-    const base: WalletState = {...freshState(), tssEnabled: true};
-    const state = walletReducer(base, {
-      type: WalletActionTypes.SET_TSS_ENABLED,
-      payload: false,
-    });
-    expect(state.tssEnabled).toBe(false);
   });
 });

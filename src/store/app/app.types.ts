@@ -10,6 +10,7 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
   InAppNotificationContextType,
+  OnboardingKeyStatus,
 } from './app.models';
 import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
@@ -65,6 +66,7 @@ export enum AppActionTypes {
   CURRENT_PIN = 'APP/CURRENT_PIN',
   CURRENT_SALT = 'APP/CURRENT_SALT',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
+  PIN_FAILED_ATTEMPTS = 'APP/PIN_FAILED_ATTEMPTS',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
   TOGGLE_HIDE_ALL_BALANCES = 'APP/TOGGLE_HIDE_ALL_BALANCES',
@@ -103,6 +105,8 @@ export enum AppActionTypes {
   DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
   SET_SHOW_KYC_GET_VERIFIED_MODAL = 'APP/SET_SHOW_KYC_GET_VERIFIED_MODAL',
   RESET_KYC_GET_VERIFIED_MODAL = 'APP/RESET_KYC_GET_VERIFIED_MODAL',
+  SET_ONBOARDING_KEY_STATUS = 'APP/SET_ONBOARDING_KEY_STATUS',
+  SET_BACKUP_NUDGE_SHOWN = 'APP/SET_BACKUP_NUDGE_SHOWN',
 }
 
 interface NetworkChanged {
@@ -294,6 +298,10 @@ interface PinBannedUntil {
   type: typeof AppActionTypes.PIN_BANNED_UNTIL;
   payload: number | undefined;
 }
+interface PinFailedAttempts {
+  type: typeof AppActionTypes.PIN_FAILED_ATTEMPTS;
+  payload: number;
+}
 interface ShowBiometricModal {
   type: typeof AppActionTypes.SHOW_BIOMETRIC_MODAL;
   payload: BiometricModalConfig;
@@ -457,6 +465,15 @@ interface ShowArchaxBanner {
   payload: boolean;
 }
 
+interface SetOnboardingKeyStatus {
+  type: typeof AppActionTypes.SET_ONBOARDING_KEY_STATUS;
+  payload: OnboardingKeyStatus;
+}
+
+interface SetBackupNudgeShown {
+  type: typeof AppActionTypes.SET_BACKUP_NUDGE_SHOWN;
+}
+
 interface DismissMarketingContentCard {
   type: typeof AppActionTypes.DISMISS_MARKETING_CONTENT_CARD;
   payload: string;
@@ -510,6 +527,7 @@ export type AppActionType =
   | CurrentPin
   | CurrentSalt
   | PinBannedUntil
+  | PinFailedAttempts
   | ShowBlur
   | ShowPortfolioValue
   | ToggleHideAllBalances
@@ -551,4 +569,6 @@ export type AppActionType =
   | ShowArchaxBanner
   | DismissMarketingContentCard
   | SetShowKycGetVerifiedModal
-  | ResetKycGetVerifiedModal;
+  | ResetKycGetVerifiedModal
+  | SetOnboardingKeyStatus
+  | SetBackupNudgeShown;

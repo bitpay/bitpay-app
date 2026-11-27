@@ -43,7 +43,6 @@ export interface WalletState {
   accountSvmCreationMigrationComplete: boolean;
   svmAddressFixComplete: boolean;
   pendingJoinerSession: PendingJoinerSession | null;
-  tssEnabled: boolean;
   /**
    * Testnet mode. `null` until the user unlocks it with the title taps in
    * Settings > Crypto; once set the toggle stays visible there.
@@ -85,7 +84,6 @@ export const initialState: WalletState = {
   accountSvmCreationMigrationComplete: false,
   svmAddressFixComplete: false,
   pendingJoinerSession: null,
-  tssEnabled: false,
   showTestnetWallets: null,
   secretsMigrated: false,
 };
@@ -685,6 +683,9 @@ export const walletReducer = (
             if (!status) {
               return;
             }
+            // Wallet screens check freshness per wallet, so record it here too;
+            // otherwise opening a wallet refetches what this refresh just got.
+            balanceCacheUpdates[wallet.id] = refreshedAt;
 
             if (!walletHasStatus(wallet, status)) {
               updatedWallets ??= [...currentKey.wallets];
@@ -762,6 +763,19 @@ export const walletReducer = (
         pendingJoinerSession: action.payload,
       };
 
+    case WalletActionTypes.CLEAR_TSS_SESSION_SECRETS: {
+      const keys = {...state.keys};
+      action.payload.keyIds.forEach(keyId => {
+        const key = keys[keyId];
+        if (key?.tssSession) {
+          const tssSession = {...key.tssSession};
+          delete tssSession.partyKey;
+          keys[keyId] = {...key, tssSession};
+        }
+      });
+      return {...state, keys};
+    }
+
     case WalletActionTypes.REMOVE_PENDING_JOINER_SESSION:
       return {
         ...state,
@@ -779,12 +793,6 @@ export const walletReducer = (
       return {
         ...state,
         secretsMigrated: action.payload,
-      };
-
-    case WalletActionTypes.SET_TSS_ENABLED:
-      return {
-        ...state,
-        tssEnabled: action.payload,
       };
 
     case WalletActionTypes.SET_SHOW_TESTNET_WALLETS: {

@@ -1,5 +1,5 @@
 diff --git a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
-index edec362..9236d6f 100644
+index edec362..d0c75d0 100644
 --- a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
 +++ b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
 @@ -52,7 +52,9 @@ class Dkg {
@@ -410,7 +410,7 @@ index edec362..9236d6f 100644
      }
  }
 diff --git a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js
-index b354724..9a792eb 100644
+index b354724..356899a 100644
 --- a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js
 +++ b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js
 @@ -45,16 +45,17 @@ class Dsg {
@@ -462,7 +462,7 @@ index b354724..9a792eb 100644
      async init() {
          if (this.dsgState !== types_1.DsgState.Uninitialized) {
              throw Error('DSG session already initialized');
-@@ -132,140 +137,221 @@ class Dsg {
+@@ -132,140 +137,223 @@ class Dsg {
          if (!this.dklsWasm) {
              await this.loadDklsWasm();
          }
@@ -501,6 +501,7 @@ index b354724..9a792eb 100644
 +            
 +            await this._deserializeState();
 +            this.dsgSessionBytes = await this.dsgSession.toBytes();
++            try { await this.dsgSession.free(); } catch {}
              this.dsgSession = undefined;
 +            
              return {
@@ -738,6 +739,7 @@ index b354724..9a792eb 100644
 +                        throw serError;
 +                    }
 +                }
++                try { await this.dsgSession.free(); } catch {}
                  this.dsgSession = undefined;
              }
          }

@@ -23,7 +23,7 @@ import {
 } from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {setShowKycGetVerifiedModal} from '../../../../store/app/app.actions';
-import {SumSubSelectors} from '../../../../store/sumsub';
+import {SumSubActions, SumSubSelectors} from '../../../../store/sumsub';
 import {BitpayIdScreens} from '../../../bitpay-id/BitpayIdGroup';
 import {navigationRef} from '../../../../Root';
 import IconKycGetVerified from '../../../../../assets/img/kyc_get_verified.svg';
@@ -164,7 +164,15 @@ const GetVerifiedModal: React.FC = () => {
   // root-navigator screen).
   const pendingVerifyRef = useRef(false);
 
-  const dismiss = () => dispatch(setShowKycGetVerifiedModal(false));
+  const network = useAppSelector(({APP}) => APP.network);
+  const eid = useAppSelector(({BITPAY_ID}) => BITPAY_ID?.user?.[network]?.eid);
+
+  const dismiss = () => {
+    if (eid) {
+      dispatch(SumSubActions.setGetVerifiedDismissed(network, eid));
+    }
+    dispatch(setShowKycGetVerifiedModal(false));
+  };
 
   useEffect(() => {
     if (isVisible && !canStartKyc) {

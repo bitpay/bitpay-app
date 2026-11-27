@@ -535,6 +535,20 @@ describe('PIN modal and flags', () => {
     });
     expect(state.pinBannedUntil).toBe(ts);
   });
+
+  it('PIN_FAILED_ATTEMPTS sets and resets pinFailedAttempts', () => {
+    expect(freshState().pinFailedAttempts).toBe(0);
+    const bumped = appReducer(freshState(), {
+      type: AppActionTypes.PIN_FAILED_ATTEMPTS,
+      payload: 4,
+    });
+    expect(bumped.pinFailedAttempts).toBe(4);
+    const cleared = appReducer(bumped, {
+      type: AppActionTypes.PIN_FAILED_ATTEMPTS,
+      payload: 0,
+    });
+    expect(cleared.pinFailedAttempts).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

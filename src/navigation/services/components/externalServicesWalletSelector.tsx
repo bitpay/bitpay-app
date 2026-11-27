@@ -135,6 +135,7 @@ export const WalletSelector: React.FC<
   const theme = useTheme();
   return (
     <TouchableOpacity
+      hitSlop={{top: 4, bottom: 4}}
       style={[
         styles.walletSelector,
         {backgroundColor: theme.dark ? LightBlack : NeutralSlate},
@@ -268,11 +269,11 @@ const ExternalServicesWalletSelector: React.FC<
 
   const walletError = async (
     type?: string,
-    fromCurrencyAbbreviation?: string,
+    errorCurrencyAbbreviation?: string,
   ) => {
     hideOngoingProcess();
     await sleep(400);
-    dispatch(showWalletError(type, fromCurrencyAbbreviation));
+    dispatch(showWalletError(type, errorCurrencyAbbreviation));
   };
 
   const _setSelectedWallet = (wallet: Wallet) => {

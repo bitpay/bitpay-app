@@ -119,16 +119,25 @@ const TransakDetails: React.FC = () => {
     const walletIsSupported = (wallet: Wallet): boolean =>
       !!(wallet.credentials && wallet.isComplete());
 
-    const selectedWallet = Object.values(allKeys)
-      .filter(key => key.backupComplete)
-      .flatMap(key => key.wallets ?? [])
-      .find(walletIsSupported);
+    // BWS only returns an order to the wallet that bought it (saved as user_id).
+    const selectedWallet =
+      Object.values(allKeys)
+        .flatMap(key => key.wallets ?? [])
+        .find(
+          wallet =>
+            wallet.id === paymentRequest.user_id && walletIsSupported(wallet),
+        ) ??
+      Object.values(allKeys)
+        .filter(key => key.backupComplete)
+        .flatMap(key => key.wallets ?? [])
+        .find(walletIsSupported);
 
     if (!selectedWallet) {
       logger.error('No supported wallet found for Transak order details');
       return;
     }
 
+    // eslint-disable-next-line no-bitwise -- `| 0` truncates the seconds timestamp to an integer
     const nowTimestamp = (Date.now() / 1000) | 0;
     let _accessToken = accessTokenTransak?.accessToken;
     let _expiresAt = accessTokenTransak?.expiresAt;
@@ -328,6 +337,7 @@ const TransakDetails: React.FC = () => {
   useEffect(() => {
     updateStatusDescription();
     getOrderDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to set the initial status and fetch the latest order details; later refreshes go through onRefresh
   }, []);
 
   useEffect(() => {

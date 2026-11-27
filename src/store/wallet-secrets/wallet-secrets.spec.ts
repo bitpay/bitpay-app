@@ -208,6 +208,27 @@ describe('wallet secrets slice', () => {
     ).toBe('second-copayer-secret');
   });
 
+  it('drops partyKey from cleared TSS sessions only', () => {
+    const withKeys = {
+      ...initialWalletSecretsState,
+      tssSessionByKeyId: {key1: key.tssSession, key2: key.tssSession} as any,
+    };
+    const next = walletSecretsReducer(withKeys, {
+      type: WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
+      payload: {keyIds: ['key1']},
+    } as any);
+
+    expect(next.tssSessionByKeyId.key1).not.toHaveProperty('partyKey');
+    expect(next.tssSessionByKeyId.key1).toMatchObject({
+      id: 'tss-session',
+      sessionExport: 'session-export',
+      copayers: key.tssSession.copayers,
+    });
+    expect(next.tssSessionByKeyId.key2.partyKey).toEqual({
+      xPrivKey: 'party-xpriv',
+    });
+  });
+
   it('merges TSS secrets back into their public sessions', () => {
     const secrets = walletSecretsReducer(initialWalletSecretsState, {
       type: WalletActionTypes.SUCCESS_CREATE_KEY,

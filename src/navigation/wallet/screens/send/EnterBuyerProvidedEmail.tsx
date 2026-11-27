@@ -62,7 +62,7 @@ const EnterBuyerProvidedEmail: React.FC = () => {
           ),
         );
         setButtonState('success');
-      } catch (e) {
+      } catch {
         setButtonState('failed');
 
         dispatch(

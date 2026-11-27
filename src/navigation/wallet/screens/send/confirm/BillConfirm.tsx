@@ -76,6 +76,12 @@ export interface BillConfirmParamList {
 const BillConfirm: React.FC<
   NativeStackScreenProps<BillGroupParamList, BillScreens.BILL_CONFIRM>
 > = ({navigation}) => {
+  // React Compiler opt-out: the hardware-wallet flow relies on render-time
+  // latest-value refs (transportRef / disconnectFnRef, read mid-await while a
+  // transport may be swapped) and on onDisconnect re-attaching itself as a
+  // stable listener. Rewriting that to satisfy the compiler would change
+  // transport/disconnect timing, so keep the existing semantics.
+  'use no memo';
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -377,6 +383,7 @@ const BillConfirm: React.FC<
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the wallet selector once on mount
     openWalletSelector(100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -410,26 +417,28 @@ const BillConfirm: React.FC<
                   : '',
               img: () => (
                 <View style={{flexDirection: 'row'}}>
-                  {billPayments.map(({billPayAccount}, index) => (
-                    <Image
-                      key={index}
-                      style={{
-                        height: 18,
-                        width: 18,
-                        marginTop: -2,
-                        borderRadius: 10,
-                        marginRight: 2,
-                        ...(billPayments.length > 1 && {
-                          marginRight:
-                            index === billPayments.length - 1 ? -5 : -3,
-                          zIndex: billPayments.length - index,
-                        }),
-                      }}
-                      source={{
-                        uri: billPayAccount[billPayAccount.type].merchantIcon,
-                      }}
-                    />
-                  ))}
+                  {billPayments.map(
+                    ({billPayAccount: paymentAccount}, index) => (
+                      <Image
+                        key={index}
+                        style={{
+                          height: 18,
+                          width: 18,
+                          marginTop: -2,
+                          borderRadius: 10,
+                          marginRight: 2,
+                          ...(billPayments.length > 1 && {
+                            marginRight:
+                              index === billPayments.length - 1 ? -5 : -3,
+                            zIndex: billPayments.length - index,
+                          }),
+                        }}
+                        source={{
+                          uri: paymentAccount[paymentAccount.type].merchantIcon,
+                        }}
+                      />
+                    ),
+                  )}
                 </View>
               ),
             }}

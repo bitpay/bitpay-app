@@ -8,6 +8,7 @@ import {
   deriveKycUiState,
   isKycEligibleToStart,
   selectCanStartKyc,
+  selectGetVerifiedDismissed,
   selectKycBannerState,
   selectKycInfo,
   selectKycStatusFetched,
@@ -241,6 +242,44 @@ describe('selectors read the current network slice', () => {
         buildState(kyc({status: 'notStarted', tier: -1}), null, false),
       ),
     ).toBe(false);
+  });
+});
+
+describe('selectGetVerifiedDismissed', () => {
+  const buildState = (
+    dismissed: string[] | undefined,
+    eid: string | null = 'eid-1',
+  ): any => ({
+    APP: {network: Network.mainnet},
+    BITPAY_ID: {user: {[Network.mainnet]: {eid}}},
+    SUMSUB: {
+      getVerifiedDismissed: dismissed && {
+        [Network.mainnet]: dismissed,
+        [Network.testnet]: [],
+        [Network.regtest]: [],
+      },
+    },
+  });
+
+  it('is true only for an eid that dismissed on this network', () => {
+    expect(selectGetVerifiedDismissed(buildState(['eid-1']))).toBe(true);
+    expect(selectGetVerifiedDismissed(buildState(['eid-2']))).toBe(false);
+    expect(selectGetVerifiedDismissed(buildState([]))).toBe(false);
+  });
+
+  it('keeps each account independent in a shared list', () => {
+    const dismissed = ['eid-1', 'eid-2'];
+    expect(selectGetVerifiedDismissed(buildState(dismissed, 'eid-2'))).toBe(
+      true,
+    );
+    expect(selectGetVerifiedDismissed(buildState(dismissed, 'eid-3'))).toBe(
+      false,
+    );
+  });
+
+  it('is false when logged out or before the slice has the field', () => {
+    expect(selectGetVerifiedDismissed(buildState(['eid-1'], null))).toBe(false);
+    expect(selectGetVerifiedDismissed(buildState(undefined))).toBe(false);
   });
 });
 

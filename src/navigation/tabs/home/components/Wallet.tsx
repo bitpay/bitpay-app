@@ -2,6 +2,7 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {useTheme} from '../../../../contexts';
 import HomeCard from '../../../../components/home-card/HomeCard';
+import {StatusTag} from '../../../../components/backup/BackupCards';
 import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
@@ -79,15 +80,6 @@ const walletStyles = StyleSheet.create({
     lineHeight: 18,
     letterSpacing: 0,
     marginLeft: 5,
-  },
-  needBackupText: {
-    maxWidth: '100%',
-    fontSize: 12,
-    textAlign: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderRadius: 3,
   },
   balanceContainer: {
     flexDirection: 'row',
@@ -232,22 +224,6 @@ export const RemainingAssetsLabel: React.FC<
       ]}
       {...rest}
     />
-  );
-};
-
-const NeedBackupText: React.FC<{children?: React.ReactNode}> = ({children}) => {
-  const theme = useTheme();
-  return (
-    <BaseText
-      style={[
-        walletStyles.needBackupText,
-        {
-          color: theme.dark ? White : SlateDark,
-          borderColor: theme.dark ? SlateDark : Slate30,
-        },
-      ]}>
-      {children}
-    </BaseText>
   );
 };
 
@@ -409,6 +385,10 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
   const isListView = layout === 'listView';
+  const backupPending = needsBackup && !pendingTssSession;
+  const cardAccessibilityLabel = backupPending
+    ? `${t('{{key}} wallet', {key: keyName})}, ${t('Needs Backup')}`
+    : t('{{key}} wallet', {key: keyName});
   const SupportedNetworkIcons = (
     <HeaderImg>
       {walletInfo.map((wallet, index) => {
@@ -429,7 +409,6 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
     </HeaderImg>
   );
 
-  /* ////////////////////////////// LISTVIEW */
   if (layout === 'listView') {
     const {amount} = formatFiatAmountObj(
       totalBalance,
@@ -439,7 +418,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       <ListWalletCard
         activeOpacity={ActiveOpacity}
         testID={`wallet-card-${keyName}`}
-        accessibilityLabel={t('{{key}} wallet', {key: keyName})}
+        accessibilityLabel={cardAccessibilityLabel}
         onPressIn={onPressIn}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
@@ -447,7 +426,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
           <ListLeftColumn>
             {needsBackup && !pendingTssSession ? (
               <NeedBackupRow>
-                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+                <StatusTag>{t('Backup Required')}</StatusTag>
               </NeedBackupRow>
             ) : (
               <ListIconRow>
@@ -519,6 +498,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         isMultisig,
       }}
       footer={CardFooter}
+      testID={`wallet-card-${keyName}`}
+      accessibilityLabel={cardAccessibilityLabel}
       onCTAPressIn={onPressIn}
       onCTAPress={onPress}
     />

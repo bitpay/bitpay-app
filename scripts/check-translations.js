@@ -2,8 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 require('intl-pluralrules');
 const i18next = require('i18next');
+const {languages, parseCatalog, sortCatalog} = require('./translation-catalog');
 
-const languages = ['en', 'de', 'es', 'fr', 'ja', 'nl', 'pt', 'ru', 'zh'];
 const counts = [0, 1, 2, 3, 4, 5, 11, 12, 14, 21, 22, 25, 101, 111];
 const matches = (text, pattern) => (text.match(pattern) || []).sort();
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -56,6 +56,12 @@ async function checkTranslations(catalogs) {
   );
 
   for (const [lang, catalog] of Object.entries(catalogs)) {
+    const keys = Object.keys(catalog);
+    if (!same(keys, Object.keys(sortCatalog(catalog)))) {
+      errors.push(
+        `${lang}: translation keys must be sorted; run yarn translation:sort`,
+      );
+    }
     const expected = new Map();
     for (const key of new Set([...bases, ...families])) {
       if (families.includes(key)) {
@@ -316,7 +322,7 @@ async function main() {
   for (const lang of languages) {
     const file = path.join(__dirname, '../locales', lang, 'translation.json');
     const raw = fs.readFileSync(file, 'utf8');
-    catalogs[lang] = JSON.parse(raw);
+    catalogs[lang] = parseCatalog(raw, file);
     if (raw !== JSON.stringify(catalogs[lang], null, 2) + '\n') {
       formatErrors.push(
         `${lang}: use unique keys, two-space indentation, Unicode and a final newline`,

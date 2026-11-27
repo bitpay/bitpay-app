@@ -439,3 +439,20 @@ export const rampSellGetStatusColor = (status: RampSellOrderStatus): string => {
       return '#9b9bab';
   }
 };
+
+// Host of a Ramp checkout frame (https, ramp.network or a subdomain), or
+// undefined for anything else
+export const getRampCheckoutHost = (url: unknown): string | undefined => {
+  if (typeof url !== 'string') {
+    return undefined;
+  }
+  try {
+    const {protocol, hostname} = new URL(url);
+    const host = hostname.toLowerCase();
+    return protocol === 'https:' && /(^|\.)ramp\.network$/.test(host)
+      ? host
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};

@@ -71,6 +71,7 @@ import {addCustomTokenOption} from '../currencies/currencies';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import {Analytics} from '../../../analytics/analytics.effects';
+import {sanitizeLogMessage} from '../../../log/log.models';
 
 const runWithConcurrency = async <T, R>(
   items: T[],
@@ -139,6 +140,7 @@ export const startCreateKey =
       tokenAddress?: string;
     }>,
     context?: string,
+    isCurrentRequest?: () => boolean,
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -157,9 +159,21 @@ export const startCreateKey =
             options: {
               network,
             },
+            isCurrentRequest,
           }),
         );
 
+        if (isCurrentRequest && !isCurrentRequest()) {
+          throw new Error('Key creation cancelled');
+        }
+        if (
+          context === 'onboarding' &&
+          !wallets.some(
+            wallet => !wallet.credentials.token && wallet.receiveAddress,
+          )
+        ) {
+          throw new Error('No wallets were created');
+        }
         const key = buildKeyObj({key: _key, wallets});
 
         if (context !== 'onboarding') {
@@ -303,7 +317,7 @@ export const addWallet =
                     associatedWallet,
                     opts,
                   );
-                } catch (err) {
+                } catch {
                   logManager.debug(
                     `Error in getTokenContractInfo for opts: ${JSON.stringify(
                       opts,
@@ -429,6 +443,7 @@ export const createMultipleWallets =
     key,
     currencies,
     options,
+    isCurrentRequest,
   }: {
     key: KeyMethods;
     currencies: Array<{
@@ -438,6 +453,7 @@ export const createMultipleWallets =
       tokenAddress?: string;
     }>;
     options: CreateOptions;
+    isCurrentRequest?: () => boolean;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
     const {
@@ -536,6 +552,9 @@ export const createMultipleWallets =
     });
 
     defer(() => {
+      if (isCurrentRequest && !isCurrentRequest()) {
+        return;
+      }
       result.forEach(wallet => {
         if (notificationsAccepted) {
           dispatch(subscribePushNotifications(wallet, brazeEid!));
@@ -715,8 +734,8 @@ const createWallet =
                   return reject(err);
                 }
 
-                const account = options.account || 0;
-                if (account >= 20) {
+                const currentAccount = options.account || 0;
+                if (currentAccount >= 20) {
                   return reject(
                     new Error(
                       t(
@@ -732,7 +751,7 @@ const createWallet =
                       key,
                       coin,
                       chain,
-                      options: {...options, account: account + 1},
+                      options: {...options, account: currentAccount + 1},
                     }),
                   ),
                 );
@@ -758,7 +777,7 @@ const createTokenWallet =
     tokenAddress: string,
     tokenOptsByAddress: {[key in string]: Token},
   ): Effect<Promise<API>> =>
-  async (dispatch): Promise<API> => {
+  async (): Promise<API> => {
     return new Promise((resolve, reject) => {
       try {
         const bwcClient = BWC.getClient();
@@ -858,7 +877,7 @@ const createTokenWallet =
 
 export const startCreateKeyWithOpts =
   (opts: Partial<KeyOptions>): Effect =>
-  async (dispatch, getState): Promise<Key> => {
+  async (dispatch): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
         const _key = BWC.createKey({
@@ -889,7 +908,9 @@ export const startCreateKeyWithOpts =
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.error(`Error creating key with opts: ${errstring}`);
+        logManager.error(
+          sanitizeLogMessage(`Error creating key with opts: ${errstring}`),
+        );
         reject(err);
       }
     });
@@ -990,7 +1011,6 @@ export const getDecryptPassword =
 export const detectAndCreateTokensForEachEvmWallet =
   ({
     key,
-    force,
     chain,
     tokenAddress,
   }: {
@@ -1015,7 +1035,7 @@ export const detectAndCreateTokensForEachEvmWallet =
           !findByTokenWalletId(
             w.tokens,
             buildTokenWalletId(w.id, tokenAddress),
-            t => t,
+            item => item,
           );
         // EVM token detection only reads mainnet balances, and a testnet
         // wallet shares its address with mainnet, so it would copy the
@@ -1168,7 +1188,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                   }),
                 );
               }
-            } catch (err) {
+            } catch {
               logManager.debug(
                 `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
               );

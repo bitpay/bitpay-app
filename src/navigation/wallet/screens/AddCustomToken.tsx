@@ -84,7 +84,7 @@ import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {RootStacks, getNavigationTabName} from '../../../Root';
+import {RootStacks} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
@@ -353,6 +353,7 @@ const AddCustomToken = ({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-picks the parent wallet only when the chain changes
     setAssociatedWallet(
       parentWalletOptions.find(w => w.network === network) ??
         parentWalletOptions[0],
@@ -395,6 +396,7 @@ const AddCustomToken = ({
     if (currencyName) {
       reset({walletName: currencyName});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resets the form only when the fetched token name changes
   }, [currencyName]);
 
   const _addWallet = async (): Promise<Wallet> => {
@@ -454,7 +456,7 @@ const AddCustomToken = ({
           await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
           await sleep(1000);
           dispatch(updatePortfolioBalance());
-        } catch (error) {
+        } catch {
           // ignore error
         }
 
@@ -558,13 +560,13 @@ const AddCustomToken = ({
     }
   });
 
-  const showMissingWalletMsg = async (chain: string) => {
+  const showMissingWalletMsg = async (missingChain: string) => {
     await sleep(500);
     dispatch(
       showBottomNotificationModal({
         type: 'info',
         title: t('Missing wallet'),
-        message: DESCRIPTIONS[chain],
+        message: DESCRIPTIONS[missingChain],
         actions: [
           {
             text: t('OK'),
@@ -599,18 +601,18 @@ const AddCustomToken = ({
     ({item}: {item: SupportedCurrencyOption}) => (
       <ChainSelectionRow
         chainObj={BitpaySupportedCoins[item.chain]}
-        onToggle={async (currencyAbbreviation, chain) => {
+        onToggle={async (_currencyAbbreviation, toggledChain) => {
           haptic('soft');
           setChainModalVisible(false);
           await sleep(1000);
           const hasAssociatedWallet = filterTestnetWallets(
             key.wallets,
             showTestnetWallets,
-          ).find(({chain: _chain}) => _chain === chain);
+          ).find(({chain: _chain}) => _chain === toggledChain);
           if (!hasAssociatedWallet) {
-            showMissingWalletMsg(chain);
+            showMissingWalletMsg(toggledChain);
           } else {
-            setChain(chain);
+            setChain(toggledChain);
           }
         }}
         key={item.id}
@@ -634,13 +636,13 @@ const AddCustomToken = ({
     setInvalidTokenAddress(false);
   };
 
-  const setTokenInfo = async (tokenAddress: string | undefined) => {
+  const setTokenInfo = async (newTokenAddress: string | undefined) => {
     try {
-      if (!tokenAddress) {
+      if (!newTokenAddress) {
         return;
       }
-      setTokenAddress(tokenAddress);
-      const addrData = GetCoinAndNetwork(tokenAddress, parentNetwork, chain);
+      setTokenAddress(newTokenAddress);
+      const addrData = GetCoinAndNetwork(newTokenAddress, parentNetwork, chain);
       const isValid =
         addrData?.coin.toLowerCase() && parentNetwork === addrData?.network;
 
@@ -654,7 +656,7 @@ const AddCustomToken = ({
       let tokenContractInfo: Token | undefined =
         parentNetwork === 'livenet'
           ? tokenOptionsByAddress?.[
-              getCurrencyAbbreviation(tokenAddress, chain)
+              getCurrencyAbbreviation(newTokenAddress, chain)
             ]
           : undefined;
       if (!tokenContractInfo) {
@@ -665,7 +667,7 @@ const AddCustomToken = ({
           ({id}) => id === associatedWallet?.id,
         )!;
         tokenContractInfo = (await getTokenContractInfo(fullWalletObj, {
-          tokenAddress,
+          tokenAddress: newTokenAddress,
           chain,
         })) as Token;
         let customToken: Token = {
@@ -673,15 +675,15 @@ const AddCustomToken = ({
           symbol: tokenContractInfo.symbol?.toLowerCase(),
           decimals: Number(tokenContractInfo.decimals),
           address: IsSVMChain(chain)
-            ? tokenAddress
-            : tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
+            ? newTokenAddress
+            : newTokenAddress?.toLowerCase(), // Solana addresses are case sensitive
         };
         dispatch(addCustomTokenOption(customToken, chain));
       }
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
       Keyboard.dismiss();
-    } catch (error) {
+    } catch {
       Keyboard.dismiss();
       setTokenAddress(undefined);
       await sleep(200);

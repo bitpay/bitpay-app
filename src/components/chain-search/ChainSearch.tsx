@@ -6,7 +6,13 @@ import {
   SearchRoundInput,
 } from '../../components/styled/Containers';
 import {groupBy} from '../../utils/array';
-import {Action, LightBlue, Slate, White} from '../../styles/colors';
+import {
+  Action,
+  LightBlue,
+  Slate,
+  White,
+  Placeholder,
+} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
@@ -14,7 +20,6 @@ import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import {debounce} from '../../utils/debounce';
 import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
-import {WC_SUPPORTED_CHAINS} from '../../constants/WalletConnectV2';
 import {cloneDeep} from '../../utils/object';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from '../../contexts';
@@ -188,7 +193,6 @@ interface SearchComponentProps<T extends SearchableItem> {
 const SearchComponent = <T extends SearchableItem>({
   searchVal,
   setSearchVal,
-  searchResults,
   setSearchResults,
   searchFullList,
   context,
@@ -209,28 +213,7 @@ const SearchComponent = <T extends SearchableItem>({
   const normalizeText = (text: string | undefined) =>
     text?.replace(/\s+/g, '')?.toLowerCase() || '';
 
-  const filterAccountsAndPolulateChainsOptions = (
-    accounts: string[],
-    normalizedText: string,
-    selectedChainFilterOption: string | undefined,
-    chains: string[],
-  ) =>
-    accounts.filter(account => {
-      const index = account.indexOf(':', account.indexOf(':') + 1);
-      const protocolChainName = account.substring(0, index);
-      const chain = normalizeText(
-        WC_SUPPORTED_CHAINS[protocolChainName]?.chainName,
-      );
-      const name = normalizeText(WC_SUPPORTED_CHAINS[protocolChainName]?.name);
-      chains.push(chain);
-      return (
-        (chain.includes(normalizedText) ||
-          name.includes(normalizedText) ||
-          !normalizedText) &&
-        (selectedChainFilterOption === chain || !selectedChainFilterOption)
-      );
-    });
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- debounced handler is memoized intentionally so the same debounce instance survives re-renders
   const updateSearchResults = useCallback(
     debounce((text: string) => {
       setSearchVal(text?.toLowerCase());
@@ -510,8 +493,8 @@ const SearchComponent = <T extends SearchableItem>({
       selectedChainFilterOption &&
       BitpaySupportedCoins[selectedChainFilterOption]
     ) {
-      const currencyInfo = BitpaySupportedCoins[selectedChainFilterOption];
-      setCurrencyInfo(currencyInfo);
+      const coinInfo = BitpaySupportedCoins[selectedChainFilterOption];
+      setCurrencyInfo(coinInfo);
     }
   };
 
@@ -523,11 +506,14 @@ const SearchComponent = <T extends SearchableItem>({
     return () => {
       updateSearchResults.cancel();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the chain filter or full list changes; searchVal and helpers are read at that time
   }, [selectedChainFilterOption, searchFullList]);
 
   const _SearchFilterContainer = () => {
     return (
       <SearchFilterContainer
+        accessibilityRole="button"
+        hitSlop={{top: 6, bottom: 6}}
         onPress={() => {
           dispatch(AppActions.showChainSelectorModal({context, chainsOptions}));
         }}>
@@ -573,8 +559,9 @@ const SearchComponent = <T extends SearchableItem>({
             </SearchIconContainer>
             <View>
               <SearchRoundInput
-                placeholderTextColor={Slate}
+                placeholderTextColor={theme.dark ? Slate : Placeholder}
                 placeholder={t('Search')}
+                accessibilityLabel={t('Search')}
                 onChangeText={updateSearchResults}
               />
             </View>

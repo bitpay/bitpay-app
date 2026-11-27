@@ -67,6 +67,7 @@ import {
   WCV2RequestType,
   WCV2SessionType,
   TokenApproval,
+  TokenTransfer,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
@@ -136,6 +137,7 @@ const WalletConnectConfirm = () => {
     selectedAccountAddress,
   } = route.params;
   const tokenApproval: TokenApproval | undefined = request.tokenApproval;
+  const tokenTransfer: TokenTransfer | undefined = request.tokenTransfer;
   const peerIcon = icons && icons[0];
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
@@ -184,7 +186,7 @@ const WalletConnectConfirm = () => {
 
   const requestV2: WCV2RequestType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
-      WALLET_CONNECT_V2.requests.find(requestV2 => requestV2.topic === topic),
+      WALLET_CONNECT_V2.requests.find(req => req.topic === topic),
   );
 
   let VerifyIcon: React.FC<SvgProps> | null = null;
@@ -247,6 +249,7 @@ const WalletConnectConfirm = () => {
 
   useEffect(() => {
     _setTxDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount to build the initial tx proposal
   }, []);
 
   const feeOptions = GetFeeOptions(wallet.chain);
@@ -445,7 +448,7 @@ const WalletConnectConfirm = () => {
     if (accountDisconnected) {
       navigation.goBack();
     }
-  }, [accountDisconnected]);
+  }, [accountDisconnected, navigation]);
 
   useEffect(() => {
     if (!requestV2) {
@@ -461,7 +464,7 @@ const WalletConnectConfirm = () => {
       }
     };
     handleRequestDismiss();
-  }, [requestDismissed]);
+  }, [requestDismissed, navigation]);
 
   return (
     <ConfirmContainer>
@@ -685,6 +688,99 @@ const WalletConnectConfirm = () => {
               />
             ) : null}
           </>
+        ) : null}
+        {tokenTransfer ? (
+          <>
+            <SharedDetailRow
+              description={t('Transfer function')}
+              value={tokenTransfer.functionName}
+              secondary
+              hr
+            />
+            {tokenTransfer.symbol ? (
+              <SharedDetailRow
+                description={t('Token')}
+                value={tokenTransfer.symbol.toUpperCase()}
+                secondary
+                hr
+              />
+            ) : null}
+            {[
+              {
+                label: t('Token contract'),
+                value: request.params.request.params[0].to,
+                type: 'transferContract',
+              },
+              ...(tokenTransfer.from
+                ? [
+                    {
+                      label: t('From'),
+                      value: tokenTransfer.from,
+                      type: 'transferFrom',
+                    },
+                  ]
+                : []),
+              {
+                label: t('Recipient'),
+                value: tokenTransfer.recipient,
+                type: 'transferRecipient',
+              },
+            ].map(({label, value, type}) => (
+              <TouchableOpacity
+                key={type}
+                accessibilityRole="button"
+                accessibilityLabel={t('Copy {{label}}: {{address}}', {
+                  label,
+                  address: value,
+                })}
+                disabled={clipboardObj.copied}
+                onPress={() => copyToClipboard(value, type)}>
+                <SharedDetailRow
+                  description={
+                    clipboardObj.copied && clipboardObj.type === type
+                      ? t('{{label}} (copied)', {label})
+                      : t('{{label}} (tap to copy)', {label})
+                  }
+                  value={value}
+                  secondary
+                  hr
+                />
+              </TouchableOpacity>
+            ))}
+            {tokenTransfer.formattedAmount !== undefined ? (
+              <SharedDetailRow
+                description={t('Amount')}
+                value={
+                  tokenTransfer.symbol
+                    ? `${
+                        tokenTransfer.formattedAmount
+                      } ${tokenTransfer.symbol.toUpperCase()}`
+                    : tokenTransfer.formattedAmount
+                }
+                secondary
+                hr
+              />
+            ) : null}
+            <SharedDetailRow
+              description={t('Amount (base units)')}
+              value={tokenTransfer.amount}
+              secondary
+              hr
+            />
+          </>
+        ) : null}
+        {request.unknownContractCall &&
+        !tokenApproval &&
+        !tokenTransfer &&
+        !request.tokenApprovalDecodeError ? (
+          <Banner
+            height={100}
+            type={'warning'}
+            title={t('Unrecognized contract call')}
+            description={t(
+              "This request calls a contract method the app can't summarize. The real effect is in the data below — only approve if you trust this site.",
+            )}
+          />
         ) : null}
         {txDetails?.data ? (
           <>

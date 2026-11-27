@@ -8,7 +8,6 @@ import {
   View,
   ViewProps,
 } from 'react-native';
-import {ScreenGutter} from '../../../components/styled/Containers';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const styles = StyleSheet.create({

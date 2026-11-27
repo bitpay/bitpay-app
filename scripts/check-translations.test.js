@@ -11,26 +11,26 @@ const {
 function catalogs() {
   return {
     en: {
-      '{{count}} wallet_one': '{{count}} wallet',
-      '{{count}} wallet_other': '{{count}} wallets',
+      'Error: ': 'Error: ',
       Share: 'Share {{name}} with {{name}}',
       Terms: '<0>Read **terms**</0> [here](https://example.com)',
-      'Error: ': 'Error: ',
+      '{{count}} wallet_one': '{{count}} wallet',
+      '{{count}} wallet_other': '{{count}} wallets',
     },
     ru: {
-      '{{count}} wallet_one': '{{count}} кошелёк',
-      '{{count}} wallet_few': '{{count}} кошелька',
-      '{{count}} wallet_many': '{{count}} кошельков',
-      '{{count}} wallet_other': '{{count}} кошельков',
+      'Error: ': 'Ошибка: ',
       Share: 'Поделитесь {{name}} с {{name}}',
       Terms: '<0>Прочитайте **условия**</0> [здесь](https://example.com)',
-      'Error: ': 'Ошибка: ',
+      '{{count}} wallet_few': '{{count}} кошелька',
+      '{{count}} wallet_many': '{{count}} кошельков',
+      '{{count}} wallet_one': '{{count}} кошелёк',
+      '{{count}} wallet_other': '{{count}} кошельков',
     },
     ja: {
-      '{{count}} wallet_other': '{{count}} 個のウォレット',
+      'Error: ': 'エラー：',
       Share: '{{name}} を {{name}} と共有',
       Terms: '<0>**規約**を読む</0> [こちら](https://example.com)',
-      'Error: ': 'エラー：',
+      '{{count}} wallet_other': '{{count}} 個のウォレット',
     },
   };
 }
@@ -205,4 +205,116 @@ test('checks translation aliases from useTranslation', async () => {
 test('fails when extraction skips a source file with a parse error', async () => {
   const errors = await checkSource("t('Missing'); const = ;");
   assert(errors.some(error => error.includes('translation extraction failed')));
+});
+
+test('rejects unsorted keys in English and translated catalogs', async () => {
+  for (const lang of ['en', 'es']) {
+    const input = {
+      en: {Alpha: 'Alpha', Zulu: 'Zulu'},
+      es: {Alpha: 'Alfa', Zulu: 'Zulu'},
+    };
+    input[lang] = {Zulu: input[lang].Zulu, Alpha: input[lang].Alpha};
+    const {errors} = await checkTranslations(input);
+    assert.deepEqual(errors, [
+      `${lang}: translation keys must be sorted; run yarn translation:sort`,
+    ]);
+  }
+});
+
+test('accepts code-unit ordering for punctuation, case, accents and plural forms', async () => {
+  const {errors} = await checkTranslations({
+    en: {
+      '!Warning': '!Warning',
+      Apple: 'Apple',
+      Wallet_one: 'One wallet',
+      Wallet_other: 'Many wallets',
+      apple: 'apple',
+      Álbum: 'Álbum',
+    },
+    ru: {
+      '!Warning': '!Warning',
+      Apple: 'Apple',
+      Wallet_few: 'Wallets',
+      Wallet_many: 'Wallets',
+      Wallet_one: 'Wallet',
+      Wallet_other: 'Wallets',
+      apple: 'apple',
+      Álbum: 'Álbum',
+    },
+  });
+  assert.deepEqual(errors, []);
+});
+
+test('accepts canonical JavaScript ordering for integer keys', async () => {
+  const {errors} = await checkTranslations({
+    en: {10: 'Ten', 2: 'Two', Apple: 'Apple'},
+    es: {10: 'Diez', 2: 'Dos', Apple: 'Manzana'},
+  });
+  assert.deepEqual(errors, []);
+});
+
+test('extraction preserves catalog values and keeps new keys sorted and idempotent', async () => {
+  const cli = require.resolve('i18next-cli');
+  const {createJiti} = require(require.resolve('jiti', {paths: [cli]}));
+  const {runExtractor} = require(cli);
+  const config = await createJiti(__dirname).import(
+    path.join(__dirname, '../i18next.config.ts'),
+    {default: true},
+  );
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'bitpay-i18n-extract-'),
+  );
+  try {
+    const source = path.join(directory, 'source.tsx');
+    const catalog = path.join(directory, 'locales/en/translation.json');
+    fs.mkdirSync(path.dirname(catalog), {recursive: true});
+    fs.writeFileSync(source, "t('Middle');");
+    fs.writeFileSync(
+      catalog,
+      JSON.stringify(
+        {
+          Zulu: 'Existing Zulu',
+          Álbum: 'Existing album',
+          apple: 'Existing apple',
+          Wallet_other: 'Existing wallets',
+          Wallet_one: 'Existing wallet',
+          Alpha: 'Existing Alpha',
+          '!Warning': 'Existing warning',
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    config.extract.input = source;
+    config.extract.output = path.join(
+      directory,
+      'locales/{{language}}/{{namespace}}.json',
+    );
+    const first = await runExtractor(config, {quiet: true});
+    assert.equal(first.hasErrors, false);
+    const raw = fs.readFileSync(catalog, 'utf8');
+    assert.equal(
+      raw,
+      JSON.stringify(
+        {
+          '!Warning': 'Existing warning',
+          Alpha: 'Existing Alpha',
+          Middle: 'Middle',
+          Wallet_one: 'Existing wallet',
+          Wallet_other: 'Existing wallets',
+          Zulu: 'Existing Zulu',
+          apple: 'Existing apple',
+          Álbum: 'Existing album',
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    const second = await runExtractor(config, {quiet: true});
+    assert.equal(second.hasErrors, false);
+    assert.equal(second.anyFileUpdated, false);
+    assert.equal(fs.readFileSync(catalog, 'utf8'), raw);
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
 });

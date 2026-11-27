@@ -18,6 +18,7 @@ import {Selector} from 'reselect';
 import {
   backupFileExists,
   backupPersistRoot,
+  discardRollingBackup,
   readBackupPersistRoot,
 } from './backup/fs-backup';
 import {
@@ -115,6 +116,11 @@ import {
   logReducerDuration,
 } from './performanceDiagnostics';
 import {PERF_DEBUG, performanceLog} from '../utils/performanceDebug';
+import {
+  isPerfEnabled,
+  recordAction,
+  registerStoreForPerf,
+} from '../perf/PerfMonitor';
 
 import {modernStorage as storage, requireVaultActive} from './vault-storage';
 import {prepareModernVault} from './vault-runtime';
@@ -124,6 +130,7 @@ export {storage};
 const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
   WalletActionTypes.SUCCESS_CREATE_KEY,
   WalletActionTypes.SUCCESS_IMPORT,
+  WalletActionTypes.CLEAR_TSS_SESSION_SECRETS,
   WalletActionTypes.SUCCESS_ADD_WALLET,
   WalletActionTypes.DELETE_KEY,
   WalletActionTypes.UPDATE_KEY_NAME,
@@ -144,6 +151,19 @@ const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
 ]);
 
 let backupTriggerAction: string | null = null;
+let backupRetryLabel: string | null = null;
+// Bounds retries and the missing-backup path: persist:root is written with
+// throttle 0, so a broken filesystem would otherwise retry on every slice change
+let backupFailures = 0;
+let backupInFlight = false;
+// Latest persist:root not yet handed to a backup; writes arriving while one is
+// in flight coalesce here instead of queueing attempts past the failure limit
+let pendingPersistRoot: string | null = null;
+// .bak is discarded only after a backup of a persist:root write made after the
+// last CLEAR_TSS_SESSION_SECRETS
+let persistRootWriteSeq = 0;
+let pendingPersistRootSeq = 0;
+let discardBakAfterSeq: number | null = null;
 
 let storeDispatch: ((action: AnyAction) => void) | null = null;
 // Never dispatches: every caller logs a storage failure, and ADD_PERSISTED_LOG
@@ -201,8 +221,58 @@ const removePortfolioChartsPersistRoot = (
     delete parsed.PORTFOLIO_CHARTS;
 
     return {changed: true, value: JSON.stringify(parsed)};
-  } catch (_) {
+  } catch {
     return {changed: false, value: rawJson};
+  }
+};
+
+const runFsBackup = async (): Promise<void> => {
+  const value = pendingPersistRoot;
+  if (backupInFlight || value === null) {
+    return;
+  }
+  backupInFlight = true;
+  pendingPersistRoot = null;
+  const seq = pendingPersistRootSeq;
+  const scrubsPendingBak =
+    discardBakAfterSeq !== null && seq > discardBakAfterSeq;
+  let label = backupTriggerAction;
+  backupTriggerAction = null;
+  try {
+    if (!label && scrubsPendingBak && backupFailures < 3) {
+      label = WalletActionTypes.CLEAR_TSS_SESSION_SECRETS;
+    }
+    // A fresh trigger action always gets one attempt, as before retries existed
+    if (!label && backupFailures < 3) {
+      label =
+        backupRetryLabel ??
+        ((await backupFileExists()) ? null : 'no existing backup');
+    }
+    if (!label) {
+      return;
+    }
+    try {
+      await backupPersistRoot(value);
+      backupFailures = 0;
+      backupRetryLabel = null;
+      logManager.debug(`Backed up store to filesystem, triggered by ${label}.`);
+      if (scrubsPendingBak && (await discardRollingBackup())) {
+        // A clear dispatched during the awaits keeps its pending discard
+        if (discardBakAfterSeq !== null && seq > discardBakAfterSeq) {
+          discardBakAfterSeq = null;
+        }
+      }
+    } catch {
+      // Retry on the next persist:root write rather than waiting for another
+      // trigger action, which may never come
+      backupFailures++;
+      backupRetryLabel = label;
+    }
+  } finally {
+    backupInFlight = false;
+    if (pendingPersistRoot !== null) {
+      runFsBackup();
+    }
   }
 };
 
@@ -242,20 +312,11 @@ export const reduxStorage: Storage = {
     }
     try {
       if (key === 'persist:root' && typeof valueToStore === 'string') {
-        const hasBackup = await backupFileExists();
-        if (backupTriggerAction || !hasBackup) {
-          const triggerLabel = backupTriggerAction ?? 'no existing backup';
-          backupPersistRoot(valueToStore)
-            .then(() =>
-              logManager.debug(
-                `Backed up store to filesystem, triggered by ${triggerLabel}.`,
-              ),
-            )
-            .catch(() => {});
-          backupTriggerAction = null;
-        }
+        pendingPersistRoot = valueToStore;
+        pendingPersistRootSeq = ++persistRootWriteSeq;
+        runFsBackup();
       }
-    } catch (_) {}
+    } catch {}
     if (PERF_DEBUG) {
       logPersistPhase(
         'setItem.total',
@@ -284,7 +345,7 @@ export const reduxStorage: Storage = {
             logManager.info(
               `MMKV persist:root removed PORTFOLIO_CHARTS - beforeBytes:${value.length} afterBytes:${sanitized.value.length}`,
             );
-          } catch (_) {}
+          } catch {}
         }
         return Promise.resolve(sanitized.value);
       }
@@ -346,6 +407,22 @@ const flushPersistenceSoon = () => {
     activePersistor?.flush().catch(() => {});
   }, 0);
 };
+
+export const fsBackupTriggerMiddleware: Middleware =
+  () => next => (action: AnyAction) => {
+    try {
+      if (action && typeof action.type === 'string') {
+        if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
+          backupTriggerAction = action.type;
+          if (action.type === WalletActionTypes.CLEAR_TSS_SESSION_SECRETS) {
+            discardBakAfterSeq = persistRootWriteSeq;
+          }
+          flushPersistenceSoon();
+        }
+      }
+    } catch {}
+    return next(action);
+  };
 
 let persistFlushSubscription: {remove: () => void} | null = null;
 
@@ -480,6 +557,7 @@ const rootReducer = (
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- dev debug toggle: enabled by uncommenting middlewares.push(logger) in configureStore
 const logger = createLogger({
   predicate: (_getState, action) =>
     ![
@@ -573,22 +651,16 @@ const initializeStore = async () => {
         store.dispatch(clearWalletPortfolioDataWithRuntime({walletIds}) as any);
       }
 
+      // BWC keeps parsed request keys for signing (patched for speed); drop
+      // them with the key. Lazy so the store module doesn't load BWC early.
+      try {
+        const {BwcProvider} = require('../lib/bwc');
+        BwcProvider.getInstance().getUtils().clearRequestPrivateKeyCache?.();
+      } catch {}
+
       return result;
     };
   };
-
-  const lastActionMiddleware =
-    (): Middleware => () => next => (action: AnyAction) => {
-      try {
-        if (action && typeof action.type === 'string') {
-          if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
-            backupTriggerAction = action.type;
-            flushPersistenceSoon();
-          }
-        }
-      } catch (_) {}
-      return next(action);
-    };
 
   const invalidateWalletDerivedCachesMiddleware: Middleware =
     () => next => (action: AnyAction) => {
@@ -600,7 +672,23 @@ const initializeStore = async () => {
   if (PERF_DEBUG) {
     middlewares.unshift(reduxPerformanceMiddleware);
   }
-  middlewares.push(lastActionMiddleware());
+  // Perf builds only (IS_PERF): counts and times every action for the
+  // harness's load profile. Outermost, so it times the whole chain.
+  if (isPerfEnabled) {
+    middlewares.unshift(() => next => (action: AnyAction) => {
+      const startedAt = performance.now();
+      const result = next(action);
+      if (typeof action?.type === 'string') {
+        recordAction(
+          action.type,
+          performance.now() - startedAt,
+          (action as AnyAction).payload,
+        );
+      }
+      return result;
+    });
+  }
+  middlewares.push(fsBackupTriggerMiddleware);
   middlewares.push(invalidateWalletDerivedCachesMiddleware);
   middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 
@@ -745,7 +833,7 @@ const initializeStore = async () => {
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.start storageKeys:${keysCount}`,
             );
-          } catch (_) {}
+          } catch {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
           !firstRehydrateLogged
@@ -757,7 +845,7 @@ const initializeStore = async () => {
             const totalSize = (() => {
               try {
                 return JSON.stringify(payload).length;
-              } catch (_) {
+              } catch {
                 return -1;
               }
             })();
@@ -766,15 +854,15 @@ const initializeStore = async () => {
               Object.keys(payload).forEach(k => {
                 try {
                   sizeByReduxKey[k] = JSON.stringify(payload[k]).length;
-                } catch (_) {}
+                } catch {}
               });
-            } catch (_) {}
+            } catch {}
             performanceLog(
               `[PERF-PERSIST] phase:rehydrate.complete durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
                 sizeByReduxKey,
               )}`,
             );
-          } catch (_) {}
+          } catch {}
         }
       }
       return next(action);
@@ -788,6 +876,9 @@ const initializeStore = async () => {
     : applyMiddleware(...middlewares);
 
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+  registerStoreForPerf(
+    store.getState as unknown as () => Record<string, unknown>,
+  );
   // Registered before the Provider subscribes, so list helpers see the new
   // testnet visibility by the time components re-render.
   store.subscribe(() =>

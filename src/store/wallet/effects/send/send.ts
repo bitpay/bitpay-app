@@ -11,7 +11,6 @@ import {
   Wallet,
   TransactionOptionsContext,
   ProposalErrorHandlerContext,
-  KeyMethods,
 } from '../../wallet.models';
 import {
   FormatAmountStr,
@@ -89,7 +88,7 @@ import {
   openUrlWithInAppBrowser,
   submitDeviceEvent,
 } from '../../../app/app.effects';
-import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import ReactNativeBiometrics from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {DeviceEventEmitter, Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
@@ -164,7 +163,6 @@ export const createProposalAndBuildTxDetails =
             feeLevel: cachedFeeLevel,
             useUnconfirmedFunds,
             queuedTransactions,
-            enableReplaceByFee,
           },
         } = getState();
 
@@ -1462,7 +1460,7 @@ export const publishAndSign =
             onRoundUpdate: (round, type) =>
               logManager.debug(`[TSS] Round ${round} ${type}`),
             onError: err => logManager.error(`[TSS] Error: ${err.message}`),
-            onComplete: sig => logManager.debug(`[TSS] Complete`),
+            onComplete: () => logManager.debug(`[TSS] Complete`),
           };
         }
         if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
@@ -1548,7 +1546,7 @@ export const publishAndSign =
             tssCallbacks?.onStatusChange('broadcasting');
             try {
               broadcastedTx = await broadcastTx(wallet, signedTx);
-            } catch (_) {
+            } catch {
               // Another copayer may have already broadcasted — poll for confirmed state.
               broadcastedTx = await pollTxpUntilBroadcast(wallet, signedTx.id);
             }
@@ -1578,6 +1576,9 @@ export const publishAndSign =
             );
           }, 3000);
         } else {
+          if (isTSSSigning && signedTx.status === 'broadcasted') {
+            tssCallbacks?.onStatusChange('complete');
+          }
           dispatch(startUpdateWalletStatus({key, wallet, force: true}));
         }
 
@@ -2208,7 +2209,7 @@ export const handleCreateTxProposalError =
             ],
           });
       }
-    } catch (err2) {
+    } catch {
       return GeneralError();
     }
   };
@@ -2513,6 +2514,27 @@ export const checkBiometricForSending =
       dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
       return Promise.reject('biometric check failed');
     }
+  };
+
+export const verifyIdentity =
+  (): Effect<Promise<void>> => async (dispatch, getState) => {
+    const {biometricLockActive, pinLockActive, showPinModal} = getState().APP;
+    if (biometricLockActive) {
+      await dispatch(checkBiometricForSending());
+      return;
+    }
+    if (!pinLockActive || showPinModal) {
+      throw new Error('PIN verification is unavailable');
+    }
+    await new Promise<void>((resolve, reject) =>
+      dispatch(
+        AppActions.showPinModal({
+          type: 'check',
+          onClose: checked =>
+            checked ? resolve() : reject(new Error('PIN check cancelled')),
+        }),
+      ),
+    );
   };
 
 export const sendCrypto =
