@@ -21,6 +21,7 @@ import CustomizeHomeSettings from './general/screens/customize-home/CustomizeHom
 import AltCurrencySettings from './general/screens/AltCurrencySettings';
 import LanguageSettings from './general/screens/LanguageSettings';
 import MoonpayConnectionSettings from './components/MoonpayConnectionSettings';
+import TransakConnectionSettings from './components/TransakConnectionSettings';
 import {useStackScreenOptions} from '../../../navigation/utils/headerHelpers';
 import type {SettingsGroupParamList} from './SettingsGroup';
 
@@ -39,6 +40,7 @@ export type SettingsDetailsParamList = {
   Language: undefined;
   Theme: undefined;
   MoonpayConnectionSettings: undefined;
+  TransakConnectionSettings: undefined;
   ContactsDetails: {contact: any};
   ContactsAdd: undefined;
   ContactsRoot: undefined;
@@ -147,6 +149,11 @@ const SettingsDetails = ({
         name="MoonpayConnectionSettings"
         component={MoonpayConnectionSettings}
         options={{title: 'MoonPay'}}
+      />
+      <Stack.Screen
+        name="TransakConnectionSettings"
+        component={TransakConnectionSettings}
+        options={{title: 'Transak'}}
       />
     </Stack.Navigator>
   );

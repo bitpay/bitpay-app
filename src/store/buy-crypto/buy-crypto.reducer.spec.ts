@@ -746,6 +746,49 @@ describe('ACCESS_TOKEN_TRANSAK', () => {
 });
 
 // ---------------------------------------------------------------------------
+// HEADLESS_USER_AUTH_TRANSAK
+// ---------------------------------------------------------------------------
+
+describe('HEADLESS_USER_AUTH_TRANSAK', () => {
+  const userAuth = {
+    accessToken: 'user-tok',
+    expiresAt: 9999999,
+    email: 'user@example.com',
+  };
+
+  it('stores the user session for the env', () => {
+    const state = buyCryptoReducer(freshState(), {
+      type: BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK,
+      payload: {env: 'sandbox', userAuth},
+    });
+    expect(state.tokens.transakHeadlessUser?.sandbox).toEqual(userAuth);
+    expect(state.tokens.transakHeadlessUser?.production).toBeUndefined();
+  });
+
+  it('clears the user session when userAuth is undefined', () => {
+    let state = buyCryptoReducer(freshState(), {
+      type: BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK,
+      payload: {env: 'production', userAuth},
+    });
+    state = buyCryptoReducer(state, {
+      type: BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK,
+      payload: {env: 'production', userAuth: undefined},
+    });
+    expect(state.tokens.transakHeadlessUser?.production).toBeUndefined();
+  });
+
+  it('works on a state persisted before headless existed', () => {
+    const base = {...freshState(), tokens: {transak: {}}};
+    const state = buyCryptoReducer(base, {
+      type: BuyCryptoActionTypes.HEADLESS_USER_AUTH_TRANSAK,
+      payload: {env: 'sandbox', userAuth},
+    });
+    expect(state.tokens.transakHeadlessUser?.sandbox).toEqual(userAuth);
+    expect(state.tokens.transak).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
 // WYRE
 // ---------------------------------------------------------------------------
 

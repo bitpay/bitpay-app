@@ -213,7 +213,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       ramp: false,
       sardine: false,
       simplex: false,
-      transak: false,
+      transak: true,
     },
     enabled: Platform.OS === 'android',
   },

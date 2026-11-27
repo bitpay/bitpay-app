@@ -30,6 +30,15 @@ import MoonpayBuyEmbeddedCheckout, {
 import MoonpayBuyEmbeddedOnboarding, {
   MoonpayBuyEmbeddedOnboardingProps,
 } from './screens/MoonpayBuyEmbeddedOnboarding';
+import TransakBuyHeadlessCheckout, {
+  TransakBuyHeadlessCheckoutProps,
+} from './screens/TransakBuyHeadlessCheckout';
+import TransakBuyHeadlessKyc, {
+  TransakBuyHeadlessKycProps,
+} from './screens/TransakBuyHeadlessKyc';
+import TransakBuyHeadlessOnboarding, {
+  TransakBuyHeadlessOnboardingProps,
+} from './screens/TransakBuyHeadlessOnboarding';
 
 interface ExternalServicesProps {
   ExternalServices: typeof Root;
@@ -43,6 +52,9 @@ export type ExternalServicesGroupParamList = {
   MoonpaySellCheckout: MoonpaySellCheckoutProps;
   RampSellCheckout: RampSellCheckoutProps;
   SimplexSellCheckout: SimplexSellCheckoutProps;
+  TransakBuyHeadlessCheckout: TransakBuyHeadlessCheckoutProps;
+  TransakBuyHeadlessKyc: TransakBuyHeadlessKycProps;
+  TransakBuyHeadlessOnboarding: TransakBuyHeadlessOnboardingProps;
 };
 
 export enum ExternalServicesScreens {
@@ -52,6 +64,9 @@ export enum ExternalServicesScreens {
   MOONPAY_SELL_CHECKOUT = 'MoonpaySellCheckout',
   RAMP_SELL_CHECKOUT = 'RampSellCheckout',
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
+  TRANSAK_BUY_HEADLESS_CHECKOUT = 'TransakBuyHeadlessCheckout',
+  TRANSAK_BUY_HEADLESS_KYC = 'TransakBuyHeadlessKyc',
+  TRANSAK_BUY_HEADLESS_ONBOARDING = 'TransakBuyHeadlessOnboarding',
 }
 
 const AccountHeader = ({
@@ -120,6 +135,29 @@ const ExternalServicesGroup = ({
       <ExternalServices.Screen
         name={ExternalServicesScreens.MOONPAY_BUY_EMBEDDED_ONBOARDING}
         component={MoonpayBuyEmbeddedOnboarding}
+        options={{
+          headerTitle: '',
+        }}
+      />
+      <ExternalServices.Screen
+        name={ExternalServicesScreens.TRANSAK_BUY_HEADLESS_CHECKOUT}
+        component={TransakBuyHeadlessCheckout}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Confirm Buy')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServices.Screen
+        name={ExternalServicesScreens.TRANSAK_BUY_HEADLESS_KYC}
+        component={TransakBuyHeadlessKyc}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Identity Verification')}</HeaderTitle>
+          ),
+        }}
+      />
+      <ExternalServices.Screen
+        name={ExternalServicesScreens.TRANSAK_BUY_HEADLESS_ONBOARDING}
+        component={TransakBuyHeadlessOnboarding}
         options={{
           headerTitle: '',
         }}

@@ -7,6 +7,9 @@ export type ExchangeConfig = {
     paymentMethods?: PaymentMethodsConfig;
     // MoonPay embedded flow kill switch.
     embeddedBuyDisabled?: boolean;
+    // Transak headless flow kill switch.
+    headlessBuyDisabled?: boolean;
+    headlessKycDisabled?: boolean;
     [key: string]: any; // Other partner-specific configuration properties can be added here
   };
 };
@@ -57,8 +60,9 @@ export type ConfigPaymentMethodKey =
   | 'pisp'
   | 'pix'
   | 'venmo'
-  // MoonPay embedded flow only — independent from the general 'applePay' /
-  // 'creditCard' / 'debitCard' keys above, which also cover the Kayak flow.
+  // MoonPay embedded and Transak headless flows only — independent from the
+  // general 'applePay' / 'creditCard' / 'debitCard' keys above, which also
+  // cover the Kayak flow.
   | 'applePayEmbedded'
   | 'googlePayEmbedded'
   | 'cardEmbedded'
