@@ -4,6 +4,7 @@ import {
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
   getTransakHeadlessUnsupportedTermsIds,
+  getTransakLegalUrls,
   isSameTransakHeadlessQuoteForCustomer,
   isSameTransakHeadlessTermsIds,
   isTransakHeadlessConnectionEnabled,
@@ -230,6 +231,37 @@ describe('getTransakHeadlessConnectionWallet', () => {
         key2: makeKey([makeWallet('incomplete', false)]),
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('getTransakLegalUrls', () => {
+  it('uses the US terms for US users', () => {
+    expect(getTransakLegalUrls('US')).toEqual({
+      termsUrl: 'https://transak.com/terms-of-service-us',
+      privacyUrl: 'https://transak.com/privacy-policy',
+    });
+  });
+
+  it('uses the EU terms for EU and other EEA users', () => {
+    const euUrls = {
+      termsUrl: 'https://transak.com/eu/terms-of-service-eu',
+      privacyUrl: 'https://transak.com/eu/privacy-policy-eu',
+    };
+    expect(getTransakLegalUrls('DE')).toEqual(euUrls);
+    expect(getTransakLegalUrls('es')).toEqual(euUrls);
+    expect(getTransakLegalUrls('NO')).toEqual(euUrls);
+    expect(getTransakLegalUrls('IS')).toEqual(euUrls);
+    expect(getTransakLegalUrls('LI')).toEqual(euUrls);
+  });
+
+  it('uses the global terms for everyone else', () => {
+    const globalUrls = {
+      termsUrl: 'https://transak.com/terms-of-service',
+      privacyUrl: 'https://transak.com/privacy-policy',
+    };
+    expect(getTransakLegalUrls('GB')).toEqual(globalUrls);
+    expect(getTransakLegalUrls('CH')).toEqual(globalUrls);
+    expect(getTransakLegalUrls(undefined)).toEqual(globalUrls);
   });
 });
 

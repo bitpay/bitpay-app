@@ -2034,7 +2034,7 @@
   "Transak is still reviewing your information. You can complete your purchase once your identity is verified.": "Transak prüft Ihre Angaben noch. Sie können Ihren Kauf abschließen, sobald Ihre Identität bestätigt ist.",
   "Transak request timed out": "Zeitüberschreitung bei der Transak-Anfrage",
   "Transak sent a 6-digit code to {{email}}.": "Transak hat einen sechsstelligen Code an {{email}} gesendet.",
-  "TransakHeadlessTermsAgreement": "Wenn Sie fortfahren, stimmen Sie den <0>Nutzungsbedingungen von Transak</0> zu.",
+  "TransakHeadlessTermsAgreement": "Wenn Sie fortfahren, stimmen Sie den <0>Nutzungsbedingungen von Transak</0> und den <1>Datenschutzbestimmungen</1> zu.",
   "Transfer ID": "ID übertragen",
   "Transfer function": "Übertragungsfunktion",
   "Transfer to Multiple Recipients": "Übertragung an mehrere Empfänger",

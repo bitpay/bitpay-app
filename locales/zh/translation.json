@@ -2023,7 +2023,7 @@
   "Transak is still reviewing your information. You can complete your purchase once your identity is verified.": "Transak 仍在审核您的信息。身份验证通过后，您即可完成购买。",
   "Transak request timed out": "Transak 请求超时",
   "Transak sent a 6-digit code to {{email}}.": "Transak 已向 {{email}} 发送 6 位验证码。",
-  "TransakHeadlessTermsAgreement": "继续即表示您同意<0>Transak 服务条款</0>。",
+  "TransakHeadlessTermsAgreement": "继续即表示您同意<0>Transak 服务条款</0>和<1>隐私政策</1>。",
   "Transfer ID": "转账 ID",
   "Transfer function": "转账函数",
   "Transfer to Multiple Recipients": "转给多个接收人",

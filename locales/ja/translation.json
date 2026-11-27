@@ -2023,7 +2023,7 @@
   "Transak is still reviewing your information. You can complete your purchase once your identity is verified.": "Transak はまだお客様の情報を審査しています。本人確認が完了すると、購入を完了できます。",
   "Transak request timed out": "Transak へのリクエストがタイムアウトしました",
   "Transak sent a 6-digit code to {{email}}.": "Transak が {{email}} に6桁のコードを送信しました。",
-  "TransakHeadlessTermsAgreement": "続行すると、<0>Transak の利用規約</0>に同意したものとみなされます。",
+  "TransakHeadlessTermsAgreement": "続行すると、<0>Transak の利用規約</0>と<1>プライバシーポリシー</1>に同意したものとみなされます。",
   "Transfer ID": "転送ID",
   "Transfer function": "送金関数",
   "Transfer to Multiple Recipients": "複数の受取人に転送する",

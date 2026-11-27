@@ -2034,7 +2034,7 @@
   "Transak is still reviewing your information. You can complete your purchase once your identity is verified.": "Transak is still reviewing your information. You can complete your purchase once your identity is verified.",
   "Transak request timed out": "Transak request timed out",
   "Transak sent a 6-digit code to {{email}}.": "Transak sent a 6-digit code to {{email}}.",
-  "TransakHeadlessTermsAgreement": "By continuing, you agree to <0>Transak's Terms of Service</0>.",
+  "TransakHeadlessTermsAgreement": "By continuing, you agree to <0>Transak's Terms of Service</0> and <1>Privacy Policy</1>.",
   "Transfer ID": "Transfer ID",
   "Transfer function": "Transfer function",
   "Transfer to Multiple Recipients": "Transfer to Multiple Recipients",

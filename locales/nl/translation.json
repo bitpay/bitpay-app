@@ -2034,7 +2034,7 @@
   "Transak is still reviewing your information. You can complete your purchase once your identity is verified.": "Transak beoordeelt uw gegevens nog. U kunt uw aankoop voltooien zodra uw identiteit is geverifieerd.",
   "Transak request timed out": "Time-out bij het Transak-verzoek",
   "Transak sent a 6-digit code to {{email}}.": "Transak heeft een zescijferige code naar {{email}} gestuurd.",
-  "TransakHeadlessTermsAgreement": "Door verder te gaan, gaat u akkoord met de <0>Servicevoorwaarden van Transak</0>.",
+  "TransakHeadlessTermsAgreement": "Door verder te gaan, gaat u akkoord met de <0>Servicevoorwaarden van Transak</0> en het <1>Privacybeleid</1>.",
   "Transfer ID": "Overdracht-ID",
   "Transfer function": "Overdrachtsfunctie",
   "Transfer to Multiple Recipients": "Overmaken naar meerdere ontvangers",

@@ -10,6 +10,7 @@ import {
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Key, Wallet} from '../../../../store/wallet/wallet.models';
+import {EUCountries} from '../../../../store/location/location.constants';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod, PaymentMethodKey} from '../constants/BuyCryptoConstants';
@@ -478,6 +479,34 @@ export const isTransakHeadlessUserAuthValid = (
   userAuth: TransakHeadlessUserAuthData | undefined,
 ): userAuth is TransakHeadlessUserAuthData =>
   !!userAuth?.accessToken && userAuth.expiresAt - Date.now() > 10 * 60 * 1000;
+
+const EEA_NON_EU_COUNTRIES = ['IS', 'LI', 'NO'];
+
+export const getTransakLegalUrls = (
+  country: string | undefined,
+): {termsUrl: string; privacyUrl: string} => {
+  const countryCode = country?.toUpperCase();
+  if (countryCode === 'US') {
+    return {
+      termsUrl: 'https://transak.com/terms-of-service-us',
+      privacyUrl: 'https://transak.com/privacy-policy',
+    };
+  }
+  if (
+    countryCode &&
+    (EUCountries.includes(countryCode) ||
+      EEA_NON_EU_COUNTRIES.includes(countryCode))
+  ) {
+    return {
+      termsUrl: 'https://transak.com/eu/terms-of-service-eu',
+      privacyUrl: 'https://transak.com/eu/privacy-policy-eu',
+    };
+  }
+  return {
+    termsUrl: 'https://transak.com/terms-of-service',
+    privacyUrl: 'https://transak.com/privacy-policy',
+  };
+};
 
 const TRANSAK_HEADLESS_RESULT_PARAM = 'headlessResult';
 

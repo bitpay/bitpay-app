@@ -2041,7 +2041,7 @@
   "Transak is still reviewing your information. You can complete your purchase once your identity is verified.": "Transak всё ещё проверяет ваши данные. Вы сможете завершить покупку после подтверждения личности.",
   "Transak request timed out": "Истекло время ожидания запроса к Transak",
   "Transak sent a 6-digit code to {{email}}.": "Transak отправил шестизначный код на {{email}}.",
-  "TransakHeadlessTermsAgreement": "Продолжая, вы принимаете <0>Условия обслуживания Transak</0>.",
+  "TransakHeadlessTermsAgreement": "Продолжая, вы принимаете <0>Условия обслуживания Transak</0> и <1>Политику конфиденциальности</1>.",
   "Transfer ID": "Идентификатор перевода",
   "Transfer function": "Функция перевода",
   "Transfer to Multiple Recipients": "Отправить нескольким получателям",

@@ -28,7 +28,7 @@ import {AppEffects} from '../../../store/app';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getErrorString} from '../../../utils/helper-methods';
 import yup from '../../../lib/yup';
-import TransakLogo from '../../../components/icons/external-services/transak/transak-logo';
+import TransakConnectImage from '../../../components/icons/external-services/transak/transak-connect';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   TransakHeadlessPaymentMethod,
@@ -40,7 +40,10 @@ import {
   transakHeadlessSendOtp,
   transakHeadlessVerifyOtp,
 } from '../../../store/buy-crypto/effects/transak/transak-headless';
-import {transakEnv} from '../buy-crypto/utils/transak-utils';
+import {
+  getTransakLegalUrls,
+  transakEnv,
+} from '../buy-crypto/utils/transak-utils';
 import {
   ExternalServicesGroupParamList,
   ExternalServicesScreens,
@@ -240,6 +243,7 @@ const TransakBuyHeadlessOnboarding = ({
     onSkip,
   } = route.params;
   const isConnections = context === 'connections';
+  const legalUrls = getTransakLegalUrls(country);
   const walletPaymentName =
     paymentMethod === 'apple_pay'
       ? 'Apple Pay'
@@ -390,7 +394,7 @@ const TransakBuyHeadlessOnboarding = ({
       <ScrollView keyboardShouldPersistTaps={'handled'}>
         <HeaderContainer>
           <IconRow>
-            <TransakLogo width={120} height={40} />
+            <TransakConnectImage width={120} height={70} />
           </IconRow>
           {step === 'email' && isConnections ? (
             <>
@@ -495,15 +499,8 @@ const TransakBuyHeadlessOnboarding = ({
           <Trans
             i18nKey="TransakHeadlessTermsAgreement"
             components={[
-              <LegalLink
-                onPress={() =>
-                  openUrl(
-                    country === 'US'
-                      ? 'https://transak.com/terms-of-service-us'
-                      : 'https://transak.com/terms-of-service',
-                  )
-                }
-              />,
+              <LegalLink onPress={() => openUrl(legalUrls.termsUrl)} />,
+              <LegalLink onPress={() => openUrl(legalUrls.privacyUrl)} />,
             ]}
           />
         </LegalText>
