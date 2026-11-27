@@ -9,6 +9,7 @@ import {
 } from '../../../../utils/hooks';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {BuyCryptoActions} from '../../../../store/buy-crypto';
+import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {
   TransakHeadlessUserAuthData,
   TransakHeadlessUserDetailsData,
@@ -88,6 +89,11 @@ const TransakConnectionSettings = () => {
             '[TransakConnectionSettings] stored session rejected by Transak, removing it.',
           );
           dispatch(
+            Analytics.track('Transak Headless: session rejected', {
+              context: 'Settings Connections',
+            }),
+          );
+          dispatch(
             BuyCryptoActions.updateHeadlessUserAuthTransak({
               env: transakEnv,
               userAuth: undefined,
@@ -109,6 +115,11 @@ const TransakConnectionSettings = () => {
     }
     haptic('impactLight');
     setUnlinking(true);
+    dispatch(
+      Analytics.track('Transak Headless: unlinked account', {
+        context: 'Settings Connections',
+      }),
+    );
     if (wallet) {
       try {
         await transakHeadlessLogout(wallet, {
