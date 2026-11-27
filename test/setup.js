@@ -352,32 +352,12 @@ jest.mock('ethers', () => {
   };
 });
 
-// @gorhom/bottom-sheet — requires BottomSheetModalProvider context; minimal mock
-jest.mock('@gorhom/bottom-sheet', () => {
-  const React = require('react');
-  const noop = () => {};
-  class BottomSheetModal extends React.Component {
-    present() {}
-    dismiss() {}
-    snapToIndex() {}
-    close() {}
-    render() { return this.props.children || null; }
-  }
-  return {
-    __esModule: true,
-    default: ({children}) => children,
-    BottomSheet: ({children}) => children,
-    BottomSheetModal,
-    BottomSheetView: ({children}) => children,
-    BottomSheetModalProvider: ({children}) => children,
-    BottomSheetBackdrop: noop,
-    BottomSheetScrollView: ({children}) => children,
-    BottomSheetFlatList: ({children}) => children,
-    BottomSheetTextInput: 'TextInput',
-    useBottomSheet: () => ({close: noop, expand: noop, collapse: noop, snapToIndex: noop}),
-    useBottomSheetModal: () => ({dismiss: noop, dismissAll: noop, present: noop}),
-  };
-});
+jest.mock('@swmansion/react-native-bottom-sheet', () => ({
+  __esModule: true,
+  BottomSheet: ({children}) => children,
+  BottomSheetProvider: ({children}) => children,
+  ModalBottomSheet: ({children}) => children,
+}));
 
 // react-native-vision-camera — TurboModule; mock to avoid native errors
 jest.mock('react-native-vision-camera', () => ({

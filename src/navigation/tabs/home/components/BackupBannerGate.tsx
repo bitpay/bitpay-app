@@ -11,6 +11,7 @@ import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import type {Effect} from '../../../../store';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {isTransactMenuOpen} from '../../../../components/modal/transact-menu/TransactMenu';
+import {isModalLayoutSheetOpen} from '../../../../components/modal/base/sheet/SheetModal';
 
 export const BACKUP_NUDGE_DELAY_MS = 2500;
 
@@ -31,7 +32,8 @@ const isAnotherSurfaceOpen = (): Effect<boolean> => (_dispatch, getState) => {
     showKycGetVerifiedModal ||
     showKeyMigrationFailureModal ||
     ongoingProcessManager.getState().isVisible ||
-    isTransactMenuOpen()
+    isTransactMenuOpen() ||
+    isModalLayoutSheetOpen()
   );
 };
 

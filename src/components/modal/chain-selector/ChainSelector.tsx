@@ -3,12 +3,7 @@ import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Platform, StyleSheet, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '../../../contexts';
-import {useBottomSheetScrollableCreator} from '@gorhom/bottom-sheet';
-import {
-  FlashList,
-  type FlashListProps,
-  type ListRenderItemInfo,
-} from '@shopify/flash-list';
+import {FlashList, type ListRenderItemInfo} from '@shopify/flash-list';
 import {useDispatch, useSelector} from 'react-redux';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
@@ -177,21 +172,11 @@ const searchIconSize = {height: 16, width: 16};
 const ghostSvgStyle = {marginTop: 20};
 const allNetworkSvgStyle = {width: 20, height: 20};
 
-type ChainSelectorFlashListProps<T> = FlashListProps<T>;
-
 type ChainSelectorListItem = string | {title: string};
 
 const isSectionHeader = (
   item: ChainSelectorListItem,
 ): item is {title: string} => typeof item !== 'string';
-
-export const ChainSelectorFlashList = <T,>(
-  props: ChainSelectorFlashListProps<T>,
-) => {
-  const BottomSheetScrollable = useBottomSheetScrollableCreator();
-
-  return <FlashList {...props} renderScrollComponent={BottomSheetScrollable} />;
-};
 
 const ChainSelectorModalContent = ({
   onModalHide,
@@ -432,7 +417,6 @@ const ChainSelectorModalContent = ({
       modalLibrary="bottom-sheet"
       height={Math.floor(modalHeightPercentage * HEIGHT)}
       snapPoints={snapPoints}
-      stackBehavior="push"
       isVisible={isVisible}
       borderRadius={borderRadius}
       backdropOpacity={0.4}
@@ -458,7 +442,7 @@ const ChainSelectorModalContent = ({
         </View>
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
-            <ChainSelectorFlashList
+            <FlashList
               contentContainerStyle={contentContainerStyle}
               data={searchResults}
               renderItem={renderChainItem}
@@ -478,7 +462,7 @@ const ChainSelectorModalContent = ({
         </HideableView>
 
         <HideableView show={!searchVal}>
-          <ChainSelectorFlashList
+          <FlashList
             contentContainerStyle={contentContainerStyle}
             data={chainList}
             renderItem={renderItem}

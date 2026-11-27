@@ -6,13 +6,10 @@ import BottomNotification from './BottomNotification';
 import SheetModal from '../base/sheet/SheetModal';
 import configureTestStore from '@test/store';
 import {AppActions} from '../../../store/app';
-import {BottomSheetModal} from '@gorhom/bottom-sheet';
+import {ModalBottomSheet} from '@swmansion/react-native-bottom-sheet';
 import {ThemeProvider} from '../../../contexts';
 import {BitPayDarkTheme} from '../../../themes/bitpay';
 import {Caution, LightBlack} from '../../../styles/colors';
-
-// Preserve ScrollView props now that notifications use a sheet-aware scrollable.
-jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 const mockFn = jest.fn();
 
@@ -65,16 +62,19 @@ describe('Bottom Notification Modal', () => {
     expect(cta).toBeTruthy();
   });
 
-  it('should enable backdrop', async () => {
-    const {getByTestId} = render(
-      <Provider store={store}>
+  it('should enable backdrop', () => {
+    const backdropStore = configureTestStore(initialState);
+    const {UNSAFE_getByType} = render(
+      <Provider store={backdropStore}>
         <BottomNotification />
       </Provider>,
     );
 
-    const backdrop = await getByTestId('modalBackdrop');
-    expect(backdrop).toBeTruthy();
-    fireEvent.press(backdrop);
+    act(() => UNSAFE_getByType(ModalBottomSheet).props.onCloseRequest());
+
+    expect(backdropStore.getState().APP.showBottomNotificationModal).toBe(
+      false,
+    );
   });
 
   it('uses the content color for the sheet wrapper and Android bottom inset', () => {
@@ -156,7 +156,7 @@ describe('Bottom Notification Modal', () => {
     );
 
     act(() => {
-      UNSAFE_getByType(BottomSheetModal).props.onDismiss();
+      UNSAFE_getByType(ModalBottomSheet).props.onSettle(0);
     });
 
     expect(

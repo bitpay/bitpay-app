@@ -7,10 +7,6 @@ const mockDispatch = jest.fn();
 const mockUseAppSelector = jest.fn();
 const mockSheetModal = jest.fn(({children}) => children);
 const mockFlashList = jest.fn((_props: unknown) => null);
-const mockBottomSheetScrollable = jest.fn((_props: unknown) => null);
-const mockUseBottomSheetScrollableCreator = jest.fn(
-  () => mockBottomSheetScrollable,
-);
 
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
@@ -30,10 +26,6 @@ jest.mock('../../../utils/hooks', () => ({
 jest.mock('../base/sheet/SheetModal', () => ({
   __esModule: true,
   default: (props: {children?: React.ReactNode}) => mockSheetModal(props),
-}));
-
-jest.mock('@gorhom/bottom-sheet', () => ({
-  useBottomSheetScrollableCreator: () => mockUseBottomSheetScrollableCreator(),
 }));
 
 jest.mock('@shopify/flash-list', () => ({
@@ -57,7 +49,6 @@ describe('TransactMenu lazy content', () => {
 
     expect(mockUseAppSelector).not.toHaveBeenCalled();
     expect(mockSheetModal).not.toHaveBeenCalled();
-    expect(mockUseBottomSheetScrollableCreator).not.toHaveBeenCalled();
     expect(mockFlashList).not.toHaveBeenCalled();
 
     fireEvent.press(getByTestId('transact-menu-button'));
@@ -67,12 +58,7 @@ describe('TransactMenu lazy content', () => {
     expect(mockSheetModal.mock.lastCall?.[0]).toEqual(
       expect.objectContaining({isVisible: true}),
     );
-    expect(mockUseBottomSheetScrollableCreator).toHaveBeenCalled();
-    expect(mockFlashList).toHaveBeenCalledWith(
-      expect.objectContaining({
-        renderScrollComponent: mockBottomSheetScrollable,
-      }),
-    );
+    expect(mockFlashList).toHaveBeenCalled();
   });
 
   it('keeps the sheet mounted with isVisible false while it closes', () => {

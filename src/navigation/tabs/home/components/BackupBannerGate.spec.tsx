@@ -27,10 +27,17 @@ jest.mock('../../../../components/modal/transact-menu/TransactMenu', () => ({
   isTransactMenuOpen: jest.fn(() => false),
 }));
 
+jest.mock('../../../../components/modal/base/sheet/SheetModal', () => ({
+  isModalLayoutSheetOpen: jest.fn(() => false),
+}));
+
 const mockAppEffects = jest.requireMock('../../../../store/app').AppEffects;
 const mockIsTransactMenuOpen = jest.requireMock(
   '../../../../components/modal/transact-menu/TransactMenu',
 ).isTransactMenuOpen as jest.Mock;
+const mockIsModalLayoutSheetOpen = jest.requireMock(
+  '../../../../components/modal/base/sheet/SheetModal',
+).isModalLayoutSheetOpen as jest.Mock;
 
 const BANNER_TITLE = 'Back up your recovery phrase';
 const OTHER_SHEET_TITLE = 'Back up your recovery phrase first';
@@ -84,6 +91,7 @@ describe('BackupBannerGate', () => {
     jest.clearAllMocks();
     mockAppEffects.requestNotificationsPermissions.mockResolvedValue(true);
     mockIsTransactMenuOpen.mockReturnValue(false);
+    mockIsModalLayoutSheetOpen.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -144,6 +152,20 @@ describe('BackupBannerGate', () => {
 
   it('only turns on the banner when the transact menu is open as the nudge is due', () => {
     mockIsTransactMenuOpen.mockReturnValue(true);
+    const store = buildStore({notificationsInteractionDone: true});
+    const {getByText} = renderGate(store);
+
+    act(() => {
+      jest.advanceTimersByTime(BACKUP_NUDGE_DELAY_MS);
+    });
+
+    expect(store.getState().APP.backupNudgeShown).toBe(true);
+    expect(store.getState().APP.showBottomNotificationModal).toBe(false);
+    expect(getByText(BANNER_DESCRIPTION)).toBeTruthy();
+  });
+
+  it('only turns on the banner when a full-screen sheet is open as the nudge is due', () => {
+    mockIsModalLayoutSheetOpen.mockReturnValue(true);
     const store = buildStore({notificationsInteractionDone: true});
     const {getByText} = renderGate(store);
 

@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   SafeAreaView as RNSafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -39,7 +40,6 @@ import {
 } from '../../../../components/styled/Text';
 import ArrowDownSvg from '../../../../../assets/img/chevron-down.svg';
 import ArrowUpSvg from '../../../../../assets/img/chevron-up.svg';
-import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {SwapCryptoExchangeKey} from '../utils/swap-crypto-utils';
 
 const styles = StyleSheet.create({
@@ -618,7 +618,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
             )}
           </PartnersText>
         </SectionContainer>
-        <BottomSheetScrollView>
+        <ScrollView>
           {offers && !showOffersLoading
             ? Object.values(offers)
                 .sort(
@@ -745,7 +745,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
                   ) : null;
                 })
             : null}
-        </BottomSheetScrollView>
+        </ScrollView>
       </SafeAreaView>
     </>
   );
