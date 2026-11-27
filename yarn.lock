@@ -5303,17 +5303,17 @@
     Base64 "~0.2.0"
     inherits "~2.0.1"
 
-"@transak/ui-components-core@0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@transak/ui-components-core/-/ui-components-core-0.10.0.tgz#320c1395d998189cf94439e4f3ec106b7816f48f"
-  integrity sha512-5EtD9fZhpe2F38U/m46Sm3WxqkN8OCDYVMK6VObB3brDSphxvkL26nN/hY3Hh3av7G7rvWzicTWYLimLeOE9BQ==
+"@transak/ui-components-core@0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@transak/ui-components-core/-/ui-components-core-0.11.0.tgz#c44633fa5687ab32f819534eb9629185bc6099b7"
+  integrity sha512-stdEp61CHM93uaTEz2DXO78USV5hH5+ZHRGty3jAX73w2NKiN7g7ZkvuXfaPWzqhP/4+ceSrudJUVYV3lSE09w==
 
-"@transak/ui-components-rn@0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@transak/ui-components-rn/-/ui-components-rn-0.10.0.tgz#f925331205d6cc57502f1559605fc2c56f68b5d0"
-  integrity sha512-6LMxNsLXqx6gIaT18wwSzGqNLP64DmWFha4pteGSIa2yNptH8KXblr06gW+MSzbZXU3RI7zsjA7b43LqJHvRDg==
+"@transak/ui-components-rn@0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@transak/ui-components-rn/-/ui-components-rn-0.11.0.tgz#860c867bc8d747ddd3195dcd1050981515795f4c"
+  integrity sha512-53kmzwAFsxOYvJdiUGpikdyRS8A3sKodt+EEY6CMuq0z5S55njgRrSZH9ldXBZMFgGGPROB/FvzKAbTiO8QBrQ==
   dependencies:
-    "@transak/ui-components-core" "0.10.0"
+    "@transak/ui-components-core" "0.11.0"
 
 "@trysound/sax@0.2.0":
   version "0.2.0"

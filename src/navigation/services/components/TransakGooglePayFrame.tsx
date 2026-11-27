@@ -22,17 +22,19 @@ const TransakGooglePayFrame = ({
   sessionId,
   environment,
   onReady,
+  onClick,
   onSuccess,
   onError,
 }: TransakGooglePayFrameProps) => {
   const callbacksRef = useRef<GooglePayCallbacks>({
     onReady,
+    onClick,
     onSuccess,
     onError,
   });
   useEffect(() => {
-    callbacksRef.current = {onReady, onSuccess, onError};
-  }, [onReady, onSuccess, onError]);
+    callbacksRef.current = {onReady, onClick, onSuccess, onError};
+  }, [onReady, onClick, onSuccess, onError]);
 
   const uri = useMemo(
     () => buildGooglePayUrl({sessionId, environment}),
