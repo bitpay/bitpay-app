@@ -52,6 +52,13 @@ export class TransakHeadlessUnavailableError extends Error {
 
 export const TRANSAK_HEADLESS_CANCEL_REASON = 'cancel';
 
+export const getTransakHeadlessErrorCodes = (
+  err: unknown,
+): {statusCode: number | ''; errorCode: number | ''} =>
+  err instanceof TransakHeadlessError
+    ? {statusCode: err.statusCode ?? '', errorCode: err.errorCode ?? ''}
+    : {statusCode: '', errorCode: ''};
+
 export const isTransakHeadlessUnauthorized = (err: unknown): boolean =>
   err instanceof TransakHeadlessError &&
   (err.statusCode === 401 ||

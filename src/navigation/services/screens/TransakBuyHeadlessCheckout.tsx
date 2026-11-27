@@ -333,6 +333,8 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
   const orderRef = useRef<TransakHeadlessOrderData | undefined>(undefined);
   const finalizingRef = useRef(false);
   const mountedRef = useRef(true);
+  const payButtonClickedRef = useRef(false);
+  const challengeStartedRef = useRef(false);
 
   const isNewCard = selectedCardId === 'new';
 
@@ -350,6 +352,17 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       }),
     );
   };
+
+  const getAnalyticsData = () => ({
+    exchange: 'transak',
+    context: 'TransakBuyHeadlessCheckout',
+    paymentMethod: paymentMethod?.method || '',
+    amount: Number(offer.fiatAmount) || '',
+    coin,
+    chain: wallet.chain?.toLowerCase() || '',
+    fiatCurrency: offer.fiatCurrency || '',
+    isEmbedded: true,
+  });
 
   const showError = async ({
     err,
@@ -372,15 +385,8 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
-        exchange: 'transak',
-        context: 'TransakBuyHeadlessCheckout',
+        ...getAnalyticsData(),
         reason: errMsg ? `[${reason}]: ${errMsg}` : reason,
-        paymentMethod: paymentMethod?.method || '',
-        amount: Number(offer.fiatAmount) || '',
-        coin,
-        chain: wallet.chain?.toLowerCase() || '',
-        fiatCurrency: offer.fiatCurrency || '',
-        isEmbedded: true,
       }),
     );
 
@@ -620,6 +626,19 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     ) {
       status = (await cancelAbandonedOrder(order.orderId)) ?? status;
     }
+    logger.debug(
+      `[TransakHeadlessCheckout] order ${order.orderId} status: ${status}`,
+    );
+
+    if (challengeStartedRef.current && (paid || result !== 'cancelled')) {
+      dispatch(
+        Analytics.track('Buy Crypto Challenge Completed', {
+          ...getAnalyticsData(),
+          transactionId: order.orderId,
+          transactionStatus: status,
+        }),
+      );
+    }
 
     dispatch(
       BuyCryptoActions.updatePaymentRequestTransak({
@@ -665,7 +684,10 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     }
 
     showError({
-      reason: `order ${result} (${status})`,
+      reason:
+        result === 'cancelled'
+          ? 'Challenge cancelled by user'
+          : `order ${result} (${status})`,
       title: t('Payment not completed'),
       allowFallback: false,
     });
@@ -677,6 +699,9 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
     }
     orderRef.current = order;
     recordOrder(order);
+    logger.debug(
+      `[TransakHeadlessCheckout] order ${order.orderId} created (${headlessPaymentMethod}): ${order.status}`,
+    );
 
     // The customer left the checkout while the order was being created or its
     // payment page was being fetched: nothing will show the 3DS page, so the
@@ -745,6 +770,13 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       return;
     }
     if (url) {
+      logger.debug(
+        `[TransakHeadlessCheckout] order ${order.orderId}: 3DS page opened`,
+      );
+      challengeStartedRef.current = true;
+      dispatch(
+        Analytics.track('Buy Crypto Challenge Started', getAnalyticsData()),
+      );
       setRedirectUrl(url);
     } else if (isTransakHeadlessPaidStatus(status)) {
       finalize('success');
@@ -856,6 +888,19 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
       reason: `${headlessPaymentMethod} form error`,
       allowFallback: true,
     });
+  };
+
+  const onPayButtonClick = () => {
+    if (payButtonClickedRef.current) {
+      return;
+    }
+    payButtonClickedRef.current = true;
+    logger.debug(
+      `[TransakHeadlessCheckout] ${headlessPaymentMethod} button clicked`,
+    );
+    dispatch(
+      Analytics.track('Clicked Buy Crypto Pay Button', getAnalyticsData()),
+    );
   };
 
   const onPressBuy = () => {
@@ -1055,6 +1100,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
                   sessionId={sessionId}
                   environment={transakHeadlessEnvironment}
                   onReady={() => setFormReady(true)}
+                  onClick={onPayButtonClick}
                   onSuccess={onPaymentSuccess}
                   onError={onPaymentFormError}
                 />
@@ -1065,6 +1111,7 @@ const TransakBuyHeadlessCheckout: React.FC = () => {
                   sessionId={sessionId}
                   environment={transakHeadlessEnvironment}
                   onReady={() => setFormReady(true)}
+                  onClick={onPayButtonClick}
                   onSuccess={onPaymentSuccess}
                   onError={onPaymentFormError}
                 />

@@ -183,6 +183,7 @@ import {
   getPassthroughUri,
   getTransakChainFormat,
   getTransakCoinFormat,
+  getTransakHeadlessFallbackReason,
   getTransakHeadlessPaymentMethod,
   getTransakPaymentMethodFormat,
   isTransakHeadlessKycEnabled,
@@ -3692,7 +3693,10 @@ const BuyAndSellRoot = ({
     const startCheckout = async (
       userAuth: TransakHeadlessUserAuthData,
       allowKyc: boolean,
-    ): Promise<'started' | 'unauthorized' | 'unavailable'> => {
+    ): Promise<
+      | {status: 'started'}
+      | {status: 'unauthorized' | 'unavailable'; reason: string}
+    > => {
       const ownHeadlessOrders = Object.values(transakPaymentRequests).filter(
         pr => pr.is_headless && pr.order_id,
       );
@@ -3733,21 +3737,21 @@ const BuyAndSellRoot = ({
             quoteRequestData,
             sessionId: preparation.sessionId,
             onApproved: async () => {
-              const result = await startCheckout(userAuth, false);
-              if (result !== 'started') {
-                fallbackToTransakWidget(offer, paymentMethod);
+              const start = await startCheckout(userAuth, false);
+              if (start.status !== 'started') {
+                fallbackToTransakWidget(offer, paymentMethod, start.reason);
               }
             },
             onFallback: (reason: string) => {
               logger.debug(
                 `[TransakHeadlessBuy] KYC fallback (${reason}), continuing with the Transak widget.`,
               );
-              fallbackToTransakWidget(offer, paymentMethod);
+              fallbackToTransakWidget(offer, paymentMethod, reason);
             },
           },
         });
         setOpeningBrowser(false);
-        return 'started';
+        return {status: 'started'};
       }
       if (preparation.status !== 'ready') {
         logger.debug(
@@ -3765,7 +3769,9 @@ const BuyAndSellRoot = ({
             }),
           );
         }
-        return preparation.status;
+        return preparation.status === 'unavailable'
+          ? {status: 'unavailable', reason: preparation.reason}
+          : {status: 'unauthorized', reason: 'session rejected'};
       }
 
       dispatch(
@@ -3795,18 +3801,22 @@ const BuyAndSellRoot = ({
             logger.debug(
               `[TransakHeadlessBuy] checkout fallback (${reason}), continuing with the Transak widget.`,
             );
-            fallbackToTransakWidget(offer, paymentMethod);
+            fallbackToTransakWidget(offer, paymentMethod, reason);
           },
         },
       });
       setOpeningBrowser(false);
-      return 'started';
+      return {status: 'started'};
     };
 
     if (isTransakHeadlessUserAuthValid(transakHeadlessUserAuth)) {
-      const result = await startCheckout(transakHeadlessUserAuth, true);
-      if (result !== 'unauthorized') {
-        return result === 'started';
+      const start = await startCheckout(transakHeadlessUserAuth, true);
+      if (start.status === 'started') {
+        return true;
+      }
+      if (start.status === 'unavailable') {
+        trackTransakHeadlessFallback(offer, paymentMethod, start.reason);
+        return false;
       }
       // The stored session is no longer accepted: sign in again below.
     }
@@ -3825,9 +3835,9 @@ const BuyAndSellRoot = ({
               userAuth,
             }),
           );
-          const result = await startCheckout(userAuth, true);
-          if (result !== 'started') {
-            fallbackToTransakWidget(offer, paymentMethod);
+          const start = await startCheckout(userAuth, true);
+          if (start.status !== 'started') {
+            fallbackToTransakWidget(offer, paymentMethod, start.reason);
           }
         },
         onSkip: (manualSkip: boolean) => {
@@ -3836,7 +3846,11 @@ const BuyAndSellRoot = ({
               manualSkip ? 'User skipped' : 'Skipped'
             } the Transak sign in, continuing with the Transak widget.`,
           );
-          fallbackToTransakWidget(offer, paymentMethod);
+          fallbackToTransakWidget(
+            offer,
+            paymentMethod,
+            manualSkip ? 'sign-in skipped' : 'sign-in unavailable',
+          );
         },
       },
     );
@@ -3844,11 +3858,30 @@ const BuyAndSellRoot = ({
     return true;
   };
 
+  const trackTransakHeadlessFallback = (
+    offer: CryptoOffer,
+    paymentMethod: PaymentMethod,
+    reason: string,
+  ) => {
+    dispatch(
+      Analytics.track('Transak Headless: fallback to widget', {
+        reason: getTransakHeadlessFallbackReason(reason),
+        paymentMethod: paymentMethod?.method || '',
+        amount: Number(offer.fiatAmount) || '',
+        coin: selectedWallet?.currencyAbbreviation?.toLowerCase() || '',
+        chain: selectedWallet?.chain?.toLowerCase() || '',
+        fiatCurrency: offer.fiatCurrency || '',
+      }),
+    );
+  };
+
   // Leaves the headless screen on top and continues with the Transak widget.
   const fallbackToTransakWidget = async (
     offer: CryptoOffer,
     paymentMethod: PaymentMethod,
+    reason: string,
   ) => {
+    trackTransakHeadlessFallback(offer, paymentMethod, reason);
     hasInitializedRef.current = true;
     navigation.goBack();
     // Wait for the back-transition: the transitionEnd listener resets

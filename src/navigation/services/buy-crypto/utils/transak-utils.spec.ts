@@ -1,6 +1,7 @@
 import {
   getTransakHeadlessConfirmButtonKind,
   getTransakHeadlessConnectionWallet,
+  getTransakHeadlessFallbackReason,
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
   getTransakHeadlessUnsupportedTermsIds,
@@ -231,6 +232,36 @@ describe('getTransakHeadlessConnectionWallet', () => {
         key2: makeKey([makeWallet('incomplete', false)]),
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('getTransakHeadlessFallbackReason', () => {
+  it('drops order IDs and Transak error messages', () => {
+    expect(getTransakHeadlessFallbackReason('active order: abc-123')).toBe(
+      'active order',
+    );
+    expect(
+      getTransakHeadlessFallbackReason('400/6003: Feature is not enabled'),
+    ).toBe('transak error 400/6003');
+    expect(getTransakHeadlessFallbackReason('-/-: Something went wrong')).toBe(
+      'transak error -/-',
+    );
+    expect(getTransakHeadlessFallbackReason('request: Network Error')).toBe(
+      'request error',
+    );
+  });
+
+  it('keeps the reasons that have no variable data', () => {
+    for (const reason of [
+      'kyc: SUBMITTED (STANDARD)',
+      'limits: exceeded',
+      'terms: NEW_DISCLAIMER',
+      'sign-in skipped',
+      'session rejected',
+      'apple_pay form error',
+    ]) {
+      expect(getTransakHeadlessFallbackReason(reason)).toBe(reason);
+    }
   });
 });
 

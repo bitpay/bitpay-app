@@ -480,6 +480,20 @@ export const isTransakHeadlessUserAuthValid = (
 ): userAuth is TransakHeadlessUserAuthData =>
   !!userAuth?.accessToken && userAuth.expiresAt - Date.now() > 10 * 60 * 1000;
 
+export const getTransakHeadlessFallbackReason = (reason: string): string => {
+  if (reason.startsWith('active order:')) {
+    return 'active order';
+  }
+  const transakError = reason.match(/^([0-9-]+\/[0-9-]+):/);
+  if (transakError) {
+    return `transak error ${transakError[1]}`;
+  }
+  if (reason.startsWith('request:')) {
+    return 'request error';
+  }
+  return reason;
+};
+
 const EEA_NON_EU_COUNTRIES = ['IS', 'LI', 'NO'];
 
 export const getTransakLegalUrls = (

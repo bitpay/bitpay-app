@@ -36,6 +36,7 @@ import {
   TransakHeadlessVerifyOtpData,
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {
+  getTransakHeadlessErrorCodes,
   TransakHeadlessError,
   transakHeadlessSendOtp,
   transakHeadlessVerifyOtp,
@@ -286,6 +287,14 @@ const TransakBuyHeadlessOnboarding = ({
       logger.error(
         `[TransakHeadlessOnboarding] send code failed: ${getErrorString(err)}`,
       );
+      dispatch(
+        Analytics.track('Transak Headless Onboarding: failed', {
+          action: 'send code',
+          step,
+          context,
+          ...getTransakHeadlessErrorCodes(err),
+        }),
+      );
       setEmailError(
         t('We could not send the code. Please check your email and try again.'),
       );
@@ -350,6 +359,14 @@ const TransakBuyHeadlessOnboarding = ({
         `[TransakHeadlessOnboarding] verify code failed: ${getErrorString(
           err,
         )}`,
+      );
+      dispatch(
+        Analytics.track('Transak Headless Onboarding: failed', {
+          action: 'verify code',
+          step,
+          context,
+          ...getTransakHeadlessErrorCodes(err),
+        }),
       );
       setButtonState(undefined);
       const isRejectedCode =

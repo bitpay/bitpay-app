@@ -157,6 +157,7 @@ const TransakBuyHeadlessKyc: React.FC = () => {
   const mountedRef = useRef(true);
   const submittedRef = useRef(false);
   const failedRef = useRef(false);
+  const cameraDeniedTrackedRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -263,6 +264,13 @@ const TransakBuyHeadlessKyc: React.FC = () => {
       return;
     }
     if (code === 'CAMERA_PERMISSION_DENIED') {
+      if (!cameraDeniedTrackedRef.current) {
+        cameraDeniedTrackedRef.current = true;
+        logger.debug('[TransakHeadlessKyc] camera permission denied');
+        dispatch(
+          Analytics.track('Transak Headless KYC: camera permission denied'),
+        );
+      }
       showCameraPermissionInfo();
       return;
     }
