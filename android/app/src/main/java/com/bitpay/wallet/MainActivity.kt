@@ -1,7 +1,10 @@
 package com.bitpay.wallet
 
 import android.content.Intent
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
 import com.braze.reactbridge.BrazeReactUtils
 import com.braze.ui.inappmessage.BrazeInAppMessageManager
@@ -57,6 +60,17 @@ class MainActivity : ReactActivity() {
                 )
             }
         }
+    }
+
+    private fun setWindowFlag(bits: Int, on: Boolean) {
+        val win = window
+        val winParams = win.attributes
+        if (on) {
+            winParams.flags = winParams.flags or bits
+        } else {
+            winParams.flags = winParams.flags and bits.inv()
+        }
+        win.attributes = winParams
     }
 
     override fun onNewIntent(intent: Intent) {
