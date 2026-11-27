@@ -1,7 +1,7 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Image, StyleSheet, View} from 'react-native';
+import {Image, Platform, StyleSheet, View} from 'react-native';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import WalletConnectIcon from '../../../../../assets/img/wallet-connect/wallet-connect-icon.svg';
 import ZenLedgerIcon from '../../../../../assets/img/zenledger/zenledger-icon.svg';
@@ -12,12 +12,18 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
 import {SettingsDetailsParamList} from '../SettingsDetails';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
+import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import {
   getMoonpayEmbeddedAnonymousCredentials,
+  getMoonpayEmbeddedApplePaySupported,
   getMoonpayEmbeddedEnabled,
   getMoonpayEmbeddedStatus,
   isMoonpayEmbeddedCredentialsValid,
@@ -26,6 +32,23 @@ import {
 } from '../../../../store/buy-crypto/buy-crypto.effects';
 import {ExternalServicesScreens} from '../../../services/ExternalServicesGroup';
 import {MoonpayClientCredentials} from '../../../services/utils/moonpayFrameCrypto';
+import {
+  getCachedExternalServicesConfig,
+  getExternalServicesConfig,
+} from '../../../../store/external-services/external-services.effects';
+import {
+  BuyCryptoConfig,
+  ExternalServicesConfig,
+} from '../../../../store/external-services/external-services.types';
+import {
+  getTransakHeadlessConnectionWallet,
+  isTransakHeadlessConnectionEnabled,
+  isTransakHeadlessUserAuthValid,
+  transakEnv,
+} from '../../../services/buy-crypto/utils/transak-utils';
+import {BuyCryptoActions} from '../../../../store/buy-crypto';
+import {TransakHeadlessUserAuthData} from '../../../../store/buy-crypto/buy-crypto.models';
+import {getErrorString} from '../../../../utils/helper-methods';
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
 
@@ -61,6 +84,7 @@ const Connections = () => {
   const {redirectTo} = route.params || {};
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const sessions = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
   );
@@ -69,6 +93,45 @@ const Connections = () => {
   );
 
   const moonpayEmbeddedEnabled = getMoonpayEmbeddedEnabled();
+
+  const country = useAppSelector(
+    ({LOCATION}) => LOCATION.locationData?.countryShortCode,
+  );
+  const transakWallet = useAppSelector(({WALLET}) =>
+    getTransakHeadlessConnectionWallet(WALLET.keys),
+  );
+  const transakHeadlessUserAuth: TransakHeadlessUserAuthData | undefined =
+    useAppSelector(
+      ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transakHeadlessUser?.[transakEnv],
+    );
+  const [buyCryptoConfig, setBuyCryptoConfig] = useState<
+    BuyCryptoConfig | undefined
+  >(() => getCachedExternalServicesConfig()?.config?.buyCrypto);
+  const transakHeadlessEnabled =
+    !!transakWallet &&
+    !!buyCryptoConfig &&
+    isTransakHeadlessConnectionEnabled(buyCryptoConfig, country, {
+      applePaySupported:
+        Platform.OS === 'ios' && getMoonpayEmbeddedApplePaySupported(),
+      googlePaySupported: Platform.OS === 'android',
+    });
+
+  useEffect(() => {
+    if (getCachedExternalServicesConfig()) {
+      return;
+    }
+    dispatch(getExternalServicesConfig())
+      .then((config: ExternalServicesConfig) =>
+        setBuyCryptoConfig(config?.buyCrypto),
+      )
+      .catch((err: unknown) =>
+        logger.debug(
+          `[Connections] could not get the external services config: ${getErrorString(
+            err,
+          )}`,
+        ),
+      );
+  }, [dispatch, logger]);
 
   const goToWalletConnect = useCallback(() => {
     dispatch(
@@ -144,6 +207,40 @@ const Connections = () => {
     navigation.navigate('MoonpayConnectionSettings');
   };
 
+  const goToTransak = () => {
+    haptic('impactLight');
+    dispatch(
+      Analytics.track('Clicked Transak', {
+        context: 'Settings Connections',
+      }),
+    );
+    if (
+      !transakWallet ||
+      isTransakHeadlessUserAuthValid(transakHeadlessUserAuth)
+    ) {
+      navigation.navigate('TransakConnectionSettings');
+      return;
+    }
+    navigation.navigate(
+      ExternalServicesScreens.TRANSAK_BUY_HEADLESS_ONBOARDING,
+      {
+        wallet: transakWallet,
+        context: 'connections',
+        country,
+        initialEmail: user?.email,
+        onConnect: (userAuth: TransakHeadlessUserAuthData) => {
+          dispatch(
+            BuyCryptoActions.updateHeadlessUserAuthTransak({
+              env: transakEnv,
+              userAuth,
+            }),
+          );
+          navigation.navigate('TransakConnectionSettings');
+        },
+      },
+    );
+  };
+
   useEffect(() => {
     if (redirectTo === 'walletconnect') {
       // reset params to prevent re-triggering
@@ -181,6 +278,23 @@ const Connections = () => {
                 <MoonpayLogo iconOnly={true} widthIcon={26} heightIcon={25} />
               </ConnectionIconContainer>
               <SettingTitle>Moonpay</SettingTitle>
+            </ConnectionItemContainer>
+            <AngleRight />
+          </Setting>
+          <Hr />
+        </>
+      ) : null}
+      {transakHeadlessEnabled ? (
+        <>
+          <Setting
+            testID="settings-connections-transak-row"
+            accessibilityLabel={'Transak'}
+            onPress={() => goToTransak()}>
+            <ConnectionItemContainer>
+              <ConnectionIconContainer style={{marginLeft: 3}}>
+                <TransakLogo iconOnly={true} width={26} height={25} />
+              </ConnectionIconContainer>
+              <SettingTitle>Transak</SettingTitle>
             </ConnectionItemContainer>
             <AngleRight />
           </Setting>

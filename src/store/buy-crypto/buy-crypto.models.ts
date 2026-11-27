@@ -1169,6 +1169,12 @@ export interface TransakHeadlessVerifyOtpData {
   created?: string;
 }
 
+export interface TransakHeadlessUserDetailsData {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 export interface TransakHeadlessGetQuoteRequestData {
   env: TransakEnv;
   fiatCurrency: string;

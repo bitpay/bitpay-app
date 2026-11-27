@@ -1,15 +1,18 @@
 import {
   getTransakHeadlessConfirmButtonKind,
+  getTransakHeadlessConnectionWallet,
   getTransakHeadlessRedirectResult,
   getTransakHeadlessRedirectUrls,
   getTransakHeadlessUnsupportedTermsIds,
   isSameTransakHeadlessQuoteForCustomer,
   isSameTransakHeadlessTermsIds,
+  isTransakHeadlessConnectionEnabled,
   isTransakHeadlessKycEnabled,
   isTransakHeadlessPaidStatus,
   isTransakHeadlessPaymentMethodEnabled,
 } from './transak-utils';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 
 const headlessConfig: BuyCryptoConfig = {
   transak: {config: {headlessBuyDisabled: false}},
@@ -134,6 +137,99 @@ describe('isTransakHeadlessKycEnabled', () => {
         transak: {config: {headlessKycDisabled: true}},
       }),
     ).toBe(false);
+  });
+});
+
+describe('isTransakHeadlessConnectionEnabled', () => {
+  it('is enabled when a headless payment method can be used', () => {
+    expect(isTransakHeadlessConnectionEnabled(headlessConfig, 'US')).toBe(true);
+    expect(
+      isTransakHeadlessConnectionEnabled(
+        {
+          transak: {
+            config: {
+              paymentMethods: {
+                cardEmbedded: {disabled: true},
+                applePayEmbedded: {disabled: true},
+              },
+            },
+          },
+        },
+        'US',
+        {googlePaySupported: true},
+      ),
+    ).toBe(true);
+  });
+
+  it('is disabled when Transak or its headless flow is turned off', () => {
+    expect(
+      isTransakHeadlessConnectionEnabled(
+        {transak: {config: {headlessBuyDisabled: true}}},
+        'US',
+      ),
+    ).toBe(false);
+    expect(
+      isTransakHeadlessConnectionEnabled({transak: {disabled: true}}, 'US'),
+    ).toBe(false);
+    expect(
+      isTransakHeadlessConnectionEnabled({transak: {removed: true}}, 'US'),
+    ).toBe(false);
+    expect(isTransakHeadlessConnectionEnabled({disabled: true}, 'US')).toBe(
+      false,
+    );
+  });
+
+  it('is disabled in the UK', () => {
+    expect(isTransakHeadlessConnectionEnabled(headlessConfig, 'GB')).toBe(
+      false,
+    );
+  });
+
+  it('is disabled when no headless payment method can be used', () => {
+    expect(
+      isTransakHeadlessConnectionEnabled(
+        {
+          transak: {
+            config: {
+              paymentMethods: {
+                cardEmbedded: {disabled: true},
+              },
+            },
+          },
+        },
+        'US',
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('getTransakHeadlessConnectionWallet', () => {
+  const makeWallet = (id: string, complete = true): Wallet =>
+    ({
+      id,
+      credentials: {},
+      isComplete: () => complete,
+    } as unknown as Wallet);
+  const makeKey = (wallets: Wallet[], backupComplete = true): Key =>
+    ({wallets, backupComplete} as unknown as Key);
+
+  it('returns the first complete wallet of a backed up key', () => {
+    expect(
+      getTransakHeadlessConnectionWallet({
+        key1: makeKey([makeWallet('notBackedUp')], false),
+        key2: makeKey([makeWallet('incomplete', false), makeWallet('ready')]),
+      })?.id,
+    ).toBe('ready');
+  });
+
+  it('returns nothing without a usable wallet', () => {
+    expect(getTransakHeadlessConnectionWallet({})).toBeUndefined();
+    expect(
+      getTransakHeadlessConnectionWallet({
+        key1: makeKey([makeWallet('notBackedUp')], false),
+        key2: makeKey([makeWallet('incomplete', false)]),
+      }),
+    ).toBeUndefined();
   });
 });
 

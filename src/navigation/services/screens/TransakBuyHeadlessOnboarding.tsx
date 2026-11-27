@@ -207,13 +207,14 @@ LegalLink.displayName = 'LegalLink';
 
 export interface TransakBuyHeadlessOnboardingProps {
   wallet: Wallet;
+  context?: 'buy' | 'connections';
   country?: string;
-  paymentMethod: TransakHeadlessPaymentMethod;
+  paymentMethod?: TransakHeadlessPaymentMethod;
   initialEmail?: string;
   // Kept loading until it resolves, while the checkout is prepared.
   onConnect: (userAuth: TransakHeadlessUserAuthData) => Promise<void> | void;
   // manualSkip is false when the onboarding gave up on its own.
-  onSkip: (manualSkip: boolean) => void;
+  onSkip?: (manualSkip: boolean) => void;
 }
 
 const emailSchema = yup.string().email().required().trim();
@@ -229,8 +230,16 @@ const TransakBuyHeadlessOnboarding = ({
   const logger = useLogger();
   const dispatch = useAppDispatch();
 
-  const {wallet, country, paymentMethod, initialEmail, onConnect, onSkip} =
-    route.params;
+  const {
+    wallet,
+    context = 'buy',
+    country,
+    paymentMethod,
+    initialEmail,
+    onConnect,
+    onSkip,
+  } = route.params;
+  const isConnections = context === 'connections';
   const walletPaymentName =
     paymentMethod === 'apple_pay'
       ? 'Apple Pay'
@@ -265,7 +274,9 @@ const TransakBuyHeadlessOnboarding = ({
         throw new Error('No stateToken returned');
       }
       setStateToken(data.stateToken);
-      dispatch(Analytics.track('Transak Headless Onboarding: code sent'));
+      dispatch(
+        Analytics.track('Transak Headless Onboarding: code sent', {context}),
+      );
       return true;
     } catch (err) {
       logger.error(
@@ -327,7 +338,9 @@ const TransakBuyHeadlessOnboarding = ({
       if (!data?.accessToken || !data.ttl) {
         throw new Error('No accessToken returned');
       }
-      dispatch(Analytics.track('Transak Headless Onboarding: connected'));
+      dispatch(
+        Analytics.track('Transak Headless Onboarding: connected', {context}),
+      );
     } catch (err) {
       logger.error(
         `[TransakHeadlessOnboarding] verify code failed: ${getErrorString(
@@ -357,9 +370,15 @@ const TransakBuyHeadlessOnboarding = ({
 
   const skip = () => {
     dispatch(
-      Analytics.track('Transak Headless Onboarding: manual skip', {step}),
+      Analytics.track('Transak Headless Onboarding: manual skip', {
+        step,
+        context,
+      }),
     );
-    onSkip(true);
+    onSkip?.(true);
+    if (isConnections) {
+      navigation.goBack();
+    }
   };
 
   const openUrl = (url: string) => {
@@ -373,7 +392,16 @@ const TransakBuyHeadlessOnboarding = ({
           <IconRow>
             <TransakLogo width={120} height={40} />
           </IconRow>
-          {step === 'email' ? (
+          {step === 'email' && isConnections ? (
+            <>
+              <Title>{t('Connect your Transak account')}</Title>
+              <Subtitle>
+                {t(
+                  'Verify your email with Transak so you can buy crypto without leaving the app.',
+                )}
+              </Subtitle>
+            </>
+          ) : step === 'email' ? (
             <>
               <Title>
                 {walletPaymentName
@@ -494,7 +522,7 @@ const TransakBuyHeadlessOnboarding = ({
           buttonStyle={'secondary'}
           borderRadius={100}
           height={50}>
-          {t('Continue on Transak instead')}
+          {isConnections ? t('Cancel') : t('Continue on Transak instead')}
         </Button>
       </BottomSection>
     </Container>

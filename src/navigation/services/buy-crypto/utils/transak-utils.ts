@@ -9,6 +9,7 @@ import {
   TransakStatusKey,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod, PaymentMethodKey} from '../constants/BuyCryptoConstants';
@@ -432,6 +433,44 @@ export const isTransakHeadlessPaymentMethodEnabled = (
 export const isTransakHeadlessKycEnabled = (
   buyCryptoConfig: BuyCryptoConfig | undefined,
 ): boolean => buyCryptoConfig?.transak?.config?.headlessKycDisabled !== true;
+
+const TRANSAK_HEADLESS_PAYMENT_METHOD_KEYS: PaymentMethodKey[] = [
+  'creditCard',
+  'applePay',
+  'googlePay',
+];
+
+export const isTransakHeadlessConnectionEnabled = (
+  buyCryptoConfig: BuyCryptoConfig | undefined,
+  country: string | undefined,
+  support: TransakHeadlessSupport = {},
+): boolean =>
+  !buyCryptoConfig?.disabled &&
+  !buyCryptoConfig?.transak?.disabled &&
+  !buyCryptoConfig?.transak?.removed &&
+  TRANSAK_HEADLESS_PAYMENT_METHOD_KEYS.some(method =>
+    isTransakHeadlessPaymentMethodEnabled(
+      method,
+      buyCryptoConfig,
+      country,
+      support,
+    ),
+  );
+
+export const getTransakHeadlessConnectionWallet = (keys: {
+  [keyId: string]: Key;
+}): Wallet | undefined => {
+  for (const key of Object.values(keys)) {
+    if (!key.backupComplete) {
+      continue;
+    }
+    const wallet = key.wallets?.find(w => w.credentials && w.isComplete());
+    if (wallet) {
+      return wallet;
+    }
+  }
+  return undefined;
+};
 
 // A session about to expire is treated as expired: Transak cannot refresh an
 // expired session, and a purchase must not fail halfway because of it.

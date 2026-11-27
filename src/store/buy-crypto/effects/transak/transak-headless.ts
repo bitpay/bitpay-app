@@ -9,6 +9,7 @@ import {
   TransakHeadlessSavedCard,
   TransakHeadlessSendOtpData,
   TransakHeadlessTransactionSessionData,
+  TransakHeadlessUserDetailsData,
   TransakHeadlessUserLimitsData,
   TransakHeadlessVerifyOtpData,
   TransakStatusKey,
@@ -90,6 +91,19 @@ export const transakHeadlessVerifyOtp = async (
   },
 ): Promise<TransakHeadlessVerifyOtpData> =>
   unwrap(await wallet.transakHeadlessVerifyOtp(requestData));
+
+export const transakHeadlessLogout = async (
+  wallet: Wallet,
+  requestData: {env: TransakEnv; userAccessToken: string},
+): Promise<void> => {
+  unwrap(await wallet.transakHeadlessLogout(requestData));
+};
+
+export const transakHeadlessGetUserDetails = async (
+  wallet: Wallet,
+  requestData: {env: TransakEnv; userAccessToken: string},
+): Promise<TransakHeadlessUserDetailsData> =>
+  unwrap(await wallet.transakHeadlessGetUserDetails(requestData));
 
 export const transakHeadlessGetQuote = async (
   wallet: Wallet,
